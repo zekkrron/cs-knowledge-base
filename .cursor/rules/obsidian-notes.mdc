@@ -1,0 +1,54 @@
+---
+description: How to write notes in this Obsidian CS knowledge base vault
+alwaysApply: true
+---
+
+# Obsidian CS Knowledge Base — Note Conventions
+
+This vault belongs to Akash Singh. Full conventions are in `CONVENTIONS.md`.
+Always read that file first when writing or converting notes.
+
+## Quick Reference
+
+**Folder rules:** DSA = one note per topic. LLD = one note per design problem.
+HLD = one subfolder per system with its own `.md` inside.
+
+**Every note starts with:**
+```
+---
+tags: [dsa/topic, status/draft]
+created: YYYY-MM-DD
+---
+# Title
+> [!abstract] One paragraph: what this is and why it matters
+```
+
+**Callouts:** `[!abstract]` open, `[!tip]` key insight, `[!warning]` gotcha,
+`[!danger]` failure mode, `[!info]` context, `[!example]` worked example.
+
+**Diagrams:** Always Mermaid first (`flowchart TD` default). Excalidraw only when
+structure genuinely cannot be expressed as text.
+
+**DSA notes must have:** pattern name, when-to-use signal, plain-English idea,
+code block, complexity table (Time + Space), key variants, classic problems.
+
+**HLD notes must have:** requirements (functional + non-functional), scale estimates
+table, architecture Mermaid diagram, component deep dives, database choices table,
+failure modes table, key design decisions.
+
+**LLD notes must have:** requirements, class diagram (Mermaid `classDiagram`),
+key methods, design patterns used, edge cases.
+
+## Converting Handwritten Notes
+
+User will provide a PDF exported from OneNote (pages are images of freehand writing).
+Reconstruct as a properly structured `.md` file following these conventions.
+Recreate drawn diagrams as Mermaid. One OneNote section = one `.md` file.
+
+## Style Rules
+
+- `==highlight==` only for the single most critical fact on a line
+- Link related concepts: `[[Consistent Hashing]]`, `[[CAP Theorem]]`
+- Keep Mermaid node labels short (2–4 words, `\n` for breaks)
+- Complexity values always in backticks: `O(log n)`
+- No filler sentences. Every line earns its place.
