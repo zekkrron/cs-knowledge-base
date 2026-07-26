@@ -1,13 +1,24 @@
 /* Obsidian clips overflowing content at the page edge when exporting to PDF
-   instead of scaling it down. Force wide elements to fit the printable width. */
+   instead of scaling it down. Force wide elements to fit the available width.
+
+   Applied unconditionally rather than inside @media print, because the export
+   path does not reliably match print media. */
+
+.mermaid {
+	overflow: visible !important;
+	max-width: 100% !important;
+}
+
+/* Mermaid emits an SVG with pixel width/height attributes and a viewBox.
+   Constraining width while letting height resolve from the viewBox scales
+   the diagram down proportionally instead of cropping it. */
+.mermaid svg {
+	max-width: 100% !important;
+	width: 100% !important;
+	height: auto !important;
+}
 
 @media print {
-	.mermaid,
-	.mermaid svg {
-		max-width: 100% !important;
-		height: auto !important;
-	}
-
 	table {
 		max-width: 100% !important;
 		table-layout: fixed;
@@ -18,5 +29,10 @@
 	code {
 		white-space: pre-wrap !important;
 		word-break: break-word;
+	}
+
+	.markdown-preview-view,
+	.markdown-rendered {
+		overflow: visible !important;
 	}
 }

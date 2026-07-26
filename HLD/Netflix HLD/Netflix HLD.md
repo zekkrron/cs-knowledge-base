@@ -1,4 +1,4 @@
-# Netflix — High Level Design
+	# Netflix — High Level Design
 
 > [!abstract] What we're designing
 > A globally distributed video streaming platform serving **200M+ users** across 190 countries with personalised recommendations, near-zero buffering, and high availability.
