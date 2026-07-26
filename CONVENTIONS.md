@@ -16,12 +16,20 @@ cs-knowledge-base/
     Problems/          Problems I solved myself
     README.md
   LLD/
-    Course/            Source layer — one note per course module, in course order
-    Principles/        SOLID, coupling/cohesion, composition over inheritance
-    Patterns/          One note per design pattern
-    Problems/          MY OWN solved designs (see rule below)
-    Concurrency/       Threading, locks, synchronisation
+    Course/                  Record layer — one note per module: `NN - <Title>.md`
+    Patterns/
+      Creational/            Singleton, Factory, Abstract Factory, Builder, Prototype
+      Structural/            Adapter, Bridge, Composite, Decorator, Facade, Proxy
+      Behavioural/           Strategy, Observer, State, Command, Chain of Responsibility
+    Principles/              SOLID (one note each), DRY, KISS, composition over inheritance
+    Foundations/             OOP mechanics, UML notation, relationship types
+    Concurrency/             Threading, locks, races, deadlock
+    Tech/
+      Java/                  Language idioms the course relies on
+      Spring Boot/           API-based solutions, DI, annotations, layering
+    Problems/                MY OWN solved designs (empty for now — see rule below)
     Pattern Selection.md
+    Interview Approach.md
     README.md
   HLD/
     Course/            Source layer — one note per course module, in course order
@@ -89,6 +97,77 @@ One source of truth, visible in both places.
 Both questions then have an answer. *"What did module 7 cover?"* → the module note.
 *"Everything I know about Observer?"* → the concept note, with backlinks showing every
 module and problem that touched it.
+
+---
+
+## Agent Extraction Procedure
+
+> [!important] The agent performs the extraction, not the user
+> The user will say something like *"convert module 12"* or *"add this module to my notes"*
+> and nothing more. The agent is responsible for finding every piece of extractable
+> knowledge in that module and routing it to the correct destination.
+> **Do not ask the user where things belong.** That decision is specified below.
+
+### Record vs Accumulator
+
+- **Record note** — `Course/NN - <Title>.md`. Written once, never revisited.
+- **Accumulator note** — everything else. Returned to and grown across the entire course.
+
+So *"where does this go?"* always means *"which accumulator does this feed?"*
+
+### Procedure
+
+1. **Read this file first.**
+2. **Render the source.** OneNote PDFs have no text layer — see
+   [Converting Handwritten Notes](#converting-handwritten-notes-onenote--obsidian).
+3. **Write the record note** at `Course/NN - <Original OneNote Page Title>.md`.
+   `NN` is the module's position in the course. One OneNote page = one module = one note.
+4. **Run the extraction checklist** below across the whole module.
+5. **For every hit, search the vault for an existing accumulator note first.**
+   - Exists → **merge** the new understanding into it. Never overwrite.
+   - Does not exist → create it using that folder's prescribed structure.
+6. **Cross-link in both directions.** The module note links out to each accumulator it
+   fed; each accumulator gains an entry under `## Sources` naming the module.
+7. **Update the `README.md` index** of every folder touched.
+8. **Report** what was created, what was updated, and anything deliberately skipped.
+
+### The Extraction Checklist
+
+Scan every module for all seven. A single module normally hits several.
+
+| # | Look for | Destination |
+|---|---|---|
+| 1 | A design pattern taught or applied | `Patterns/<Category>/<Name>.md` |
+| 2 | A principle invoked or violated | `Principles/<Name>.md` |
+| 3 | An OOP mechanism, relationship type, or UML notation | `Foundations/<Name>.md` |
+| 4 | A naive solution and why it failed | *Motivation* section of the pattern note |
+| 5 | A concurrency concern | `Concurrency/<Name>.md` |
+| 6 | A Java or Spring Boot idiom | `Tech/Java/` or `Tech/Spring Boot/` |
+| 7 | An interview-relevant remark or technique | `Interview Approach.md` |
+
+Anything matching no row **stays in the module note**: the narrative, the instructor's
+specific framing, the full problem walkthrough, the user's own questions and confusions.
+That residue is expected and correct — it is what the record layer is for.
+
+### Merge Rules
+
+> [!danger] Accumulators are append-and-refine, never replace
+> A pattern note may already hold knowledge from five earlier modules. Destroying it
+> to write the current module's version is the worst failure mode in this vault.
+
+- Never delete existing content from an accumulator to make room for new content.
+- If new material contradicts what is there, keep both and flag it with a `[!question]` callout.
+- If the idea is already present, improve the existing wording instead of appending a duplicate.
+- Append to `## Sources`; never replace it.
+
+### Code Policy
+
+The course has a public repo, linked in the header of each OneNote page
+(e.g. `github.com/singhsanket143/Design-Patterns/tree/master/src/...`).
+
+- Link the relevant repo folder from the module note.
+- Inline **only** excerpts that carry the teaching point — typically 5–20 lines.
+- Do **not** transcribe DTOs, enums, or boilerplate from photographs of a screen.
 
 ---
 
@@ -239,16 +318,26 @@ Open/Closed Principle in executable form. So:
 
 ### `Patterns/`
 
-One note per design pattern. Structure:
+One note per design pattern, filed under `Creational/`, `Structural/` or `Behavioural/`.
+
+Subfolders organise the folder tree only. Links are unaffected — `[[Strategy]]` resolves
+from anywhere in the vault regardless of which subfolder the note sits in.
+
+Structure of a pattern note:
 
 1. **Intent** — one sentence, what it solves
-2. **Recognition signal** — the cue in a problem that says "use this"
-3. **Structure** — Mermaid `classDiagram`
-4. **Code** — clean implementation
-5. **Trade-offs** — table of pros/cons
-6. **Confused with** — the pattern it's most often mistaken for, and how to tell them apart
-7. **Principles served** — `[[wikilinks]]` upward
-8. **Sources** — where learned
+2. **Motivation** — the naive approach and the specific problems it caused
+3. **Recognition signal** — the cue in a problem that says "use this"
+4. **Structure** — Mermaid `classDiagram`
+5. **Code** — the teaching excerpt only; link the repo for the full implementation
+6. **Trade-offs** — table of pros/cons
+7. **Confused with** — the pattern it is most often mistaken for, and how to tell them apart
+8. **Principles served** — `[[wikilinks]]` upward
+9. **Sources** — every module that contributed, appended over time
+
+> [!tip] Why Motivation matters
+> Courses teach patterns as naive solution → problems → refactor, and interviewers ask
+> *"why did you choose this?"*. A pattern note without its motivation cannot answer that.
 
 ### `Problems/`
 
@@ -272,6 +361,34 @@ Structure of a solved problem note:
 5. **Patterns used** — `[[wikilinks]]`, one line each on *why*
 6. **Edge cases** — what breaks the naive implementation
 7. **Extensions** — follow-ups an interviewer would add
+
+### `Foundations/`
+
+The **mechanisms** design is built from, as opposed to the guidelines in `Principles/`.
+Abstraction, encapsulation, inheritance, polymorphism, interface vs abstract class,
+static vs instance — plus the relationship types (association, aggregation, composition,
+dependency) and UML class diagram notation.
+
+The distinction: polymorphism is a *mechanism* (Foundations); "program to an interface"
+is a *guideline* (Principles). Without this folder, mechanism knowledge has no home and
+gets stranded inside module notes.
+
+### `Tech/`
+
+Language- and framework-specific knowledge, split into `Java/` and `Spring Boot/`.
+
+Named `Tech/` rather than `Stack/` to avoid colliding with the Stack data structure
+in `DSA/`. Extensible — a new language or framework becomes a new subfolder.
+
+This exists so implementation detail does not contaminate pattern notes. *"Use an enum
+for a fixed set of states"* is a Java idiom, not a design pattern, and belongs in
+`Tech/Java/`. Spring Boot material from the API-based modules goes in `Tech/Spring Boot/`
+— dependency injection, annotations, service layering.
+
+> [!tip] Spring Boot cross-links heavily
+> Dependency injection is [[Dependency Inversion Principle]] made concrete, beans are
+> managed [[Singleton]]s, and AOP is [[Proxy]]. Always link Spring Boot notes back to the
+> principle or pattern they implement.
 
 ### `Concurrency/`
 
@@ -298,6 +415,14 @@ Decorator vs Proxy, Adapter vs Facade.
 
 It deliberately duplicates the pattern notes. Its value is being one scannable page.
 Write it last, grow it as patterns are learned, read it before an interview.
+
+### `Interview Approach.md`
+
+The meta-skill, accumulated from asides scattered across the course: how to open an LLD
+interview, which clarifying questions to ask before designing, how to sequence the
+answer, what interviewers actually score, and common ways candidates lose points.
+
+The agent extracts these remarks — the user will not flag them.
 
 ---
 
@@ -355,13 +480,47 @@ Use this for facts that must be memorised cold (complexity, theorem names, port 
 
 ## Converting Handwritten Notes (OneNote → Obsidian)
 
-Export OneNote section as PDF (even handwritten pages export as image-inside-PDF).
-Send the PDF to Cursor chat. Ask:
+The source notes are entirely freehand ink plus photographs of the lecture screen.
 
-> "Convert this to an Obsidian note following CONVENTIONS.md"
+> [!danger] PDF text extraction returns nothing
+> OneNote rasterises ink, so a PDF export has no text layer. Reading the PDF as text
+> yields only the page title, date and repo link. **The pages must be rendered to
+> images and read visually.**
 
-For each page:
+### Tooling
+
+Scripts live in `C:\Users\akash\onenote-tools\` — deliberately outside the vault so they
+do not sync. Requires `pymupdf`.
+
+```powershell
+# Whole page, low DPI, to locate content on the canvas
+python onenote_to_png.py "<file>.pdf" "overview" 35
+
+# Fractional region at readable DPI: x0 y0 x1 y1 (0-1, origin top-left)
+python crop_region.py "<file>.pdf" 1 0.60 0.0 0.75 0.26 170 "crops/region.png"
+```
+
+### Why cropping is required
+
+A OneNote page is a canvas of roughly 76 × 48 inches, mostly whitespace, laid out in
+vertical columns. Rendered whole at readable DPI it exceeds 15000 px wide. Render an
+overview at ~35 DPI first to locate the columns, then crop each region at ~170 DPI.
+Budget roughly 16–20 crops per page.
+
+### Conversion rules
+
 - Handwritten text → restructured markdown
-- Drawn diagrams → recreated as Mermaid where possible
-- Pasted screenshots/images → described in text; embed original image if needed
-- One OneNote section (4–5 pages on one topic) → one `.md` file
+- Drawn diagrams → recreated as Mermaid (`stateDiagram-v2` for state machines)
+- Photographed slides → read and converted to prose, tables or callouts
+- Photographed code → link the repo; inline only the teaching excerpt
+- **One OneNote page = one module = one `Course/NN - <Title>.md`**
+
+### Source PDFs are not tracked
+
+A single handwritten page exports to ~85 MB. `*.pdf` is gitignored. Keep originals in
+OneDrive and commit only the converted markdown.
+
+> [!warning] The photographs contain personal contact details
+> The meeting overlay in many screen photos shows an email address and phone number.
+> The repo is currently private. Do not make it public, and do not share raw page
+> images, without checking this first.

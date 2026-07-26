@@ -1,40 +1,63 @@
 ---
-description: How to write notes in this Obsidian CS knowledge base vault
+description: Note extraction and writing procedure for this Obsidian CS knowledge base
 alwaysApply: true
 ---
 
-# Obsidian CS Knowledge Base — Note Conventions
+# Obsidian CS Knowledge Base — Agent Procedure
 
-This vault belongs to Akash Singh. **Read `CONVENTIONS.md` in the vault root before
-writing or converting any note.** It is the authoritative spec. This file is a summary.
+Vault owner: Akash Singh. **Read `CONVENTIONS.md` in the vault root before writing
+anything.** It is the authoritative spec; this is the operating summary.
 
-## The Two-Layer Model (most important convention)
+## Your Role
 
-Knowledge is stored in two linked layers:
+The user will say only *"convert module 12"* or *"add this to my notes"*. **You** find
+every piece of extractable knowledge and route it. **Never ask the user where something
+belongs** — the destinations are fully specified below.
 
-- **`Course/`** — source layer. One note per course module, in course order, named
-  `Module NN - <Topic>.md`. Preserves the course exactly as taught: outline, the
-  instructor's examples, live code, full problem walkthroughs, your questions.
-  Tag `source/<course-name>`.
-- **Concept folders** (`Principles/`, `Patterns/`, `Concepts/`, `Structures/`) —
-  distilled, source-independent knowledge absorbing the course *and* all other sources.
+## Two Layers
 
-**Anti-duplication rule:** if the same paragraph would appear in both, it belongs in the
-concept note; the module note links to it. Use transclusion (`![[Note#Heading]]`) to
-display content in two places without copying.
+- **Record** — `LLD/Course/NN - <Original OneNote Page Title>.md`. Written once.
+  One OneNote page = one module = one note. Holds narrative, the instructor's framing,
+  the full problem walkthrough, the user's questions.
+- **Accumulators** — everything else. Grown across the entire course.
 
-## Folder Roles
+## Extraction Checklist — run on every module
 
-- `Principles/` — rules used to *judge* a design (SOLID, coupling). Link down to patterns.
-- `Patterns/` — one per design pattern. Must include a **recognition signal** and a
-  **"confused with"** section. Link up to principles.
-- `Problems/` — **only** designs solved independently with full knowledge. Course problem
-  walkthroughs stay in their `Course/Module NN` note. Unsolved assignments go here with
-  `status/todo`. A pattern taught inside a course problem still flows up to `Patterns/`.
-- `Pattern Selection.md` — signal → pattern decision table plus commonly-confused pairs.
-  Deliberately duplicates pattern notes; value is being one scannable page.
+| Look for | Destination |
+|---|---|
+| Design pattern taught or applied | `LLD/Patterns/{Creational,Structural,Behavioural}/<Name>.md` |
+| Principle invoked or violated | `LLD/Principles/<Name>.md` (one note per principle) |
+| OOP mechanism, relationship type, UML notation | `LLD/Foundations/<Name>.md` |
+| Naive solution and why it failed | *Motivation* section of the pattern note |
+| Concurrency concern | `LLD/Concurrency/<Name>.md` |
+| Java or Spring Boot idiom | `LLD/Tech/Java/` or `LLD/Tech/Spring Boot/` |
+| Interview-relevant remark | `LLD/Interview Approach.md` |
 
-## Note Format
+Unmatched content stays in the module note. That residue is correct.
+
+## Merge Rules — critical
+
+Accumulators already hold knowledge from earlier modules. **Search the vault for an
+existing note before creating one.** Merge into it; never overwrite. Keep contradictions
+side by side under a `[!question]` callout. Append to `## Sources`, never replace.
+
+## Always
+
+- Cross-link both directions: module → accumulator, and accumulator `## Sources` → module
+- Update the `README.md` index of every folder touched
+- Report what was created, updated, and skipped
+
+## Source Material
+
+OneNote PDFs have **no text layer** — ink is rasterised. Render to images and read
+visually using `C:\Users\akash\onenote-tools\` (`onenote_to_png.py` at ~35 DPI for an
+overview, then `crop_region.py` at ~170 DPI per region; ~16–20 crops per page).
+`*.pdf` is gitignored — never commit source exports (~85 MB each).
+
+Code: link the course repo (`github.com/singhsanket143/Design-Patterns`). Inline only
+5–20 line teaching excerpts. Never transcribe boilerplate from photographs.
+
+## Format
 
 ```
 ---
@@ -45,22 +68,11 @@ created: YYYY-MM-DD
 > [!abstract] One paragraph: what this is and why it matters
 ```
 
-Callouts: `[!abstract]` open, `[!tip]` key insight, `[!warning]` gotcha, `[!danger]`
-failure mode, `[!info]` context, `[!example]` worked example.
+Callouts: `[!abstract]` open, `[!tip]` insight, `[!warning]` gotcha, `[!danger]` failure,
+`[!info]` context, `[!example]` worked example, `[!question]` unresolved.
 
-Diagrams: Mermaid first, `flowchart TD` default, `classDiagram` for LLD. Excalidraw only
-when structure genuinely cannot be text. Node labels 2–4 words.
+Diagrams: Mermaid first — `classDiagram` for LLD, `stateDiagram-v2` for state machines,
+`flowchart TD` default. Node labels 2–4 words. Excalidraw only when text genuinely fails.
 
-## Style
-
-- `==highlight==` only for the single most critical fact on a line
-- Complexity always in backticks: `O(log n)`
-- Link concepts inline: "uses [[Strategy]] to swap payment methods"
-- Every note ends with `## Related Notes` wikilinks
-- No filler. Every line earns its place.
-
-## Converting Handwritten Notes
-
-User provides a PDF exported from OneNote (pages are images of freehand writing).
-Read it, reconstruct as structured markdown per these conventions, recreate drawn
-diagrams as Mermaid. One OneNote section = one `.md` file.
+Style: `==highlight==` sparingly, complexity in backticks, link concepts inline,
+end with `## Related Notes`. No filler.
