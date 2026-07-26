@@ -23,7 +23,9 @@ Authoritative spec for this vault. Agent reads this before writing anything.
 
 ```
 LLD/
-  Course/           Record layer. One note per module: NN - <Title>.md
+  Course/           Record layer. One folder per module: NN - <Title>/
+                    Each folder contains ordered MD files: 01 - Problem Statement.md,
+                    02 - <Topic>.md, etc. A module can span as many files as needed.
   Patterns/
     Creational/
     Structural/
@@ -49,7 +51,7 @@ LLD/
 
 **Anti-duplication:** if the same paragraph would go in both, it belongs in the accumulator. The module note links to it instead.
 
-**Naming:** `NN - <Original OneNote Page Title>.md`. NN = module position. One OneNote page = one module = one note.
+**Naming:** Each module is a **folder** `NN - <Original OneNote Page Title>/`. NN = module position. One OneNote page = one module = one folder. Inside the folder, files are numbered `01 - <Topic>.md`, `02 - <Topic>.md`, etc. Split whenever a section grows large enough to deserve its own file — there is no fixed count. The first file is always `01 - Problem Statement.md` when the module starts with a problem.
 
 ---
 
@@ -59,7 +61,7 @@ The user says "convert module 12." The agent does everything below. Never ask th
 
 **Step 1** — Render the source (OneNote PDFs have no text layer, see [OneNote Conversion](#onenote-conversion)).
 
-**Step 2** — Write the record note at `Course/NN - <Title>.md`.
+**Step 2** — Write the record notes inside `Course/NN - <Title>/`. Start with `01 - Problem Statement.md` if the module opens with a problem, then create additional numbered files (`02 - ...`, `03 - ...`) as sections grow. A module folder can hold as many files as needed — split on natural topic boundaries, not on length alone.
 
 **Step 3** — Run the extraction checklist across the whole module:
 
@@ -150,33 +152,30 @@ One clear statement in plain language.
 
 ### Module (record) note
 
+Each file inside a module folder follows this template. The `# Title` should reflect
+the file topic, not just repeat the folder name (e.g., `# Problem Statement`, `# Naive Solution`, `# The Refactor`).
+
 ```
 ---
 tags: [source/lld-course, status/done]
 created: YYYY-MM-DD
 ---
-# NN - <Title>
+# <File Topic>
 
-> [!abstract] What this lecture covered.
+> [!abstract] What this file covers.
 
 **Course repo:** <link>
 
-## What Was Covered
-Outline in course order.
-
-## Naive Solution and Its Problems
-What failed and why. (Feeds Motivation in the pattern note.)
-
-## The Refactor
-How the design evolved. Key excerpts only.
-
-## Key Observations
-Instructor's analogies, Akash's questions, things that didn't click.
+## Content
+(narrative, walkthrough, observations — whatever belongs here)
 
 ## Extracted To
 - [[Pattern Name]] — why
 - [[Principle Name]] — why
 ```
+
+Cross-links from accumulators back to a module should point to the specific file:
+`[[03 - Simple Rule Engine/01 - Problem Statement]]`.
 
 ---
 

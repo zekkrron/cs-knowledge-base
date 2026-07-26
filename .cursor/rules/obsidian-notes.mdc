@@ -16,9 +16,11 @@ belongs** — the destinations are fully specified below.
 
 ## Two Layers
 
-- **Record** — `LLD/Course/NN - <Original OneNote Page Title>.md`. Written once.
-  One OneNote page = one module = one note. Holds narrative, the instructor's framing,
-  the full problem walkthrough, the user's questions.
+- **Record** — `LLD/Course/NN - <Original OneNote Page Title>/`. Written once.
+  One OneNote page = one module = one **folder**. The folder holds numbered MD files:
+  `01 - Problem Statement.md`, `02 - <Topic>.md`, etc. Split on natural topic boundaries —
+  no fixed file count. Holds narrative, instructor's framing, full problem walkthrough,
+  the user's questions.
 - **Accumulators** — everything else. Grown across the entire course.
 
 ## Extraction Checklist — run on every module
@@ -33,7 +35,7 @@ belongs** — the destinations are fully specified below.
 | Java or Spring Boot idiom | `LLD/Tech/Java/` or `LLD/Tech/Spring Boot/` |
 | Interview-relevant remark | `LLD/Interview Approach.md` |
 
-Unmatched content stays in the module note. That residue is correct.
+Unmatched content stays in the relevant module file. That residue is correct.
 
 ## Merge Rules — critical
 
@@ -43,7 +45,7 @@ side by side under a `[!question]` callout. Append to `## Sources`, never replac
 
 ## Always
 
-- Cross-link both directions: module → accumulator, and accumulator `## Sources` → module
+- Cross-link both directions: module file → accumulator, and accumulator `## Sources` → specific module file (e.g. `[[03 - Simple Rule Engine/02 - Naive Solution]]`)
 - Update the `README.md` index of every folder touched
 - Report what was created, updated, and skipped
 
