@@ -1,0 +1,12 @@
+# Obsidian per-machine UI state: open panes, cursor positions, recent files.
+# Rewritten constantly, so tracking it causes sync conflicts across devices.
+.obsidian/workspace.json
+.obsidian/workspace-mobile.json
+
+# Obsidian's soft-delete folder
+.trash/
+
+# OS cruft
+.DS_Store
+Thumbs.db
+desktop.ini
