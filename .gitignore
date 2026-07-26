@@ -3,6 +3,11 @@
 .obsidian/workspace.json
 .obsidian/workspace-mobile.json
 
+# Plugin code, not plugin output. Multi-megabyte bundles that would grow the
+# repo on every update; install plugins per device instead. Drawings and notes
+# created by plugins live elsewhere in the vault and are still tracked.
+.obsidian/plugins/
+
 # Obsidian's soft-delete folder
 .trash/
 
