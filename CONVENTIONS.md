@@ -9,15 +9,86 @@ It also serves as a reference when writing notes manually.
 
 ```
 cs-knowledge-base/
-  DSA/          One note per data structure or algorithm topic
-  LLD/          One note per design problem (e.g. Parking Lot, Snake Game)
-  HLD/          One subfolder per system (e.g. Netflix HLD/)
+  DSA/
+    Course/            Source layer — one note per course module, in course order
+    Patterns/          Sliding window, two pointers, BFS/DFS, DP, greedy...
+    Structures/        Arrays, trees, heaps, tries, graphs...
+    Problems/          Problems I solved myself
+    README.md
+  LLD/
+    Course/            Source layer — one note per course module, in course order
+    Principles/        SOLID, coupling/cohesion, composition over inheritance
+    Patterns/          One note per design pattern
+    Problems/          MY OWN solved designs (see rule below)
+    Concurrency/       Threading, locks, synchronisation
+    Pattern Selection.md
+    README.md
+  HLD/
+    Course/            Source layer — one note per course module, in course order
+    Concepts/          Caching, sharding, consistent hashing, CAP...
+    <System Name>/     One subfolder per system, e.g. Netflix HLD/
+    README.md
   CONVENTIONS.md
   README.md
 ```
 
-Each folder has a `README.md` that acts as an index, linking to all notes inside it.
-Update it when adding a new note.
+Each folder has a `README.md` that acts as an index, linking to every note inside it.
+Update it when adding a note.
+
+---
+
+## The Two-Layer Model
+
+This vault stores knowledge in **two layers that link to each other**. Understanding
+this is the single most important convention in this file.
+
+### Layer 1 — Source (`Course/`)
+
+Preserves each course exactly as taught. One note per module, named
+`Module NN - <Topic>.md`, kept in course order. Nothing from the course is lost here.
+
+A module note owns everything **tied to that teaching moment**:
+
+- Outline of what was covered, in the order the course covered it
+- The instructor's specific examples, analogies and framing
+- Code written during the lecture
+- Full walkthrough of any problem the course solved (see Problems rule below)
+- Your own questions and confusions from that lecture
+- Links out to every concept note this module feeds
+
+Module notes may be short. An outline plus links is often enough.
+Tag them `source/<course-name>` so course material can always be filtered out.
+
+### Layer 2 — Concept (`Principles/`, `Patterns/`, `Concepts/`, `Structures/`)
+
+Distilled, source-independent knowledge. One note per concept. These absorb input
+from the course **and every other source** — books, blogs, interviews, videos.
+
+A concept note owns the **generalised** knowledge: intent, recognition signal,
+trade-offs, your synthesis. It cites its sources but is not bound to any of them.
+
+### The Anti-Duplication Rule
+
+> [!important] If you would write the same paragraph in both layers, it belongs in
+> the **concept** note. The module note links to it instead.
+
+Use **transclusion** to show content in two places without copying it:
+
+```markdown
+![[Module 07 - Observer via Notification System#Stock Ticker Example]]
+```
+
+This renders that section of the module note inside the concept note, live.
+One source of truth, visible in both places.
+
+### Linking Discipline
+
+- In a module note: "Taught [[Observer]] via a stock-price notifier. Also introduced [[Loose Coupling]]."
+- In a concept note, under `## Sources`: "Introduced in [[Module 07 - Observer via Notification System]]; refined with Head First Design Patterns."
+
+Both questions then have an answer. *"What did module 7 cover?"* → the module note.
+*"Everything I know about Observer?"* → the concept note, with backlinks showing every
+module and problem that touched it.
 
 ---
 
@@ -143,15 +214,90 @@ Mandatory sections:
 
 ---
 
-## LLD Note Specifics
+## LLD Folder Roles
 
-Every LLD note follows this structure:
+### `Course/`
 
-1. **Requirements** — what the system must do
-2. **Entities / Classes** — the nouns; use a `classDiagram` Mermaid block
-3. **Key Methods** — what each class is responsible for
-4. **Design Patterns used** — Observer, Strategy, Factory, etc. with a [[wikilink]] to the pattern
-5. **Edge Cases** — what breaks the naive implementation
+Source layer. See [The Two-Layer Model](#the-two-layer-model).
+One note per module. Course problem walkthroughs live here in full.
+
+### `Principles/`
+
+The rules used to **judge** a design: SOLID, coupling and cohesion, composition over
+inheritance, DRY, KISS, YAGNI, Law of Demeter, separation of concerns.
+
+Principles are distinct from patterns because they serve a different purpose.
+Patterns are what you **build with**; principles are what you **justify with**.
+In an interview: *"I'm splitting this class because of SRP"* is a principle.
+*"I'll use Strategy here"* is a pattern.
+
+Most patterns are a principle made concrete — Strategy is essentially the
+Open/Closed Principle in executable form. So:
+
+- A principle note links **down** to the patterns that embody it
+- A pattern note cites **up** to the principles it serves
+
+### `Patterns/`
+
+One note per design pattern. Structure:
+
+1. **Intent** — one sentence, what it solves
+2. **Recognition signal** — the cue in a problem that says "use this"
+3. **Structure** — Mermaid `classDiagram`
+4. **Code** — clean implementation
+5. **Trade-offs** — table of pros/cons
+6. **Confused with** — the pattern it's most often mistaken for, and how to tell them apart
+7. **Principles served** — `[[wikilinks]]` upward
+8. **Sources** — where learned
+
+### `Problems/`
+
+> [!warning] Reserved for problems solved independently
+> This folder holds **only** designs worked out from scratch with full knowledge.
+> Course problem walkthroughs do **not** go here — they stay in their `Course/Module NN` note.
+> The course's treatment is not authoritative enough to occupy this space.
+
+Unsolved course assignments **do** belong here: create the note with the question and
+`status/todo` in frontmatter. Filtering that tag gives the work queue. Fill it in on solving.
+
+Even when a problem stays in the course layer, any **pattern** it teaches still flows
+up into `Patterns/`. Only the problem design itself stays in the module note.
+
+Structure of a solved problem note:
+
+1. **Problem statement** and clarifying questions to ask
+2. **Requirements** — functional and non-functional
+3. **Entities / Classes** — Mermaid `classDiagram`
+4. **Key methods** — responsibility per class
+5. **Patterns used** — `[[wikilinks]]`, one line each on *why*
+6. **Edge cases** — what breaks the naive implementation
+7. **Extensions** — follow-ups an interviewer would add
+
+### `Concurrency/`
+
+Threading, locks, synchronisation primitives, race conditions, deadlock.
+Concept layer — same rules as `Principles/`.
+
+### `Pattern Selection.md`
+
+A **decision table**, not knowledge storage. Optimised for one moment: a problem
+statement is in front of you and you need the right pattern.
+
+Maps *signal in the problem* → *pattern*:
+
+| Signal | Pattern |
+|---|---|
+| Interchangeable algorithms swapped at runtime | [[Strategy]] |
+| One-to-many notification on state change | [[Observer]] |
+| Object creation logic varies by input | [[Factory]] |
+| Behaviour changes with internal state | [[State]] |
+| Add responsibilities without subclassing | [[Decorator]] |
+
+Also holds **commonly confused pairs**: Strategy vs State, Factory vs Abstract Factory,
+Decorator vs Proxy, Adapter vs Facade.
+
+It deliberately duplicates the pattern notes. Its value is being one scannable page.
+Write it last, grow it as patterns are learned, read it before an interview.
 
 ---
 

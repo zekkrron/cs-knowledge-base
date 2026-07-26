@@ -5,50 +5,62 @@ alwaysApply: true
 
 # Obsidian CS Knowledge Base — Note Conventions
 
-This vault belongs to Akash Singh. Full conventions are in `CONVENTIONS.md`.
-Always read that file first when writing or converting notes.
+This vault belongs to Akash Singh. **Read `CONVENTIONS.md` in the vault root before
+writing or converting any note.** It is the authoritative spec. This file is a summary.
 
-## Quick Reference
+## The Two-Layer Model (most important convention)
 
-**Folder rules:** DSA = one note per topic. LLD = one note per design problem.
-HLD = one subfolder per system with its own `.md` inside.
+Knowledge is stored in two linked layers:
 
-**Every note starts with:**
+- **`Course/`** — source layer. One note per course module, in course order, named
+  `Module NN - <Topic>.md`. Preserves the course exactly as taught: outline, the
+  instructor's examples, live code, full problem walkthroughs, your questions.
+  Tag `source/<course-name>`.
+- **Concept folders** (`Principles/`, `Patterns/`, `Concepts/`, `Structures/`) —
+  distilled, source-independent knowledge absorbing the course *and* all other sources.
+
+**Anti-duplication rule:** if the same paragraph would appear in both, it belongs in the
+concept note; the module note links to it. Use transclusion (`![[Note#Heading]]`) to
+display content in two places without copying.
+
+## Folder Roles
+
+- `Principles/` — rules used to *judge* a design (SOLID, coupling). Link down to patterns.
+- `Patterns/` — one per design pattern. Must include a **recognition signal** and a
+  **"confused with"** section. Link up to principles.
+- `Problems/` — **only** designs solved independently with full knowledge. Course problem
+  walkthroughs stay in their `Course/Module NN` note. Unsolved assignments go here with
+  `status/todo`. A pattern taught inside a course problem still flows up to `Patterns/`.
+- `Pattern Selection.md` — signal → pattern decision table plus commonly-confused pairs.
+  Deliberately duplicates pattern notes; value is being one scannable page.
+
+## Note Format
+
 ```
 ---
-tags: [dsa/topic, status/draft]
+tags: [lld/patterns, status/draft]
 created: YYYY-MM-DD
 ---
 # Title
 > [!abstract] One paragraph: what this is and why it matters
 ```
 
-**Callouts:** `[!abstract]` open, `[!tip]` key insight, `[!warning]` gotcha,
-`[!danger]` failure mode, `[!info]` context, `[!example]` worked example.
+Callouts: `[!abstract]` open, `[!tip]` key insight, `[!warning]` gotcha, `[!danger]`
+failure mode, `[!info]` context, `[!example]` worked example.
 
-**Diagrams:** Always Mermaid first (`flowchart TD` default). Excalidraw only when
-structure genuinely cannot be expressed as text.
+Diagrams: Mermaid first, `flowchart TD` default, `classDiagram` for LLD. Excalidraw only
+when structure genuinely cannot be text. Node labels 2–4 words.
 
-**DSA notes must have:** pattern name, when-to-use signal, plain-English idea,
-code block, complexity table (Time + Space), key variants, classic problems.
+## Style
 
-**HLD notes must have:** requirements (functional + non-functional), scale estimates
-table, architecture Mermaid diagram, component deep dives, database choices table,
-failure modes table, key design decisions.
-
-**LLD notes must have:** requirements, class diagram (Mermaid `classDiagram`),
-key methods, design patterns used, edge cases.
+- `==highlight==` only for the single most critical fact on a line
+- Complexity always in backticks: `O(log n)`
+- Link concepts inline: "uses [[Strategy]] to swap payment methods"
+- Every note ends with `## Related Notes` wikilinks
+- No filler. Every line earns its place.
 
 ## Converting Handwritten Notes
 
-User will provide a PDF exported from OneNote (pages are images of freehand writing).
-Reconstruct as a properly structured `.md` file following these conventions.
-Recreate drawn diagrams as Mermaid. One OneNote section = one `.md` file.
-
-## Style Rules
-
-- `==highlight==` only for the single most critical fact on a line
-- Link related concepts: `[[Consistent Hashing]]`, `[[CAP Theorem]]`
-- Keep Mermaid node labels short (2–4 words, `\n` for breaks)
-- Complexity values always in backticks: `O(log n)`
-- No filler sentences. Every line earns its place.
+User provides a PDF exported from OneNote (pages are images of freehand writing).
+Read it, reconstruct as structured markdown per these conventions, recreate drawn
+diagrams as Mermaid. One OneNote section = one `.md` file.
