@@ -1,0 +1,22 @@
+/* Obsidian clips overflowing content at the page edge when exporting to PDF
+   instead of scaling it down. Force wide elements to fit the printable width. */
+
+@media print {
+	.mermaid,
+	.mermaid svg {
+		max-width: 100% !important;
+		height: auto !important;
+	}
+
+	table {
+		max-width: 100% !important;
+		table-layout: fixed;
+		word-wrap: break-word;
+	}
+
+	pre,
+	code {
+		white-space: pre-wrap !important;
+		word-break: break-word;
+	}
+}

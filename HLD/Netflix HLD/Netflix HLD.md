@@ -43,40 +43,34 @@
 ## High Level Architecture
 
 ```mermaid
-graph TD
-    Client["📱 Client\n(Web / iOS / Android / TV)"]
-    CDN["🌐 CDN\n(Open Connect)"]
-    AG["API Gateway\n(Load Balancer + Auth)"]
+graph LR
+    Client["📱 Client\n(Web / Mobile / TV)"]
+    CDN["🌐 CDN\nOpen Connect"]
+    AG["API Gateway\nLB + Auth"]
+    STORE[("Encoded Chunks\nS3")]
 
     subgraph Microservices
-        US["User Service"]
-        VS["Video Service"]
-        RS["Recommendation\nService"]
-        SS["Search Service"]
-        BS["Billing Service"]
+        US["User"]
+        VS["Video"]
+        RS["Recommendation"]
+        SS["Search"]
+        BS["Billing"]
     end
 
     subgraph Databases
-        UDB[("User DB\nCassandra")]
-        VDB[("Video Metadata\nMySQL")]
-        RDB[("Recommendations\nDynamoDB")]
-        Cache[("Cache\nRedis")]
+        UDB[("Cassandra")]
+        VDB[("MySQL")]
+        RDB[("DynamoDB")]
+        Cache[("Redis")]
     end
 
-    subgraph Video Pipeline
-        S3["Raw Video\nS3"]
-        ENC["Encoding Farm\n(AWS Elemental)"]
-        STORE["Encoded Chunks\nS3"]
-    end
-
-    Client -->|"Stream (video bytes)"| CDN
-    CDN -->|"Cache miss → fetch"| STORE
-    Client -->|"API calls"| AG
+    Client -->|stream| CDN
+    CDN -->|cache miss| STORE
+    Client -->|API| AG
     AG --> US & VS & RS & SS & BS
     US --> UDB & Cache
     VS --> VDB & Cache
     RS --> RDB
-    S3 --> ENC --> STORE
 ```
 
 ---
@@ -128,15 +122,15 @@ sequenceDiagram
 6. Metadata (chunk URLs, duration, available qualities) written to **Video Metadata DB**
 
 ```mermaid
-flowchart LR
+flowchart TD
     Upload["Raw Upload\nS3"] --> SQS["SQS Queue"]
     SQS --> Coord["Encoding\nCoordinator"]
-    Coord --> W1["Worker\n4K H.265"]
-    Coord --> W2["Worker\n1080p H.264"]
-    Coord --> W3["Worker\n720p H.264"]
-    Coord --> W4["Worker\n480p AV1"]
+    Coord --> W1["4K\nH.265"]
+    Coord --> W2["1080p\nH.264"]
+    Coord --> W3["720p\nH.264"]
+    Coord --> W4["480p\nAV1"]
     W1 & W2 & W3 & W4 --> Encoded["Encoded Chunks\nS3"]
-    Encoded --> Meta["Video Metadata DB\n(MySQL)"]
+    Encoded --> Meta["Video Metadata\nMySQL"]
 ```
 
 ---
@@ -177,10 +171,10 @@ The client does not download the whole video. It uses **DASH** or **HLS**:
 - Real-time layer: **Kafka** streams click events → lightweight online model adjusts ranking
 
 ```mermaid
-flowchart LR
-    Events["User Events\n(clicks, watches)"] --> Kafka
-    Kafka --> Spark["Spark\nBatch Training\n(nightly)"]
-    Kafka --> Online["Online Model\n(real-time adjustment)"]
+flowchart TD
+    Events["User Events\nclicks, watches"] --> Kafka
+    Kafka --> Spark["Spark\nBatch Training\nnightly"]
+    Kafka --> Online["Online Model\nreal-time"]
     Spark --> DDB[("DynamoDB\npre-computed recs")]
     Online --> DDB
     DDB --> API["Recommendation\nAPI"]
