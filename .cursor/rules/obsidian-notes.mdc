@@ -57,6 +57,15 @@ overview, then `crop_region.py` at ~170 DPI per region; ~16–20 crops per page)
 Code: link the course repo (`github.com/singhsanket143/Design-Patterns`). Inline only
 5–20 line teaching excerpts. Never transcribe boilerplate from photographs.
 
+## Voice
+
+Write in Akash's natural language — how he'd explain it to himself, not a textbook.
+The test: would the sentence connect in his head immediately?
+Bad: "Interchangeable algorithms swapped at runtime"
+Good: "You have a finite family of algorithms that all solve the same problem and need
+to swap between them at runtime based on conditions — without the caller knowing"
+Use analogies where they land better than precision.
+
 ## Format
 
 ```
