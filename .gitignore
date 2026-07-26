@@ -8,6 +8,11 @@
 # created by plugins live elsewhere in the vault and are still tracked.
 .obsidian/plugins/
 
+# Source exports from OneNote. A single handwritten page renders to ~85 MB because
+# the ink and photos are rasterised. These are conversion input, not knowledge:
+# convert to markdown, keep the original in OneDrive. Force one in with `git add -f`.
+*.pdf
+
 # Obsidian's soft-delete folder
 .trash/
 
