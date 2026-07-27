@@ -70,6 +70,33 @@ classDiagram
 >
 > The problem isn't the `Rule` interface. The problem is treating `Expense` as a type hierarchy when it's really just **data** — a map of string keys and values. Making it a class hierarchy adds complexity with no real benefit.
 
+> [!danger] Segregating on expense type doesn't map to reality
+> Think from a **database perspective** — you're never going to have a separate table for `AirfareExpense`, another for `RestaurantExpense`, another for `HotelExpense`. They all live in one `expenses` table with an `expense_type` column. If the storage model doesn't split them, your domain model has no business splitting them either. The class hierarchy is modelling a distinction that doesn't exist at the persistence layer.
+
+> [!danger] "Can segregate" ≠ "should segregate"
+> Just because you *can* pull out a concrete class per expense type doesn't mean it's adding value. Ask: what behaviour does `AirfareExpense` have that `HotelExpense` doesn't? None — they're both a bag of key-value pairs. The rules are what differ, not the data shape. If the subclass adds zero unique behaviour, it's ceremony with no payoff. Segregation needs to earn its keep.
+
+---
+
+## Second Student Suggestion — Rules Categorized by Expense Type
+
+Another instinct students had: okay, keep the `Rule` interface (or abstract class), but make each **child class** represent an expense type's ruleset — `AirfareRules`, `RestaurantRules`, `EntertainmentRules`. Each child would then have methods like `maxAmount()`, `isAllowed()`, etc.
+
+> [!danger] Same mistake wearing different clothes
+> This is the expense-type segregation problem again, just moved from the data side to the rule side. You're still splitting your hierarchy on *what type of expense this targets* rather than *what the rule actually does*.
+>
+> The teacher's killer counterexample: say two out of three expense types have a max-amount cap, but the third doesn't. Now the third rule class is **forced** to override `maxAmount()` with a no-op or a dummy value. You're writing empty implementations just to satisfy a contract that shouldn't apply to you. That's the textbook signal that the abstraction axis is wrong.
+
+> [!tip] The correct axis — categorize by what the rule *does*
+> The real insight: rules should be classified by their **behaviour**, not by the expense type they target.
+>
+> - `MaxAmountRule` — caps any expense (or trip total) at a configured threshold
+> - `DisallowRule` — blocks a specific expense type entirely
+>
+> Each rule implementation is self-contained: it knows what condition it checks and what parameters it needs (the threshold, the blocked type, etc.). You configure *which* expense types or contexts it applies to via constructor arguments or a predicate — not by creating a new subclass per expense type.
+>
+> This way, adding a new expense type doesn't require a new rule class. And adding a new *kind* of rule doesn't force empty overrides anywhere. The two axes (rule behaviour × expense type) stay orthogonal.
+
 ---
 
 ## Extracted To
