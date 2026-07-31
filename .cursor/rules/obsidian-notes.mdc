@@ -16,12 +16,19 @@ belongs** — the destinations are fully specified below.
 
 ## Two Layers
 
+### LLD
 - **Record** — `LLD/Course/NN - <Original OneNote Page Title>/`. Written once.
   One OneNote page = one module = one **folder**. The folder holds numbered MD files:
   `01 - Problem Statement.md`, `02 - <Topic>.md`, etc. Split on natural topic boundaries —
   no fixed file count. Holds narrative, instructor's framing, full problem walkthrough,
   the user's questions.
 - **Accumulators** — everything else. Grown across the entire course.
+
+### DSA
+- **Topics** — `DSA/Topics/<Topic Name>/`. One folder per topic.
+  Each folder holds numbered MD files: `01 - <Topic>.md`, `02 - <Topic>.md`, etc.
+  One special folder per topic: `Indexing/` — contains MD files that map every question
+  from the course to the thought process or pattern it teaches.
 
 ## Extraction Checklist — run on every module
 

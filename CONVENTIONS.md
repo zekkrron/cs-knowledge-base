@@ -44,6 +44,19 @@ LLD/
 
 ---
 
+## DSA Folder Structure
+
+```
+DSA/
+  Topics/           One folder per topic (e.g. Arrays/, Trees/, Graphs/)
+                    Each folder contains numbered MD files: 01 - <Topic>.md, 02 - <Topic>.md, etc.
+                    One special folder per topic: Indexing/ — contains MD files that map
+                    every question from the course to the thought process or pattern it teaches.
+  README.md
+```
+
+---
+
 ## Two Layers
 
 - **Record** (`Course/`) — the course as taught. Written once. Owns: outline, instructor's framing, full problem walkthrough, Akash's questions. Never revisited after extraction.
