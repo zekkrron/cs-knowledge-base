@@ -31,3 +31,31 @@ Given a string s of length n (≤ 100), find the minimum total cost to collect k
 - **The counting function: `rec(i, l, c)`.** Reads as "how many distinct subsequences of length `l`, ending with character `c`, can be formed using the first `i` characters?" You loop `c` over all 26 characters, and for each, find the rightmost occurrence in `s[0..i]`, anchor there, then call `rec(anchor - 1, l - 1, *)` summing over all characters for the prefix. This recursion naturally enforces the anchoring rule at every step.
 - **3D DP state: `dp[i][l][c]`.** Memoises `rec(i, l, c)`. Adding the final-character dimension is what gives you control over the anchoring rule and prevents the blind overcounting that a 2D DP would suffer.
 - **Cap values at k to avoid overflow.** Subsequence counts can exceed 2^100 — way past 64-bit limits. But since you only need k (≤ 10^12) of them, cap every DP value at k immediately after addition. You only care whether the count is ≥ k, not the exact astronomical number. Skip this and you overflow into garbage.
+
+## 4. Mountain Arrays
+
+Given N (≤ 1000) distinct integers and a max adjacent gap K, count the number of ways to reorder them into a valid mountain sequence (strictly increasing then strictly decreasing, peak cannot be at endpoints) where consecutive elements differ by at most K. Answer mod 10^9+7.
+
+- **Sort descending, build top-down.** Don't try to guess the peak. Sort the array largest-first — the biggest element is always the peak. Every subsequent element extends either the left or right slope downward. The problem becomes: for each element, choose left or right.
+- **State compression to 2D.** Naively tracking both slope bottoms gives O(N³). But since you process in descending order, the last element you placed is always the bottom of the "current" slope. You only need to remember the bottom of the *other* slope. State: `dp[i][j]` — processing element i, opposite slope ends at element j.
+- **Two transitions per element.** For element A[i]: (1) place on same side as previous — valid if `A[i-1] - A[i] ≤ K`, transition to `dp[i+1][j]`. (2) swap sides — valid if `A[j] - A[i] ≤ K`, transition to `dp[i+1][i-1]` (previous becomes the new opposite).
+- **Force asymmetry, then multiply by 2.** A mountain has mirror symmetry. Force A[1] (second largest) onto the left slope, start DP from A[2] with `f(2, 0)`. Multiply final answer by 2 to account for the mirror.
+- **Base case: reject single-slope paths.** If at i == N and j == 0, everything went on one side — that's a ramp, not a mountain. Return 0. Otherwise return 1.
+
+## 5. The Witcher
+
+Given N (≤ 10^5) rooms with A[i] monsters each (A[i] ≤ 10^7), find the longest subsequence of rooms you can clear such that any two consecutively cleared rooms share a prime factor (gcd > 1).
+
+- **DP on prime factors, not indices.** Naive LIS-style `dp[i]` checks all previous indices — O(N²) TLE. Since the link condition is a shared prime, flip the state: `dp[p]` = longest chain ending with any multiple of prime p. This makes transitions O(number of primes of A[i]) instead of O(N).
+- **SPF sieve for fast factorisation.** Trial division per element is O(√A[i]) ≈ 3×10³ — borderline. Precompute a Smallest Prime Factor array up to 10^7 using a sieve. Then factorise any number in O(log A[i]) by repeatedly dividing by its SPF.
+- **Update logic.** For current element A[i]: extract its distinct primes, query `max(dp[p])` across those primes to get the best chain length T, then set `dp[p] = T + 1` for all its primes. This extends the longest reachable chain through any shared factor.
+- **Deduplicate primes per element.** A number like 12 = 2×2×3 would query/update dp[2] twice if you're not careful, inflating the chain. Extract primes into a set (or skip duplicates during SPF division) so each prime is processed exactly once per element.
+
+## 6. Students Happiness
+
+Assign up to N (≤ 10) ranks to M (≤ 50) students to maximise total happiness. Each rank goes to at most one student. Students without a rank get 0 happiness.
+
+- **Bitmask the smaller set, iterate on the larger.** Two sets to match, one is tiny (N ≤ 10). That's the bitmask trigger. Encode which ranks are taken as a binary integer (10 bits = 1024 states). Iterate over students (the bigger set, up to 50) one by one — for each student you decide: skip, or assign an available rank.
+- **State: `dp[pos][mask]`.** `pos` = current student index, `mask` = which ranks are already claimed. For each student, either skip (`dp[pos+1][mask]`) or try every rank where bit is 0: `dp[pos+1][mask | (1 << i)]` + happiness[pos][i]. Take the max.
+- **Bitwise checks.** Rank i available? `(mask & (1 << i)) == 0`. Claim it? `mask | (1 << i)`. Simple and O(1) per rank.
+- **Complexity is tiny.** O(M · 2^N · N) = 50 × 1024 × 10 ≈ 5×10^5. Passes comfortably even with T = 200.
