@@ -52,7 +52,41 @@ DSA/
                     Each folder contains numbered MD files: 01 - <Topic>.md, 02 - <Topic>.md, etc.
                     One special folder per topic: Indexing/ — contains MD files that map
                     every question from the course to the thought process or pattern it teaches.
+  Ratta Sheet/      Standard/non-trivial questions to be memorised, not derived in an interview.
+                    One folder per section (e.g. Stack and Queue/, Arrays/, Graph/).
+                    Each folder holds numbered MD files: <Section> 1.md, <Section> 2.md, etc.
+                    Split into a new numbered file when one grows too long — no fixed count.
   README.md
+```
+
+**Ratta Sheet source of truth:** lives in a Google Doc (needed during office hours where the
+vault isn't available). Content pasted into `temp.md` for conversion must be transcribed
+**exactly as given** — no rewording, paraphrasing, or restructuring of the explanation text.
+Only the heading structure below is imposed on top of it.
+
+**Ratta Sheet question format:**
+
+```
+## <Exact Question Name as Pasted> (<Source Tag>)
+
+**Problem Statement:** ... (if given)
+
+### Brute
+Intuition: ...
+Complexity: ...
+(explanation and code included only if explicitly given/asked for)
+
+### Better
+Intuition: ...
+Complexity: ...
+(explanation and code included only if explicitly given/asked for)
+
+### Optimal
+Intuition: ...
+Explanation: ...
+Code: ...
+Complexity: ...
+(explanation and code always included)
 ```
 
 ---

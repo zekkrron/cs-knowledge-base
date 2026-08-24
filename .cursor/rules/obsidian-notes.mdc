@@ -29,6 +29,14 @@ belongs** — the destinations are fully specified below.
   Each folder holds numbered MD files: `01 - <Topic>.md`, `02 - <Topic>.md`, etc.
   One special folder per topic: `Indexing/` — contains MD files that map every question
   from the course to the thought process or pattern it teaches.
+- **Ratta Sheet** — `DSA/Ratta Sheet/<Section Name>/`. Standard/non-trivial interview
+  questions to memorise, not derive live. Source of truth is a Google Doc (needed during
+  office hours). Content pasted into `temp.md` must be transcribed **exactly as given** —
+  no rewording. Each folder holds numbered MD files: `<Section> 1.md`, `<Section> 2.md`, etc.
+  Question format per entry: exact question name + source tag as heading, optional problem
+  statement, then `### Brute`, `### Better`, `### Optimal` sections (Intuition/Complexity for
+  Brute & Better; Intuition/Explanation/Code/Complexity always for Optimal). Code/explanation
+  for Brute and Better only if explicitly given.
 
 ## Extraction Checklist — run on every module
 
