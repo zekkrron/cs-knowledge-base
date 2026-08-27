@@ -154,7 +154,7 @@ D13 Miscellaneous                         4
 
 | # | Problem | Source | The new idea |
 |---|---|---|---|
-| 45 | Partition to K Equal Sum Subsets | LC **698** | **A subset as an integer.** The mask *is* the state; iterating submasks is the new primitive. |
+| 45 | Partition to K Equal Sum Subsets | LC **698** | **A subset as an integer.** The mask *is* the state; iterating submasks is the new primitive ([[Bit Manipulation]] #14). |
 | 46 | Find the Shortest Superstring | LC **943** | **Bitmask plus a "current item" for ordering** — the TSP shape — and reconstructing the permutation from parent pointers. |
 | 47 | Maximum Students Taking Exam | LC **1349** | **Profile DP.** The mask describes an entire row's configuration and transitions run between adjacent rows. |
 | 48 | Number of Ways to Wear Different Hats | LC **1434** | **Iterate the smaller axis.** Masking over 40 hats is impossible; masking over 10 people is trivial. Choosing which dimension becomes the mask is the whole problem. |
@@ -210,7 +210,7 @@ Developed more fully in the named topic, but you will meet them here and they ar
 | ↗ | Longest Increasing Path in a Matrix | LC **329** | **Memoisation is only legal once you have proved acyclicity.** Strictly increasing values are what make the grid a DAG. The most important reminder in this file about *when DP is allowed at all*. [[Graphs]] #12. |
 | ↗ | Shortest Path Visiting All Nodes | LC **847** | Bitmask state driven by a BFS frontier rather than a recurrence — the same `(node, mask)` state as #46, reached by a different machine. Worth doing right after D9. [[Graphs]] #8. |
 | ↗ | Palindromic Substrings | LC **647** | The `dp[i][j]` "is this range a palindrome" table, which several interviewers ask for by name even though expand-around-centre is better. Strings basis. |
-| ↗ | Word Break II | LC **140** | Where DP stops and search begins: counting or testing is DP (#7), but *enumerating every solution* is backtracking with memoised feasibility as a pruning aid. Backtracking basis. |
+| ↗ | Word Break II | LC **140** | Where DP stops and search begins: counting or testing is DP (#7), but *enumerating every solution* is backtracking with memoised feasibility as a pruning aid. [[Backtracking]] #16, where the memoised value is the whole set of completions rather than a boolean; the general test is [[Backtracking]] #14. |
 
 ---
 
@@ -295,3 +295,6 @@ Three axis rows were added: *what the state is keyed by*, *where the DP order co
 - [[Binary Trees]]
 - [[N-ary Trees]]
 - [[Tries]]
+- [[Backtracking]]
+- [[Math & Number Theory]]
+- [[Bit Manipulation]]

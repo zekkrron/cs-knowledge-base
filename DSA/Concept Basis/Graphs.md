@@ -132,7 +132,7 @@ Developed more fully in the named topic, but you will meet them here and they ar
 
 | ↗ | Problem | Source | The idea, and where it goes deeper |
 |---|---|---|---|
-| ↗ | Word Search | LC **79** | **DFS with undo.** Mark a cell used, recurse, then *unmark it on the way out* — the first time a traversal's visited set is temporary rather than permanent. Every entry in G1 relies on visited being monotone; this one deliberately breaks that. Backtracking basis. |
+| ↗ | Word Search | LC **79** | **DFS with undo.** Mark a cell used, recurse, then *unmark it on the way out* — the first time a traversal's visited set is temporary rather than permanent. Every entry in G1 relies on visited being monotone; this one deliberately breaks that. [[Backtracking]] #8. |
 | ↗ | Lowest Common Ancestor of a Binary Tree | LC **236** | The recursive "found in both subtrees means I am the answer" argument, and the binary-lifting alternative that reuses #29's table. [[Binary Trees]] #7. |
 | ↗ | Maximum Students Taking Exam | LC **1349** | Profile DP over a grid, which reads as a graph problem and is not one. Useful here precisely as a negative example — recognising when *not* to reach for a traversal. [[Dynamic Programming]] #47. |
 | ↗ | Number of Islands II | LC **305** | #14 run incrementally as land is added, decrementing the component count on each successful union. Union-Find basis. |
@@ -227,3 +227,5 @@ One collision, checked and cleared: "count the paths between two nodes" reaches 
 - [[Binary Search]]
 - [[Binary Trees]]
 - [[N-ary Trees]]
+- [[Backtracking]]
+- [[Bit Manipulation]]

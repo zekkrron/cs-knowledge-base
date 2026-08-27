@@ -146,6 +146,10 @@ Developed more fully in the named topic, but you will meet them while studying h
 |---|---|---|---|
 | K Closest Points to Origin | LC **973** | #3 | Size-`k` heap with distance as the comparator. |
 | Last Stone Weight | LC **1046** | #3 | Max-heap simulation, two pops and a push. |
+| Ugly Number II | LC **264** | #7 | A `k`-way merge of the streams `2x`, `3x`, `5x` — a heap with a dedup set, or three pointers, which is strictly better here. |
+| Exam Room | LC **855** | #12 | A heap of *gaps* with lazy deletion, because a seat change invalidates only its neighbouring gaps. [[Sorted Containers & Order Statistics]] #6. |
+| Sequentially Ordinal Rank Tracker | LC **2102** | #11 | Two heaps exchanging one element per query, because the requested rank only ever advances by one. [[Sorted Containers & Order Statistics]] #4. |
+| 0-1 BFS | LC **2290** | — | **The negative result worth knowing:** when edge weights are only 0 or 1 a deque replaces the heap entirely, giving `O(V+E)` instead of `O(E log V)`. A heap is not free, and this is where you decline it. [[Graphs]] #19. |
 | Kth Largest Sum in a Binary Tree | LC **2583** | #3 | BFS to collect level sums, then #3 verbatim. |
 | Take Gifts From the Richest Pile | LC **2558** | #3 | Pop, transform, push back. |
 | Seat Reservation Manager | LC **1845** | #3 | Min-heap of free indices behind a class. |
@@ -217,3 +221,8 @@ Also confirmed by the sweep: the missing sorted-container topic is real. **"I ke
 - [[Binary Trees]]
 - [[Binary Search Trees]]
 - [[N-ary Trees]]
+- [[Sliding Window]]
+- [[Two Pointers]]
+- [[Sorted Containers & Order Statistics]]
+- [[Linked List]]
+- [[Sorting & Custom Comparators]]

@@ -108,7 +108,7 @@ Here the BST is not the problem — it is the **tool**. You build it yourself be
 |---|---|---|---|
 | ↗ | Count of Smaller Numbers After Self | LC **315** | Insert right-to-left into a size-augmented BST (#7 plus #12) and each insertion reports how many smaller keys preceded it. The canonical demonstration that a BST can be *built as a counting tool*; a value-indexed BIT is the sturdier implementation. [[Segment Trees]] #3. |
 | ↗ | Unique Binary Search Trees | LC **96** | Counting distinct BST *shapes* on `n` keys is Catalan DP — fix a root, multiply the subtree counts. Not a tree traversal at all, which is why it feels out of place until you notice it never touches a tree. [[Dynamic Programming]] #64. |
-| ↗ | Generate All BSTs | LC **95** | Enumerating every shape rather than counting them is search, not DP, and the recursion returns *lists of subtrees* to be combined pairwise. Backtracking basis. |
+| ↗ | Generate All BSTs | LC **95** | Enumerating every shape rather than counting them is search, not DP, and the recursion returns *lists of subtrees* to be combined pairwise. [[Backtracking]] #16. |
 
 ---
 
@@ -128,7 +128,7 @@ Here the BST is not the problem — it is the **tool**. You build it yourself be
 | Search in a BST (iterative) | LC **700** | #3 | The loop form of the same descent. |
 | Insert · Delete in a BST (recursive vs iterative) | LC **701** · **450** | #7 · #8 | Implementation shape, not idea. |
 | Balance a Binary Search Tree | LC **1382** | #10 | Inorder to an array, then #10. |
-| Convert Sorted List to BST | LC **109** | #10 | Same, with the middle found by two pointers, or by inorder simulation. |
+| Convert Sorted List to BST | LC **109** | #10 | Same, but without random access — the middle is found by two pointers, or the tree is built in inorder while a cursor consumes the list. Developed in [[Linked List]] #6. |
 | Minimum Distance Between BST Nodes | LC **783** | #2 | A duplicate of LC 530. |
 | BST to Sorted Doubly Linked List | LC **426** | #13 | In-place rewiring during inorder — the rewiring hazard is [[Binary Trees]] #18. |
 | Kth Largest Element in a BST | — | #13 | Reverse inorder, counted. |
@@ -157,7 +157,7 @@ Thirty plain-language descriptions navigated against the family headings. **One 
 
 **What I am uncertain about**
 
-- **The sorted-container gap is now mostly closed by S6 plus #12**, but not entirely. `bisect.insort` over a plain list, and the "sorted window as a multiset" pattern, still have no proper home. Downgrading it from a missing topic to a missing section.
+- **The sorted-container gap is closed.** S6 plus #12 cover the structure side; the usage side — windowed multisets, offline reordering, `bisect.insort` and the language-library realities — is now [[Sorted Containers & Order Statistics]]. Read its lattice before choosing a structure for anything here.
 - **Duplicate handling** is a sentence inside #7 rather than an entry. It is asked ("what if there are duplicates?") often enough that this may be under-weighted.
 - **Treaps, splay trees, scapegoat trees** — excluded as competitive-programming or theory scope. High confidence.
 - **B-trees and B+ trees** — excluded as a database and systems topic, not DSA. Moderate confidence; they do come up in system design rounds, where they belong.
@@ -174,3 +174,6 @@ Thirty plain-language descriptions navigated against the family headings. **One 
 - [[Segment Trees]]
 - [[Heap]]
 - [[Binary Search]]
+- [[Sorted Containers & Order Statistics]]
+- [[Backtracking]]
+- [[Linked List]]

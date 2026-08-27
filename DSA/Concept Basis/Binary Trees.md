@@ -83,7 +83,7 @@ The mirror of B2. The parent hands context to the child as a parameter. **What s
 | # | Problem | Source | The new idea |
 |---|---|---|---|
 | 8 | Count Good Nodes in Binary Tree | LC **1448** | **A copied scalar travels down.** The running maximum along the root-to-node path cannot be computed from below, so it is inherited as an argument. Recognising that a quantity is *inherited* rather than *aggregated* is the modelling decision this family exists to teach — and it is what people miss when they reach for a global variable instead. |
-| 9 | Path Sum II | LC **113** | **A mutated container travels down, and must be undone.** Append on entry, recurse, pop on exit. Different from #8 because the state is edited in place rather than copied, so correctness now depends on the undo. Backtracking discipline, met in its simplest possible setting. |
+| 9 | Path Sum II | LC **113** | **A mutated container travels down, and must be undone.** Append on entry, recurse, pop on exit. Different from #8 because the state is edited in place rather than copied, so correctness now depends on the undo. Backtracking discipline, met in its simplest possible setting — [[Backtracking]] #1 is where the undo becomes load-bearing. |
 | 10 | Path Sum III | LC **437** | **An accumulating map travels down, and must be undone.** Count downward paths summing to `k` with a hash map of prefix-sum frequencies for the *current root-to-node path only* — decrement on the way out so sibling branches never see each other's prefixes. Composes the array prefix-sum-counting trick with #9's undo, and is the clearest case in this file of a technique from another topic being made to work on a tree. |
 
 ## B4 · Reconstruction & identity
@@ -109,7 +109,7 @@ Each entry either exploits a guarantee to beat `O(n)`, or changes what the tree 
 | # | Problem | Source | The new idea |
 |---|---|---|---|
 | 17 | Symmetric Tree | LC **101** | **Recurse on two nodes at once.** The function takes a *pair* and descends both in lockstep — and for mirroring you deliberately pair `left` against `right`, which is the one place the binary asymmetry is the whole point. Same Tree, Merge Two Trees and Subtree-of-Another are all this shape. |
-| 18 | Flatten Binary Tree to Linked List | LC **114** | **In-place rewiring, where assignment order is the entire problem.** You are destroying pointers you still need to read, so you must either save them first or pick a traversal order in which every read precedes its overwrite — which is why the clean solution runs in *reverse* preorder. Inverting a tree, populating next-right pointers and BST-to-doubly-linked-list are all this same hazard. |
+| 18 | Flatten Binary Tree to Linked List | LC **114** | **In-place rewiring, where assignment order is the entire problem.** You are destroying pointers you still need to read, so you must either save them first or pick a traversal order in which every read precedes its overwrite — which is why the clean solution runs in *reverse* preorder. Inverting a tree, populating next-right pointers and BST-to-doubly-linked-list are all this same hazard — and so is reversing a linked list ([[Linked List]] #1), which is the same discipline in a setting where it is impossible to avoid noticing. The general statement — **an overwrite hazard forces the direction of the write rather than leaving it to you** — is [[Two Pointers]] #12. |
 
 ---
 
@@ -153,7 +153,8 @@ Each entry either exploits a guarantee to beat `O(n)`, or changes what the tree 
 | Flip Equivalent Binary Trees | LC **951** | #17 | Lockstep, trying both pairings. |
 | Linked List in Binary Tree | LC **1367** | #17 | Lockstep against a list instead of a tree. |
 | Invert Binary Tree | LC **226** | #18 | Swap children during any traversal. |
-| Populating Next Right Pointers II | LC **117** | #18 | Use the already-threaded level above as a linked list — in-place rewiring at `O(1)` space. |
+| Populating Next Right Pointers II | LC **117** | #18 | Use the already-threaded level above as a linked list — in-place rewiring at `O(1)` space. [[Linked List]] ↗. |
+| "Now write it without recursion" | LC **94** · **145** | #1 | **The follow-up, not a problem.** A skewed tree is `O(n)` deep, so recursion is a real stack-overflow risk and converting to an explicit stack is a standard request — hardest for postorder, where you either track the previously visited node or reverse a modified preorder. The machinery is [[Stack and Queue]] #18, and #3 here is the `O(1)`-space version that needs no stack at all. |
 | Print Binary Tree | LC **655** | #2 | Level order into a padded grid. |
 | Boundary of Binary Tree | LC **545** | #1 | Three traversals concatenated. Fiddly, no new idea. |
 | Binary Tree Tilt · Sum of Left Leaves | LC **563** · **404** | #4 | Postorder aggregation with a different accumulator. |
@@ -180,7 +181,7 @@ Twenty-six plain-language descriptions navigated against the family headings. On
 
 **What I am uncertain about**
 
-- **Recursion depth as a first-class concern.** A skewed tree is `O(n)` deep, and "convert this to iterative" is a real interview request. It appears in #1 and #3 but has no entry of its own. The most likely thing I have under-weighted.
+- **Recursion depth as a first-class concern.** Flagged here as the most likely thing under-weighted — a skewed tree is `O(n)` deep and "convert this to iterative" is a real request, yet it appeared only inside #1 and #3. **Acted on in 4C** with an exclusions row naming the follow-up explicitly and pointing at [[Stack and Queue]] #18 and #3. Kept out of the numbered entries because it is a *re-implementation* of a traversal you already have rather than a new idea, which is exactly the call worth leaving visible.
 - **Threaded binary trees** beyond Morris — excluded, high confidence.
 - **Array-indexed binary trees** (`2i+1`, `2i+2`) appear in #14's argument and in [[Heap]] #1, but the indexing scheme itself is not an entry here. Probably right, mildly uncertain.
 - **The exclusions table runs to 29 rows**, seven of them collapsing into level-order alone. That is where a wrong merge would hide.
@@ -196,3 +197,5 @@ Twenty-six plain-language descriptions navigated against the family headings. On
 - [[Dynamic Programming]]
 - [[Segment Trees]]
 - [[Stack and Queue]]
+- [[Backtracking]]
+- [[Linked List]]

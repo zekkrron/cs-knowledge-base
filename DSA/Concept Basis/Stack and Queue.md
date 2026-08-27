@@ -117,7 +117,7 @@ Recursion *is* a stack. These are where you take that stack over manually, which
 | # | Problem | Source | The new idea |
 |---|---|---|---|
 | 18 | Binary Tree Inorder Traversal (iterative) | LC **94** | **Replace the call stack by hand.** Descend left pushing as you go, then pop, visit, and turn right. Once you can do this you can pause a traversal mid-flight, which recursion cannot. ↗ developed further in [[Binary Trees]] #1. |
-| 19 | Flatten Nested List Iterator | LC **341** | **A stack that survives between calls.** The traversal state lives in the object, so `next()` resumes where the last call stopped and nothing is flattened until asked for. #18 made the stack explicit; this makes it *persistent*. ↗ developed further in the Design basis. |
+| 19 | Flatten Nested List Iterator | LC **341** | **A stack that survives between calls.** The traversal state lives in the object, so `next()` resumes where the last call stopped and nothing is flattened until asked for. #18 made the stack explicit; this makes it *persistent*. The same laziness over a search you *generate* rather than traverse is [[Backtracking]] #18, and over a tree it is [[Binary Search Trees]] #14. ↗ developed further in the Design basis. |
 
 ---
 
@@ -131,7 +131,7 @@ Recursion *is* a stack. These are where you take that stack over manually, which
 | ↗ | BFS / shortest path on unweighted graphs | LC **1091** etc. | The FIFO discipline is what makes the layer-equals-distance argument work. [[Graphs]] #2. |
 | ↗ | Binary Tree Level Order Traversal | LC **102** | Queue size at the top of the loop delimits a level. [[Binary Trees]] #2. |
 
-Two more that people expect to find here and should not: **time-expiring windows** (LC 933) are two pointers, in the Arrays basis, and **Josephus-style rotation** (CSES 2163) is simulation, in the Math basis. Neither teaches you anything about queues.
+Two more that people expect to find here and should not: **time-expiring windows** (LC 933) are a window driven by an external clock, [[Sliding Window]] #11, and **Josephus-style rotation** (CSES 2163) has an `O(n)` recurrence that removes the simulation entirely, [[Math & Number Theory]] #20. Neither teaches you anything about queues.
 
 ---
 
@@ -162,14 +162,17 @@ Two more that people expect to find here and should not: **time-expiring windows
 | Implement Stack using Queues | LC **225** | #11 | Mirror construction of the same amortisation argument. |
 | Min Queue (O(1) minimum) | classic | #11 + #21 | Two min-stacks composed, and behaviourally identical to a monotonic deque. A composition, not an idea. |
 | Next Greater Element I | LC **496** | #12 | Identical monotonic sweep with a lookup map bolted on. |
-| Next Greater Element II | LC **503** | #12 | Circular handling is `2n` with a modulo — learned once in the Arrays basis, not here. |
+| Next Greater Node in Linked List | LC **1019** | #12 | The same sweep over a structure with no random access — which costs nothing, since the sweep only ever moves forwards. [[Linked List]] ↗. |
+| Next Greater Element II | LC **503** | #12 | Circular handling is `2n` with a modulo — learned once in [[Sliding Window]] #10, not here. |
 | Online Stock Span | LC **901** | #12 | Monotonic stack behind a class wrapper. |
+| Sum of Subarray Minimums | LC **907** | #12 · #13 | **The most-asked monotonic-stack problem after next-greater, and the stack part is the easy half.** Previous-smaller and next-smaller give each element the range it dominates; the new idea is multiplying those two spans to count the subarrays it is the minimum of, which is the contribution technique and belongs to [[Math & Number Theory]] #25. Same for Sum of Subarray Ranges (LC 2104) and Minimum Product of a Subarray. |
+| 0-1 BFS | LC **2290** | #22 | A deque used as a **two-ended frontier** rather than as a monotonic window — push-front for a zero-weight edge, push-back for a one, and the frontier stays sorted with no heap. Worth seeing, because it is the only place a deque's two ends mean "cheaper" and "dearer" instead of "dominated" and "expired". [[Graphs]] #19. |
 | Nearest Smaller Values | CSES **1645** | #12 | The core sweep, unadorned. |
 | Longest Valid Parentheses (stack solution) | LC **32** | #13 | Stack of indices; the span between current and new top gives the length. Same "width from exposed boundary" move. |
 | Remove Duplicate Letters | LC **316** | #15 | Same greedy monotonic pop; budget is "keep one of each" instead of "k removals." |
 | Smallest Subsequence of Distinct Characters | LC **1081** | #15 | Literally a duplicate of LC 316. |
 | Sum of Subarray Ranges | LC **2104** | #16 | Contribution counting run twice, for min and for max. |
-| Number of Recent Calls | LC **933** | Arrays basis | Time-expiring window is just two pointers. |
+| Number of Recent Calls | LC **933** | [[Sliding Window]] #11 | Time-expiring window; the queue is incidental to it. |
 
 ---
 
@@ -198,3 +201,9 @@ Twenty-five plain-language descriptions were navigated against the family headin
 - [[Heap]]
 - [[Binary Trees]]
 - [[N-ary Trees]]
+- [[Sliding Window]]
+- [[Two Pointers]]
+- [[Prefix Sums & Difference Arrays]]
+- [[Backtracking]]
+- [[Math & Number Theory]]
+- [[Linked List]]

@@ -49,7 +49,7 @@ R6  Persistence                  1 idea    [tail]
 | # | Problem | Source | Tier | The new idea |
 |---|---|---|---|---|
 | 1 | Range Sum Query - Mutable | LC **307** · CSES **1648** | **[core]** | **The segment tree itself.** Recursive build over halves; a point update walks one root-to-leaf path and pulls values back up; a range query decomposes `[l, r]` into `O(log n)` **canonical nodes** — the maximal aligned blocks that tile it. Everything problem-specific lives in one `merge` function, and once you see that, min-trees and gcd-trees are the same code with one line changed. |
-| 2 | Range Sum Query - Mutable (BIT form) | LC **307** | **[core]** | **The Fenwick tree as the lighter alternative.** `i & -i` isolates the lowest set bit, which is exactly the length of the block each index is responsible for. Prefix-only, so range queries need `pre(r) - pre(l-1)` and therefore an **invertible** operation. Roughly a quarter of the memory and a fifth of the lines. Writing both for the same problem is the fastest way to feel why one exists. |
+| 2 | Range Sum Query - Mutable (BIT form) | LC **307** | **[core]** | **The Fenwick tree as the lighter alternative.** `i & -i` isolates the lowest set bit ([[Bit Manipulation]] #1), which is exactly the length of the block each index is responsible for. Prefix-only, so range queries need `pre(r) - pre(l-1)` and therefore an **invertible** operation. Roughly a quarter of the memory and a fifth of the lines. Writing both for the same problem is the fastest way to feel why one exists. |
 | 3 | Count of Smaller Numbers After Self | LC **315** | **[core]** | **Index the tree by *value*, not by position.** Compress values to `[0, n)`, sweep the array right to left, and at each step query the prefix "how many smaller values have I already seen" then insert the current one. The tree's index axis has nothing to do with the array's. This one reframing solves counting inversions, "how many in `[l,r]` are `< x`", and most rank-as-you-sweep problems — it is the highest-yield idea in the file and the one most likely to actually appear in an interview. |
 
 ## R2 · Lazy propagation
@@ -97,7 +97,7 @@ Developed more fully in the named topic, but you will meet them while studying t
 
 | ↗ | Problem | Source | The idea, and where it goes deeper |
 |---|---|---|---|
-| ↗ | Range Sum Query - Immutable | LC **303** | **The baseline you must rule out first.** No updates means prefix sums answer in `O(1)` with four lines and no structure. Reaching for a segment tree when the data is static is the most common way to lose points on this topic. Arrays basis. |
+| ↗ | Range Sum Query - Immutable | LC **303** | **The baseline you must rule out first.** No updates means prefix sums answer in `O(1)` with four lines and no structure. Reaching for a segment tree when the data is static is the most common way to lose points on this topic. [[Prefix Sums & Difference Arrays]] #1. |
 | ↗ | Sliding Window Maximum | LC **239** | A segment tree answers this in `O(n log n)` and a monotonic deque answers it in `O(n)`. Listed as the canonical **when not to use a segment tree** — a moving window is not a general range query. [[Stack and Queue]] #21. |
 | ↗ | Longest Increasing Subsequence | LC **300** | LIS as a segment tree over the *value* axis: for each element, query `max` over all smaller values and update at its own. Same `O(n log n)` as patience, but it survives generalisations patience cannot handle, like weighted LIS. The clearest payoff of #3's value-indexing idea. [[Dynamic Programming]] #52. |
 | ↗ | Kth Ancestor of a Tree Node | LC **1483** | Binary lifting is a sparse table on a tree — literally the same doubling precomputation as #9, applied to ancestors instead of ranges. [[Graphs]] #29. |
@@ -146,7 +146,7 @@ The one description that resolved to nothing was **"I keep inserting and need th
 
 **What I am uncertain about**
 
-- **Order-statistic trees / policy-based data structures** (`__gnu_pbds::tree`, or a balanced BST with subtree counts). They subsume #3 and #7 in a few lines and have no home in the basis. This is the **third** time the missing sorted-container topic has come up — after [[Heap]] and [[Binary Search]] — so it should now be treated as a confirmed gap rather than a note.
+- **Order-statistic trees / policy-based data structures** (`__gnu_pbds::tree`, or a balanced BST with subtree counts). They subsume #3 and #7 in a few lines. This was the **third** file to flag the missing sorted-container topic, after [[Heap]] and [[Binary Search]], which is what tipped it from a note into a confirmed gap — and it is now **closed** by [[Sorted Containers & Order Statistics]], where #1 and #3 here are the implementations it selects between.
 - **Segment tree beats** (range chmin/chmax with amortised complexity) — excluded, high confidence. Pure competitive programming.
 - **Li Chao tree, divide-and-conquer over queries, offline dynamic connectivity** — excluded as CP, consistent with the same call in [[Dynamic Programming]].
 - **Iterative bottom-up segment trees** — a shorter and faster implementation of #1, excluded as an implementation detail. Mild doubt: if you ever need to write one under time pressure it is the better one to know.
@@ -164,3 +164,6 @@ The one description that resolved to nothing was **"I keep inserting and need th
 - [[Binary Trees]]
 - [[Binary Search Trees]]
 - [[Tries]]
+- [[Prefix Sums & Difference Arrays]]
+- [[Sorted Containers & Order Statistics]]
+- [[Bit Manipulation]]

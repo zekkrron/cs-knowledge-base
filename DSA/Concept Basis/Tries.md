@@ -186,3 +186,6 @@ Two collisions, both checked and cleared. "Which stored word is a prefix of my q
 - [[Binary Trees]]
 - [[Segment Trees]]
 - [[Dynamic Programming]]
+- [[Sorted Containers & Order Statistics]]
+- [[Backtracking]]
+- [[Bit Manipulation]]

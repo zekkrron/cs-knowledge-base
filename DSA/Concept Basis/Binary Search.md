@@ -179,6 +179,8 @@ Developed more fully in the named topic, but you will meet them while studying b
 | Search Suggestions System | LC **1268** | #21 | Sort, then `lower_bound` per prefix. A trie is the better answer — [[Tries]] #6. |
 | Kth Smallest Element in a BST | LC **230** | [[Binary Search Trees]] #2 | In-order traversal with a counter. Not a binary search despite the tree. |
 | Count of Smaller Numbers After Self | LC **315** | [[Segment Trees]] | Needs a BIT or merge sort, not a binary search. |
+| Closest Subsequence Sum | LC **1755** | #21 | Binary search as the **join step** in meet in the middle: enumerate both halves, sort one, then look up each half-sum's best partner. The search is a subroutine, not the algorithm. [[Backtracking]] #19. |
+| "First prefix whose sum exceeds `x`", with updates | *classic* | — | **The trap worth knowing.** If your predicate is itself a range query, a binary search over it costs `O(log² n)` — descend the segment tree instead and pay `O(log n)`. So the reflex "the predicate is monotone, therefore binary search" is right about *what* and wrong about *how*. [[Segment Trees]] #8. |
 
 ---
 
@@ -212,7 +214,7 @@ One near-miss worth recording: **"find the value closest to `x`"** resolves only
 
 **What I am uncertain about**
 
-- **Maintaining a sorted container incrementally** — `bisect.insort`, C++ `multiset`, order-statistic trees. Every "insert and query rank as you sweep" problem needs it, and it has no home yet. This is the same gap flagged in [[Heap]], and it is now flagged twice, which means it should probably become its own topic file rather than a footnote.
+- **Maintaining a sorted container incrementally** — `bisect.insort`, C++ `multiset`, order-statistic trees — was flagged here as a homeless gap, and being flagged twice (also in [[Heap]]) is what argued for promoting it. **Now closed:** it is [[Sorted Containers & Order Statistics]], and the lattice for choosing between a heap, an ordered set, a BIT and a segment tree is that file's opening section. Left in the audit as evidence that *the same footnote appearing in two files is a topic asking to be written.*
 - **Parallel binary search** (answering many queries by binary searching all of them simultaneously) — excluded as competitive-programming scope. Moderate confidence; it does occasionally surface at Google.
 - **Fractional cascading** — excluded, high confidence.
 - **Binary search descending a segment tree** — deliberately deferred to [[Segment Trees]], where the structure is defined.
@@ -228,3 +230,7 @@ One near-miss worth recording: **"find the value closest to `x`"** resolves only
 - [[Graphs]]
 - [[Heap]]
 - [[Binary Search Trees]]
+- [[Sliding Window]]
+- [[Two Pointers]]
+- [[Math & Number Theory]]
+- [[Linked List]]

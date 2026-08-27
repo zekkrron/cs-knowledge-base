@@ -18,33 +18,37 @@ The no-redundancy rule still applies **within** a topic. Two problems in the sam
 
 ## Index
 
-| Topic | Native | ↗ | Status |
-|---|---|---|---|
-| [[Stack and Queue]] | 23 | 4 | Draft · 4B passed |
-| [[Graphs]] | 33 | 5 | Draft · 4B passed |
-| [[Dynamic Programming]] | 68 | 4 | Draft · 4B passed |
-| [[Heap]] | 24 | 5 | Draft · 4B passed |
-| [[Binary Search]] | 21 | 4 | Draft · 4B passed |
-| [[Segment Trees]] | 13 | 4 | Draft · 4B passed · mostly tail scope |
-| [[Binary Trees]] | 18 | 5 | Draft · 4B passed |
-| [[Binary Search Trees]] | 16 | 3 | Draft · 4B found 1 |
-| [[N-ary Trees]] | 12 | 4 | Draft · 4B found 1 · smallest topic, honestly so |
-| [[Tries]] | 18 | 4 | Draft · 4B found 2 |
-| Arrays / Two Pointers / Sliding Window | — | — | Not started |
-| **Sorted Containers / Order Statistics** | — | — | **Partially covered by [[Binary Search Trees]] S4 + S6 — see below** |
-| Linked List | — | — | Not started |
-| Backtracking | — | — | Not started |
-| Greedy | — | — | Not started |
-| Bit Manipulation | — | — | Not started |
-| Strings (KMP / Z / hashing) | — | — | Not started |
-| Intervals | — | — | Not started |
-| Matrix | — | — | Not started |
-| Union-Find | — | — | Not started |
-| Math & Number Theory | — | — | Not started |
-| Design | — | — | Not started |
-| Sorting & Custom Comparators | — | — | Not started |
+| Topic                                    | Native | ↗   | Status                                                    |
+| ---------------------------------------- | ------ | --- | --------------------------------------------------------- |
+| [[Stack and Queue]]                      | 23     | 4   | Draft · 4B passed · **4C found 2**                        |
+| [[Graphs]]                               | 33     | 5   | Draft · 4B passed                                         |
+| [[Dynamic Programming]]                  | 68     | 4   | Draft · 4B passed                                         |
+| [[Heap]]                                 | 24     | 5   | Draft · 4B passed · **4C found 4**                        |
+| [[Binary Search]]                        | 21     | 4   | Draft · 4B passed · **4C found 2** · stale flag fixed     |
+| [[Segment Trees]]                        | 13     | 4   | Draft · 4B passed · mostly tail scope                     |
+| [[Binary Trees]]                         | 18     | 5   | Draft · 4B passed · **4C found 1**                        |
+| [[Binary Search Trees]]                  | 16     | 3   | Draft · 4B found 1                                        |
+| [[N-ary Trees]]                          | 12     | 4   | Draft · 4B found 1 · smallest topic, honestly so          |
+| [[Tries]]                                | 18     | 4   | Draft · 4B found 2                                        |
+| [[Sliding Window]]                       | 15     | 7   | Draft · 4B found 1 · fixed **and** variable length        |
+| [[Two Pointers]]                         | 19     | 5   | Draft · 4B found 1 + 1 named-list sweep                   |
+| [[Prefix Sums & Difference Arrays]]      | 23     | 8   | Draft · 4B found 1 · **4C found 2** · positional tables   |
+| [[Arrays]]                               | 14     | 9   | Draft · 4B found 1 · hub topic · **holds the name index** |
+| [[Sorted Containers & Order Statistics]] | 14     | 6   | Draft · 4B found 1 · usage patterns, not structures       |
+| [[Backtracking]]                         | 20     | 7   | Draft · 4B found 2 · 1 tail entry                         |
+| **Hashing**                              | —      | —   | **Not started — confirmed gap, see below**                |
+| [[Linked List]]                          | 16     | 11  | Draft · 4B found 1 · **4C found 4** · see step 4C below   |
+| Greedy                                   | —      | —   | Not started                                               |
+| [[Bit Manipulation]]                     | 18     | 10  | Draft · 4B found 1 · 4C closed the Math hedge             |
+| Strings (KMP / Z / rolling hash)         | —      | —   | Not started                                               |
+| Intervals                                | —      | —   | Not started                                               |
+| Matrix                                   | —      | —   | Not started                                               |
+| Union-Find                               | —      | —   | Not started                                               |
+| [[Math & Number Theory]]                 | 25     | 6   | Draft · 4B found 1 · fuzziest boundary in the basis       |
+| Design                                   | —      | —   | Not started                                               |
+| [[Sorting & Custom Comparators]]         | 19     | 11  | Draft · 4B found **2** · 4C found 3 + 1 false positive    |
 
-> [!warning] **Mostly-closed gap: incrementally maintained sorted containers.** Four files independently hit the same missing idea — a structure you insert into *and* query by rank as you sweep. [[Binary Search Trees]] now covers most of it: **S4** gives the structure (why balance is required, what a rotation restores, how subtree-size augmentation yields an order-statistic tree) and **S6** gives the usage (an ordered set over a sliding window, and `floorKey`/`ceilingKey` for neighbour queries). What is still absent is `bisect.insort` over a plain list, and the sorted-multiset-as-sliding-window family in its own right. Now a missing *section*, not a missing file.
+> [!tip] **Closed gap: incrementally maintained sorted containers.** Four files independently hit the same missing idea — a structure you insert into *and* query by rank as you sweep — and it is now written. The division of labour: [[Binary Search Trees]] S4 gives the **structure** (why balance matters, what subtree-size augmentation buys), [[Segment Trees]] #3 gives the **portable implementation** (value-indexed BIT), and [[Sorted Containers & Order Statistics]] gives the **usage** — which query needs which structure, windowed multisets, offline reordering, and the language-library realities. Start with that file's lattice.
 
 ---
 
@@ -74,13 +78,13 @@ This has now happened three times, always with the same signature and always dis
 
 Step 4 fixed recall-dependence at the *problem* level, where external lists exist to sweep against. Nothing fixed it at the *axis* level, where no such list exists — nobody publishes "all the axes along which binary search solutions vary." **Step 4B is the repair**: query the file from outside, in problem-shaped natural language, and see whether it can be navigated. Two plain-language descriptions colliding on one entry is the signature of a missing axis, and it is the only reliable signal there is.
 
-> [!warning] **Read the confidence percentages accordingly.** They estimate "did I miss a problem," not "did I miss an axis" — and one missing axis can hide an unbounded number of concepts while problem-level confidence sits comfortably above 90%. All six files have now passed step 4B, so the figures are honest *given the axes currently listed*, which is the only thing they ever measured. They will need re-reading whenever a new axis is discovered.
+> [!warning] **Read the confidence percentages accordingly.** They estimate "did I miss a problem," not "did I miss an axis" — and one missing axis can hide an unbounded number of concepts while problem-level confidence sits comfortably above 90%. All files have now passed step 4B, so the figures are honest *given the axes currently listed*, which is the only thing they ever measured — they need re-reading whenever a new axis is discovered. **And they measure only the native side.** A percentage computed against your own families cannot see an idea sitting correctly in *another* file and unreachable from yours. **Step 4C has now been run across all files** and found fourteen additions, so reachability is measured too — but note that the figures in each file were written before it, and none has been revised upward to account for it.
 
 A secondary rule that fell out of the same incident: **pick the canonical problem whose most salient property IS the idea.** LC 774's obvious feature is that it is real-valued; its transferable feature is budget allocation. Naming the entry after the first buried the second. When those diverge, choose a different canonical or split the entry in two.
 
 ## What step 4B actually found
 
-All ten files have now been through it. Results, because the pattern in them is more useful than any individual fix:
+All eighteen files have now been through it. Results, because the pattern in them is more useful than any individual fix:
 
 | Topic | Descriptions | Failures | What was added | Axis that had been missing |
 |---|---|---|---|---|
@@ -90,12 +94,56 @@ All ten files have now been through it. Results, because the pattern in them is 
 | [[Heap]] | 30 | 1 | #24 reordering buffer | *what happens to what leaves* — discarded, emitted, or transferred |
 | [[Binary Search]] | 26 | 0 | — | already fixed by the probe that motivated 4B |
 | [[Segment Trees]] | 21 | 0 | — | — |
-| [[Binary Trees]] | 26 | 1 | nothing — a merge was flagged, not reversed | *deep tree forces an iterative traversal* — noted, left merged |
+| [[Binary Trees]] | 26 | 1 | nothing — a merge was flagged, not reversed | *deep tree forces an iterative traversal* — noted, left merged, **then acted on in 4C-iii**: 4B saw it and wrote it down, and only the hedge probe made it a row |
 | [[Binary Search Trees]] | 30 | **1** | #6 BST serialisation needs no null markers | *the invariant is stored information* |
 | [[N-ary Trees]] | 20 | **1** | #4 canonical identity under unordered children | *is child order meaningful* |
 | [[Tries]] | 31 | **2** | #10 persistent trie, #12 fuzzy search by DP row | *persistent / versioned mutability* · *whether the query stays aligned with the path* |
+| [[Sliding Window]] | 23 | **1** | #15 restore monotonicity by conditioning on a parameter | *is the predicate monotone in length* — the axis existed with **no entry carrying its repair** |
+| [[Two Pointers]] | 23 | **1** | #16 forward match, then backward tighten | *a deliberate second pass in the opposite direction* |
+| [[Prefix Sums & Difference Arrays]] | 31 | **1** | #23 range-counting over prefix values | *does the lookup ask for equality, or an inequality* |
+| [[Arrays]] | 30 | **1** | #14 bucket by a bounded derived key | *what a bucket index means* · *why bucketing is legal* |
+| [[Sorted Containers & Order Statistics]] | 23 | **1** | #14 container along a DFS path | *expiry driven by recursion depth, not by an index* |
+| [[Backtracking]] | 30 | **2** | #18 caller-driven enumeration · #19 meet in the middle | *who drives the enumeration* · *when the tree is too big* |
+| [[Math & Number Theory]] | 31 | **1** | #25 the contribution technique | *direction of counting* — over objects, or over their parts |
+| [[Linked List]] | 35 | **1** | #16 delete with no predecessor | *what you are given* — the head, or only a node |
+| [[Sorting & Custom Comparators]] | 20 | **2** | #19 order so later insertions cannot invalidate earlier ones · #20 minimise the *number* of comparisons | *what happens after the sort* — a read-only pass, or a **mutating insertion** · *what the scarce resource is* — time, or **comparisons** |
+| [[Bit Manipulation]] | 20 | **1** | #18 flip a window of `k` consecutive bits | *granularity of the operation* — one bit, a prefix of bits, or a **sliding window of bits** |
 
-Five observations worth carrying forward.
+**A new step came out of [[Linked List]], and it applies to every file already written.**
+
+> [!danger] **Step 4C — the inward sweep.** 4B probes plain-language descriptions against *your own* classification. It cannot tell you that **another file already holds an entry that belongs in yours**, because your sweep terminates the moment your own families answer the probe. Cross-listing had only ever been applied *outward* — noting, while writing a file, what belongs elsewhere — which means a topic written eighteenth had seventeen files to sweep inward and got none of them.
+>
+> **The step: after 4B, grep the other files for the new topic's vocabulary, and check what should be cross-listed inward.** In [[Linked List]] it produced four missing ↗ rows. Two were ideas filed correctly elsewhere but unreachable from the file a reader would start in — LC 114 and LC 426 are tree-rewiring, and [[Binary Trees]] #18 is *the same save-before-you-overwrite discipline* as [[Linked List]] #1 in different vocabulary, with neither file linking to the other. **Two were in no file at all**: LC 1171 (a prefix-sum hash map over a list) and LC 1019 (a monotonic stack over a list) fell between two stools, because the technique files never considered the list variant and the list file was built from the pointer side and never looked outward.
+>
+**Step 4C has three probes.** Running it across all eighteen files produced fourteen additions, and the third probe was the cheapest and the most productive.
+
+| | Probe | What it catches |
+|---|---|---|
+| **4C-i** | **Reciprocity.** For every `[[Other Topic]] #n` reference pointing *into* this file, check this file has a row for the problem being discussed. | An idea filed correctly elsewhere and unreachable from the file a reader would start in. |
+| **4C-ii** | **Orphans.** Enumerate the topic's well-known problems and confirm each appears *somewhere* in the basis. | Problems that fell between two stools, because neither the technique file nor the container file thought to claim them. |
+| **4C-iii** | **Hedges.** Grep every audit for *"probably an omission"*, *"borderline"*, *"has no entry"*, *"worth a second look"*, *"no home"*. | **A hedge in an audit is a finding you have written down and declined to act on.** |
+
+> [!danger] **4C-iii is the one to run first, and it should be run periodically forever.** It needs no knowledge of the topic — it reads what previous sweeps already concluded and asks why nothing happened. It found two declined findings that were correct ([[Prefix Sums & Difference Arrays]] on DP-table prefix sums and bit-level counts, [[Binary Trees]] on recursion depth), and two flags that had gone **stale**: [[Binary Search]] and [[Segment Trees]] both still told the reader the sorted-container topic did not exist, months after [[Sorted Containers & Order Statistics]] was written. **A closed gap that still reads as open is worse than an open one**, because it discourages the reader from looking for a file that is right there.
+
+**Results.**
+
+| Topic | 4C additions | What was missing |
+|---|---|---|
+| [[Linked List]] | **4 ↗** | LC 114 / 426 / 117 unreachable from here; LC 1171 and LC 1019 in no file at all |
+| [[Heap]] | **4** | LC 264, LC 855, LC 2102, and 0-1 BFS as the *negative* result — where you decline a heap |
+| [[Stack and Queue]] | **2** | **LC 907 Sum of Subarray Minimums**, present only as a cross-reference in [[Math & Number Theory]]; the deque as a two-ended frontier |
+| [[Binary Search]] | **2** | Binary search as the meet-in-the-middle join; the `O(log² n)` trap when the predicate is itself a range query |
+| [[Prefix Sums & Difference Arrays]] | **2 ↗** | Both were hedged in its own audit and declined |
+| [[Binary Trees]] | **1** | The "now write it without recursion" follow-up, named in its audit as the likeliest under-weighting |
+| Stale gap flags | **2 fixed** | [[Binary Search]] and [[Segment Trees]] still advertising a gap that is closed |
+| [[Bit Manipulation]] | hedge closed | [[Math & Number Theory]]'s "expect a re-cut of M5/M6" overstated the overlap; Power of Two / add-without-operators / Single Number retargeted here. No new native rows from 4C — #18 came from 4B. |
+| Others | none | Reciprocity was healthy in the tree, trie, graph, DP, sorting and search files |
+
+> [!warning] **One correction worth recording, because it is a failure mode of 4C itself.** The sweep initially "found" that [[Heap]] was missing Prim's algorithm. It was not — Prim was already there, and the addition was a duplicate that had to be reverted. 4C works by reading *inbound references* rather than the target file, so it is structurally prone to reporting a gap that is already filled. **Confirm against the target file's own tables before adding a row.**
+
+Eight observations worth carrying forward.
+
+**A shared problem *name* can hide two different problems, and the sweep stops at the name.** Sweeping the written files against curated Indian-interview lists (Striver A2Z, NeetCode 150) found every famous *named algorithm* already native — Dutch national flag, Boyer–Moore voting, Kadane, Floyd's cycle detection, Fisher–Yates. One thing was genuinely missing: the **gap method** for merging two sorted arrays with no spare buffer ([[Two Pointers]] #19). It was missed because LC 88 was already native as "write from the back", so the probe *"merge two sorted arrays in place"* found a hit and terminated — but LC 88 hands you `m` empty trailing slots and the backward write depends entirely on them. Remove the buffer and it is a different problem with a different idea. **Add to step 4B: for each entry that depends on a given resource — spare space, sortedness, a second pass, offline access — probe the version where that resource is withdrawn.** That single question is what a follow-up in an interview *is*.
 
 **Only one outright absence was found in the whole basis.** Weighted interval scheduling was simply not in the DP file. Every other failure was an idea that existed but was *unreachable* — misnamed, or collapsed into a neighbour by a missing axis. That ratio says the original method is good at coverage and bad at *findability*, which is a much better problem to have and a much easier one to fix.
 
@@ -107,7 +155,15 @@ Five observations worth carrying forward.
 
 **A merged file hides failures from its own sweep.** The trees material was first written as one file covering n-ary, binary and BST together, and it passed 4B with zero findings. Split into three and swept separately, it produced two genuine misses — BST serialisation needing no null markers, and canonical identity under unordered children. In the merged file both descriptions resolved to a binary-tree entry and the sweep terminated satisfied, because *something* answered them. **When one file spans several structures, the most general one absorbs every probe and the specialisations never get tested.** If a topic file covers more than one structure, sweep each structure against a file that contains only it.
 
-> [!danger] **Build order.** The sorted-container gap is now down to a missing *section* rather than a missing file, since [[Binary Search Trees]] S4 and S6 cover the structure and the main usages. **Arrays / Two Pointers / Sliding Window is now the largest hole in the basis** — it is the highest-frequency topic in interviews and has nothing written. Build it next.
+**An idea that is cross-listed everywhere and native nowhere is invisible.** "Insert on the way down, remove on the way back up" appeared three times before it got an entry — as insert-and-undo on a trie ([[Tries]] #8), as a prefix-frequency map along a root-to-node path ([[Binary Trees]] #10), and finally as [[Sorted Containers & Order Statistics]] #14. Each of the first two was correct in its own file and neither named the general move, so the sweep in every file terminated satisfied. **A concept with no home is not the same as a concept with several partial homes, and only the reverse sweep distinguishes them.** Worth a periodic check: which ideas appear in three or more files and are developed in none? **It happened a second time immediately.** Resumable enumeration — hand me one solution at a time, I cannot hold them all — was present as an iterator over a nested list ([[Stack and Queue]] #19) and over a tree ([[Binary Search Trees]] #14), and absent over a search you *generate* until [[Backtracking]] #18. Same failure, same cause, one file later.
+
+**An axis can be listed and still have no entry, and the cross-product cannot see it.** [[Sliding Window]]'s miss was not a missing axis — *is the predicate monotone in length* was already in the table. It appeared only as a "what breaks" note, with an entry for the negatives break and nothing for the non-monotone break. From the axis table's side the cell looks occupied, because the axis is present; from the file's side it looks complete, because every entry maps to some axis value. **Step 2 must be run as a genuine cross-product with a named entry per occupied cell, not as a checklist of axes that exist.** The new discipline: for every axis *value*, point at the entry that carries it, and if you cannot, that is a finding.
+
+> [!danger] **Build order. Hashing is the confirmed gap.** [[Arrays]] A3 is currently absorbing it — complement lookup, canonical keys, frequency maps, seen-sets — and [[Prefix Sums & Difference Arrays]] P2 leans on it throughout. It is a real topic with no file. **Build it next.** After that: **Intervals** and **Matrix**, the last two array-chapter destinations with no file. **Bit Manipulation** and **Sorting** are now written; [[Math & Number Theory]]'s bit-adjacent hedge is closed, and [[Arrays]]'s sorting-boundary cut was reviewed and upheld.
+
+> [!tip] **Looking for a problem by name, not by idea?** Each file carries its own **named-algorithm table** for the names it owns — [[Arrays]] has the first one. A single basis-wide index was tried and abandoned: it ran to hundreds of rows, restated the exclusion tables without their reasoning, and rotted the moment any file was renumbered. Per-file tables stay correct because they only reference local IDs. **Sweeping curated lists by name is still worth doing as a check** — it is what found [[Two Pointers]] #19 and confirmed which topics had no file at all.
+
+> [!warning] **[[Arrays]] is a residue topic and will need re-cutting.** It is the one file defined by *what the others left behind* rather than by a mechanism, so its boundary moves every time a neighbouring file is written. Its confidence figure (~87%, the lowest in the basis) reflects that structural fact, not a weaker sweep.
 
 ---
 
@@ -235,6 +291,38 @@ Report the axes this step forced you to add. If it added none, say so
 explicitly rather than staying silent -- silence here usually means the
 descriptions were written in mechanism vocabulary and the step was circular.
 
+STEP 4C — INWARD SWEEP  (the reachability check; 4B cannot do this)
+Steps 4 and 4B both interrogate THIS file. Neither can tell you that another
+file already holds an entry belonging here, because your sweep terminates
+the moment your own families answer the probe. Cross-listing has only ever
+run OUTWARD -- noting what belongs elsewhere while writing. Run it inward.
+
+Three probes. Run (iii) first; it is the cheapest and the most productive.
+
+  (i)   RECIPROCITY. Grep the other files for `[[This Topic]]`. For every
+        reference pointing in, check this file has a row for the problem
+        being discussed. If not, that is a missing ↗ row.
+        WARNING: this reads inbound references, not the target file, so it
+        will report gaps that are already filled. CONFIRM AGAINST THIS
+        FILE'S OWN TABLES BEFORE ADDING -- a false positive here produced a
+        duplicate Prim entry in [[Heap]] that had to be reverted.
+
+  (ii)  ORPHANS. Enumerate the topic's well-known problems and confirm each
+        appears SOMEWHERE in the basis. Problems fall between two stools:
+        the technique file never considers this container's variant, and
+        this file was built from its own side and never looked outward.
+
+  (iii) HEDGES. Grep every audit in the basis for "probably an omission",
+        "borderline", "has no entry", "worth a second look", "no home",
+        "should probably". A HEDGE IN AN AUDIT IS A FINDING YOU WROTE DOWN
+        AND DECLINED TO ACT ON. Also check whether any flagged gap has since
+        been CLOSED by a file written later -- a closed gap still reading as
+        open is worse than an open one, because it stops the reader looking
+        for a file that already exists.
+
+Report additions per file. "None" is a valid result for a mature, heavily
+cross-linked file, but say it explicitly.
+
 STEP 5 — EXCLUSIONS
 Table of every problem considered and rejected: problem + number, the entry
 it collapses into, and one line on why. This table is the deliverable that
@@ -291,3 +379,13 @@ The practical consequence: treat each topic file as **closed under review, not c
 - [[Binary Search Trees]]
 - [[N-ary Trees]]
 - [[Tries]]
+- [[Sliding Window]]
+- [[Two Pointers]]
+- [[Prefix Sums & Difference Arrays]]
+- [[Arrays]]
+- [[Sorted Containers & Order Statistics]]
+- [[Backtracking]]
+- [[Math & Number Theory]]
+- [[Linked List]]
+- [[Sorting & Custom Comparators]]
+- [[Bit Manipulation]]
