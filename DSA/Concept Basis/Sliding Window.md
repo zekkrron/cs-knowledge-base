@@ -43,7 +43,7 @@ A sliding window *is* a two-pointer technique, so the split needs stating precis
 | **Shrink discipline** | shrink while invalid, then record (longest) · record, then shrink while valid (shortest) · advance `l` at most once per step and never shrink (maximum-only) |
 | **What is returned** | the longest length · the shortest length · a **count of valid windows** · one value per window · a boolean · the window itself |
 | **How the answer accumulates** | max · min · **sum of `r − l + 1` contributions** · one emission per position |
-| **What it slides over** | an array · a string · a **stream you cannot rewind** · a circular array · a sorted-by-you array · a 2D grid |
+| **What it slides over** | an array · a string · a **stream you cannot rewind** · a circular array · a sorted-by-you array · **`k` sequences at once** · a 2D grid |
 | **Which assumption breaks** | negatives break "the sum grows as the window grows" · a non-monotone predicate breaks shrinking · a max summary is not subtractable · "exactly `k`" is not a window predicate |
 
 ## Shape of this topic
@@ -51,13 +51,13 @@ A sliding window *is* a two-pointer technique, so the split needs stating precis
 ```
 W1  The engine — fixed length          2 ideas
 W2  The engine — variable length       5 ideas
-W3  Making a window appear             3 ideas
+W3  Making a window appear             4 ideas
 W4  What defines the extent            2 ideas
-W5  What the window carries            1 idea  + 4 ↗
+W5  What the window carries            1 idea  + 5 ↗
 W6  When there is no window            2 ideas + 3 ↗
 ```
 
-**15 native entries, plus 7 cross-listed (↗).** See [[README]] on cross-listing.
+**16 native entries, plus 8 cross-listed (↗).** See [[README]] on cross-listing.
 
 > [!info] **Numbers are stable IDs assigned in order of addition, not reading order.**
 
@@ -84,13 +84,14 @@ The core of the topic. Five distinct moves, and they are routinely mistaken for 
 
 ## W3 · Making a window appear
 
-Three modelling moves. In each the mechanism is already known — the difficulty is that the input does not look like a window until you change what you are windowing over.
+Four modelling moves. In each the mechanism is already known — the difficulty is that the input does not look like a window until you change what you are windowing over.
 
 | # | Problem | Source | The new idea |
 |---|---|---|---|
 | 8 | Maximum Points You Can Obtain from Cards | LC **1423** | **Put the predicate on the *complement*.** "Take `k` cards from either end" is a two-sided choice with `k+1` cases — until you notice that what you *leave behind* is one contiguous block of size `n − k`, so maximising the take is minimising a fixed window. The same inversion solves "replace the shortest substring so the rest is balanced" (LC 1234) and "remove the shortest subarray to hit a target sum" (LC 1658). Reflex worth building: **if a choice is made at both ends, window the middle.** |
 | 9 | Frequency of the Most Frequent Element | LC **1838** | **Sort first, because the original order is irrelevant.** Nothing in the problem is contiguous — you are choosing a multiset of elements to raise to a common value — but after sorting, the optimal group *is* contiguous, and the cost of levelling a window to its right edge is `k·max − windowSum`. New because the window is over an order **you imposed**, which is a step earlier than any other entry here. Ask it of every non-contiguous problem: *would sorting make the answer an interval?* |
 | 10 | Minimum Number of Flips to Make the Binary String Alternating | LC **1888** | **A circular array becomes linear by doubling it, then windowing at length `n`.** Concatenate the string with itself and every rotation appears exactly once as a window, so "best over all rotations" collapses to "best window". Cheap, general, and the standard answer to any wraparound constraint — the alternative, modulo arithmetic inside the loop, is correct but far easier to get wrong. |
+| 16 | Smallest Range Covering Elements from K Lists | LC **632** | **The window is over `k` sources, not one array.** Each list is already sorted. Keep one live index per list so the window always holds exactly one element from each; its range is `max − min` among those `k` heads. To shrink, advance the list that currently owns the min — the only move that can improve the range (advancing anyone else widens `max` or leaves `min` stuck). New against #3 (one array, `l` crawls the same sequence) and against #9 (you flattened one multiset; here **group identity must be preserved**, so you cannot concatenate). `k = 2` is two pointers and needs no heap; for general `k` the heap of heads is how you find which min to advance in `O(log k)` — [[Heap]] #10; the merge skeleton is [[Heap]] #7. |
 
 ## W4 · What defines the extent
 
@@ -117,7 +118,8 @@ Two entries where the length rule is neither a given `k` nor a predicate.
 | ↗ | Sliding Window Maximum | LC **239** | Max is not subtractable, so evict from **both** ends: dominated candidates from the back, expired ones from the front. The canonical proof that a window's summary can need its own data structure. [[Stack and Queue]] #21; the max-heap-with-lazy-deletion alternative is [[Heap]] #12. |
 | ↗ | Longest Continuous Subarray With Absolute Diff ≤ Limit | LC **1438** | **Two deques run in parallel**, one for max and one for min, so the window's *range* is queryable while it is being resized — a summary that needs two structures at once. [[Stack and Queue]] #22. |
 | ↗ | Sliding Window Median | LC **480** | An order statistic over a window: two heaps facing each other, with **lazy deletion** because elements now leave from the middle. [[Heap]] #12. |
-| ↗ | Contains Duplicate III | LC **220** | A **neighbourhood** query rather than an aggregate — "is anything within `t` of this value currently in the window" — which needs an ordered set's `ceiling`, not a deque. [[Binary Search Trees]] #15. |
+| ↗ | Contains Duplicate III | LC **220** | A **neighbourhood** query rather than an aggregate — "is anything within `t` of this value currently in the window" — which needs an ordered set's `lower_bound`, not a deque. [[Binary Search Trees]] #15. |
+| ↗ | Smallest Range Covering Elements from K Lists *(heap of heads)* | LC **632** | The heap supplies the min among `k` heads; popping it *is* advancing the window's left edge. #16 is the window. [[Heap]] #10. |
 
 ## W6 · When there is no window
 
@@ -171,6 +173,7 @@ The most valuable family, because recognising that the technique *cannot* apply 
 
 - **#3 and #4 kept separate.** Almost every source treats "sliding window" as one technique with a parameter. Split because the `while` loop's *semantics* invert — shrink-to-escape versus shrink-to-test — and because that inversion is the topic's signature bug. If any split in this file is over-fine it is this one, and I would still defend it.
 - **#7 (the non-shrinking window) kept as an entry rather than a footnote on #3.** It looks like an optimisation and is really a correctness argument: the window is permitted to be invalid. That is a different mental model, and LC 424 is famous precisely because people cannot reconstruct the argument.
+- **#16 (k sources) native here despite [[Heap]] #10 already owning LC 632.** Heap owns *the heap of heads, popping min advances left*. This file owns *the window is not over one array*. Same cut as Meeting Rooms II. Cross-listed both ways.
 - **#8 and #9 nearly merged** into one "reframe until a window appears" entry. Kept apart because the reframes are unrelated — one changes *which interval* you window, the other changes *what order* the elements are in — and a merged entry would have been named after neither. LC 1052 *was* merged into #8, since a constant base plus a windowed bonus is the same inversion.
 - **LC 76 excluded.** Uncomfortable, because it is the single most-asked problem in this topic. But it is #4's discipline over #2's summary with nothing added, and the exclusions table exists to say exactly that. Flagged in the table as worth solving anyway.
 - **W5 has one native entry and four cross-listed ones.** That is the honest shape: the *diagnosis* (which summaries are removable) is a sliding-window idea, while every repair is a container developed in another file. The taxonomy callout carries the weight that would otherwise need four native entries.
@@ -191,10 +194,10 @@ Two collisions, both checked and cleared. "Longest window with at most `k` zeros
 - **Prefix sums.** #14 points at them and stops, which was the largest gap this file exposed. Now closed by [[Prefix Sums & Difference Arrays]], written immediately after this one.
 - **Whether #12 (LC 30) is in scope.** Block-stride windows appear in essentially one problem. Kept because "what is one step" was an unexamined assumption everywhere else, and a single sharp representative is worth more than the axis staying invisible.
 - **Monotone-deque DP optimisation** (LC 1696) is cross-listed in [[Stack and Queue]] but not here, because the window there is over *DP states* rather than input elements. Defensible, mildly uncertain — someone drilling windows might well want it.
-- **Windows over two sequences simultaneously.** I could not name a problem where two windows advance in genuine lockstep. Probably an empty cell; possibly thin recall.
+- **Windows over two sequences simultaneously.** Lockstep *two windows* on two strings is still empty. **`k` sources sharing one window is now #16** — that was the cell the probe actually needed, and it was sitting in [[Heap]] where a windows reader would not look.
 - **Recall is likely thin on the counting family (#5).** LeetCode has dozens of "count subarrays where …" problems and I collapsed them aggressively. If an exclusion is wrong, it is there.
 
-**Completeness confidence: ~91%.** The engine (W1, W2) I would call complete — those seven entries are the topic. The uncertainty sits in W3, where "modelling moves that make a window appear" is an open-ended category with no external list to sweep against, and in the missing prefix-sum boundary.
+**Completeness confidence: ~91%.** The engine (W1, W2) I would call complete — those seven entries are the topic. W3 picked up the k-sources cell that Heap was holding alone. Remaining uncertainty is modelling moves with no external list, and the counting-family collapse.
 
 ## Related Notes
 
@@ -209,3 +212,5 @@ Two collisions, both checked and cleared. "Longest window with at most `k` zeros
 - [[Arrays]]
 - [[Sorted Containers & Order Statistics]]
 - [[Bit Manipulation]]
+- [[Strings]]
+- [[Hashing]]

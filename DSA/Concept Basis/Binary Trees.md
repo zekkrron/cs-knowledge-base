@@ -45,15 +45,15 @@ Expect overlap. Level-order appears in all three, because someone drilling any o
 
 ```
 B1  Traversal orders               3 ideas
-B2  Information flowing up         4 ideas
+B2  Information flowing up         6 ideas
 B3  Information flowing down       3 ideas
 B4  Reconstruction & identity      3 ideas
 B5  Structural shortcuts           3 ideas
 B6  Shape comparison & rewiring    2 ideas
-                                   + 5 cross-listed ↗
+                                   + 3 cross-listed ↗
 ```
 
-**18 native entries, plus 5 cross-listed (↗).** See [[README]] on cross-listing.
+**20 native entries, plus 3 cross-listed (↗).** See [[README]] on cross-listing.
 
 ---
 
@@ -75,6 +75,8 @@ Postorder aggregation. Children return, the parent combines. Where most binary t
 | 5 | Diameter of Binary Tree | LC **543** | **Return one quantity, record another.** You return the best *downward* reach, because that is all a parent can use — but you update a global with the path *through* you, which is `left + right`. The two are different quantities and conflating them is the most common binary tree bug there is. Learn this once and the entire "the answer path need not pass through the root" family collapses into a single move. |
 | 6 | Balanced Binary Tree | LC **110** | **Encode failure into the return value.** Returning `-1` for "something below is already unbalanced" lets one postorder pass answer both "how tall are you" and "is anything broken", instead of calling a height function at every node for `O(n²)`. The transferable idea is a sentinel in the return type carrying a second, cheaper signal upward. |
 | 7 | Lowest Common Ancestor of a Binary Tree | LC **236** | **Postorder consensus.** If a target appears in both subtrees you are the answer; if in one, pass that one up; if neither, pass up nothing. No parent pointers, no depth comparison, no second pass — and the correctness argument is genuinely non-obvious the first time you meet it. For many queries on a static tree, binary lifting is the scalable replacement (↗ below). |
+| 19 | Binary Tree Maximum Path Sum | LC **124** | **Negatives break greedy path reasoning — clamp a downward branch to zero before combining.** Same return-one-record-another as #5, but a negative child must not be taken, so you `max(0, left)` / `max(0, right)` before writing the through-node path. That clamp is why this is DP rather than a traversal, and it is the follow-up to #5 in most interviews. Dual-native with [[Dynamic Programming]] #42. |
+| 20 | House Robber III | LC **337** | **Return a tuple so the parent never re-descends** — `(best if I take this node, best if I don't)`. Diameter returns one number; here the parent needs both, because taking you forbids taking the child. The natural step after #5 and the entry point to tree DP proper. Dual-native with [[Dynamic Programming]] #41. |
 
 ## B3 · Information flowing down
 
@@ -117,8 +119,6 @@ Each entry either exploits a guarantee to beat `O(n)`, or changes what the tree 
 
 | ↗ | Problem | Source | The idea, and where it goes deeper |
 |---|---|---|---|
-| ↗ | Binary Tree Maximum Path Sum | LC **124** | #5 with weights, where a negative subtree must be **clamped to zero** rather than merely compared. The clamp is what makes it a DP instead of a traversal, and it is the follow-up to #5 in most interviews. [[Dynamic Programming]] #42. |
-| ↗ | House Robber III | LC **337** | **Return a tuple** — `(best if I take this node, best if I don't)` — so the parent chooses without re-descending. The natural step after #5 and the entry point to tree DP proper. [[Dynamic Programming]] #41. |
 | ↗ | Sum of Distances in Tree | LC **834** | **Rerooting.** Solve for one root, then derive every other root in `O(n)` by adjusting along each edge — the answer to "compute this for every node as the root", which otherwise costs `n` traversals. [[Dynamic Programming]] #43. |
 | ↗ | Kth Ancestor of a Tree Node | LC **1483** | **Binary lifting.** Precompute `2^j`-th ancestors so any jump is `O(log k)`; the same table answers LCA in `O(log n)`, which is what replaces #7 when queries are many and the tree is static. [[Graphs]] #29. |
 | ↗ | Minimum Height Trees | LC **310** | **Peel degree-1 nodes inward** to find the centre — Kahn's algorithm on an undirected tree, and the answer to "which root minimises the height". [[Graphs]] #33. |
@@ -165,19 +165,19 @@ Each entry either exploits a guarantee to beat `O(n)`, or changes what the tree 
 
 **Borderline calls, and which way I went**
 
-- **Diameter (#5) native, Maximum Path Sum (LC 124) cross-listed.** The same idea; the unweighted version teaches it more cleanly and the weighted one adds the clamp step that makes it DP. Splitting a pair across two files like this is exactly what cross-listing is for.
+- **Diameter (#5) native, Maximum Path Sum (LC 124) promoted to #19.** Same return-one-record-another; the clamp on negatives is a second idea, and a tree-driller meets 124 as the follow-up to diameter. Dual-native with [[Dynamic Programming]] #42.
 - **B3 split into three entries where most sources have one.** #8, #9 and #10 all "pass information down", and I nearly merged them. Kept apart because the *kind* of descending state differs — copied scalar, mutated container, accumulating map — and only the last two require an undo. That axis was missing from my first draft of this material and its absence would have hidden #10 entirely.
 - **Morris (#3) included.** Tail-flavoured, but it is a named follow-up to a top-50 problem and "mutate the structure to store your return path" has nowhere else to live.
 - **Euler tour (#15) here rather than in [[Segment Trees]].** The flattening is a tree idea; what you do with the resulting array is a range-query idea. Filed at the origin, linked forward.
 - **Level-order kept native despite also appearing in [[N-ary Trees]] and being cross-listed in [[Stack and Queue]].** Correct under the cross-listing rule, and the alternative — a binary tree file without level-order — is absurd.
-- **Tree DP is mostly cross-listed rather than native**, which leaves B2 looking thinner than the topic is: four entries and three pointers where the material is genuinely deep. I think that is right, since the machinery belongs to DP, but a reader drilling only this file could reasonably want #124 and #337 promoted.
+- **Tree DP #19 and #20 promoted from ↗.** B2 was thinner than the topic: a reader drilling only this file never saw the clamp or the tuple return. Dual-native with [[Dynamic Programming]] #42 / #41 — the machinery still lives there; the tree-shaped statement lives here.
 
 **Step 4B — reverse sweep**
 
 Twenty-six plain-language descriptions navigated against the family headings. One failure, one collision:
 
 - **"Walk the tree without recursion because it is too deep"** resolved only through #1's body text, not through any heading. The iterative-stack traversal is genuinely a *different* thing from the recursive one — it is what you write when `h` is large — and it is currently a clause inside #1 plus a cross-list. Left merged, but flagged: if the stack-overflow framing matters to you, this deserves promotion.
-- **"Find the path with the largest sum"** landed on both #5 and ↗ LC 124. Checked and correct: the second genuinely is the first plus clamping, and the cross-list says so.
+- **"Find the path with the largest sum"** landed on both #5 and #19. Checked and correct: the second is the first plus clamping.
 
 **What I am uncertain about**
 

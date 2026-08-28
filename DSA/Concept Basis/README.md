@@ -20,32 +20,32 @@ The no-redundancy rule still applies **within** a topic. Two problems in the sam
 
 | Topic                                    | Native | ↗   | Status                                                    |
 | ---------------------------------------- | ------ | --- | --------------------------------------------------------- |
-| [[Stack and Queue]]                      | 23     | 4   | Draft · 4B passed · **4C found 2**                        |
-| [[Graphs]]                               | 33     | 5   | Draft · 4B passed                                         |
-| [[Dynamic Programming]]                  | 68     | 4   | Draft · 4B passed                                         |
-| [[Heap]]                                 | 24     | 5   | Draft · 4B passed · **4C found 4**                        |
+| [[Stack and Queue]]                      | 25     | 4   | Draft · 4B passed · **4C found 2** · FreqStack added          |
+| [[Graphs]]                               | 37     | 7   | Draft · 4B passed · Clone Graph promoted · UF dual-native G5 |
+| [[Dynamic Programming]]                  | 75     | 3   | Draft · 4B passed · gap cluster + palindrome table added  |
+| [[Heap]]                                 | 25     | 7   | Draft · 4B passed · **4C found 4** · 1642 split + multiset ↗  |
 | [[Binary Search]]                        | 21     | 4   | Draft · 4B passed · **4C found 2** · stale flag fixed     |
 | [[Segment Trees]]                        | 13     | 4   | Draft · 4B passed · mostly tail scope                     |
-| [[Binary Trees]]                         | 18     | 5   | Draft · 4B passed · **4C found 1**                        |
-| [[Binary Search Trees]]                  | 16     | 3   | Draft · 4B found 1                                        |
+| [[Binary Trees]]                         | 20     | 3   | Draft · 4B passed · **4C found 1** · 124 / 337 promoted       |
+| [[Binary Search Trees]]                  | 17     | 3   | Draft · 4B found 1 · duplicate handling promoted              |
 | [[N-ary Trees]]                          | 12     | 4   | Draft · 4B found 1 · smallest topic, honestly so          |
 | [[Tries]]                                | 18     | 4   | Draft · 4B found 2                                        |
-| [[Sliding Window]]                       | 15     | 7   | Draft · 4B found 1 · fixed **and** variable length        |
-| [[Two Pointers]]                         | 19     | 5   | Draft · 4B found 1 + 1 named-list sweep                   |
+| [[Sliding Window]]                       | 16     | 8   | Draft · 4B found 1 · k-sources window added               |
+| [[Two Pointers]]                         | 21     | 5   | Draft · 4B found 1 + mismatch budget · Celebrity added        |
 | [[Prefix Sums & Difference Arrays]]      | 23     | 8   | Draft · 4B found 1 · **4C found 2** · positional tables   |
 | [[Arrays]]                               | 14     | 9   | Draft · 4B found 1 · hub topic · **holds the name index** |
-| [[Sorted Containers & Order Statistics]] | 14     | 6   | Draft · 4B found 1 · usage patterns, not structures       |
+| [[Sorted Containers & Order Statistics]] | 14     | 7   | Draft · 4B found 1 · usage patterns · #12 is C++ pbds vs BIT  |
 | [[Backtracking]]                         | 20     | 7   | Draft · 4B found 2 · 1 tail entry                         |
-| **Hashing**                              | —      | —   | **Not started — confirmed gap, see below**                |
-| [[Linked List]]                          | 16     | 11  | Draft · 4B found 1 · **4C found 4** · see step 4C below   |
-| Greedy                                   | —      | —   | Not started                                               |
-| [[Bit Manipulation]]                     | 18     | 10  | Draft · 4B found 1 · 4C closed the Math hedge             |
-| Strings (KMP / Z / rolling hash)         | —      | —   | Not started                                               |
-| Intervals                                | —      | —   | Not started                                               |
-| Matrix                                   | —      | —   | Not started                                               |
-| Union-Find                               | —      | —   | Not started                                               |
-| [[Math & Number Theory]]                 | 25     | 6   | Draft · 4B found 1 · fuzziest boundary in the basis       |
-| Design                                   | —      | —   | Not started                                               |
+| [[Hashing]]                              | 10     | 8   | Draft · 4B/4C at write · Arrays A3 dual-native               |
+| [[Linked List]]                          | 16     | 12  | Draft · 4B found 1 · **4C found 4** · see step 4C below   |
+| [[Greedy]]                               | 22     | 16  | Draft · 4B filled 2 empty cells · Intervals hedge closed |
+| [[Bit Manipulation]]                     | 22     | 10  | Draft · 4B found 1 · gap pass + K7 toolkit                |
+| [[Strings]]                              | 11     | 10  | Draft · 4B/4C run at write · KMP / Z / hash / Manacher / SA |
+| [[Intervals]]                            | 13     | 12  | Draft · 4B filled 1 empty cell · typed-event sweep is I2, not the whole file |
+| [[Matrix]]                               | 9      | 11  | Draft · 4B/4C at write · Arrays dual-native #5/#6            |
+| [[Union-Find]]                           | 9      | 7   | Draft · 4B/4C at write · Graphs G5 stays native · #9 rollback tail |
+| [[Math & Number Theory]]                 | 26     | 7   | Draft · 4B found 1 · stars and bars added                     |
+| [[Design]]                               | 11     | 12  | Draft · 4B/4C at write · pairing / versioning / encoding     |
 | [[Sorting & Custom Comparators]]         | 19     | 11  | Draft · 4B found **2** · 4C found 3 + 1 false positive    |
 
 > [!tip] **Closed gap: incrementally maintained sorted containers.** Four files independently hit the same missing idea — a structure you insert into *and* query by rank as you sweep — and it is now written. The division of labour: [[Binary Search Trees]] S4 gives the **structure** (why balance matters, what subtree-size augmentation buys), [[Segment Trees]] #3 gives the **portable implementation** (value-indexed BIT), and [[Sorted Containers & Order Statistics]] gives the **usage** — which query needs which structure, windowed multisets, offline reordering, and the language-library realities. Start with that file's lattice.
@@ -149,7 +149,7 @@ Eight observations worth carrying forward.
 
 **The worst result came from the family I knew best.** Both DP failures were in D1, linear DP, the most familiar material in the basis. Familiarity suppresses the question "what am I taking for granted?" — every entry in that file silently assumed the input's own index order until an axis asked where the order comes from.
 
-**File size predicts findings, not file quality.** DP has 68 entries and produced two misses; Segment Trees has 13 and produced none. A clean pass on a small file is weak evidence, and the two clean passes here should be read as such rather than as vindication.
+**File size predicts findings, not file quality.** DP has 75 entries and produced two 4B misses; Segment Trees has 13 and produced none. A clean pass on a small file is weak evidence, and the two clean passes here should be read as such rather than as vindication.
 
 **Collisions are a signal to check, not a verdict.** Five descriptions landed on two entries each. One was a real missing axis; the rest were single ideas legitimately appearing on two containers, and were correctly left merged.
 
@@ -159,11 +159,11 @@ Eight observations worth carrying forward.
 
 **An axis can be listed and still have no entry, and the cross-product cannot see it.** [[Sliding Window]]'s miss was not a missing axis — *is the predicate monotone in length* was already in the table. It appeared only as a "what breaks" note, with an entry for the negatives break and nothing for the non-monotone break. From the axis table's side the cell looks occupied, because the axis is present; from the file's side it looks complete, because every entry maps to some axis value. **Step 2 must be run as a genuine cross-product with a named entry per occupied cell, not as a checklist of axes that exist.** The new discipline: for every axis *value*, point at the entry that carries it, and if you cannot, that is a finding.
 
-> [!danger] **Build order. Hashing is the confirmed gap.** [[Arrays]] A3 is currently absorbing it — complement lookup, canonical keys, frequency maps, seen-sets — and [[Prefix Sums & Difference Arrays]] P2 leans on it throughout. It is a real topic with no file. **Build it next.** After that: **Intervals** and **Matrix**, the last two array-chapter destinations with no file. **Bit Manipulation** and **Sorting** are now written; [[Math & Number Theory]]'s bit-adjacent hedge is closed, and [[Arrays]]'s sorting-boundary cut was reviewed and upheld.
+> [!danger] **Build order.** Every topic file is now written. [[Matrix]] and [[Union-Find]] closed the last two gaps. [[Graphs]] G5 stays native (dual-native with Union-Find); Islands II stays a Graphs ↗. **Nothing left unstarted.** Hashing, Design, Strings, Intervals, Greedy, Bit Manipulation and Sorting hedges named above are closed.
 
 > [!tip] **Looking for a problem by name, not by idea?** Each file carries its own **named-algorithm table** for the names it owns — [[Arrays]] has the first one. A single basis-wide index was tried and abandoned: it ran to hundreds of rows, restated the exclusion tables without their reasoning, and rotted the moment any file was renumbered. Per-file tables stay correct because they only reference local IDs. **Sweeping curated lists by name is still worth doing as a check** — it is what found [[Two Pointers]] #19 and confirmed which topics had no file at all.
 
-> [!warning] **[[Arrays]] is a residue topic and will need re-cutting.** It is the one file defined by *what the others left behind* rather than by a mechanism, so its boundary moves every time a neighbouring file is written. Its confidence figure (~87%, the lowest in the basis) reflects that structural fact, not a weaker sweep.
+> [!warning] **[[Arrays]] is a residue topic.** It is the one file defined by *what the others left behind* rather than by a mechanism, so its boundary moved when Hashing and Matrix were written. A3 is dual-native with [[Hashing]]; Set Matrix Zeroes / Game of Life are dual-native with [[Matrix]]. The confidence figure was ~87% while those files were missing; it is ~90% now.
 
 ---
 
@@ -379,6 +379,11 @@ The practical consequence: treat each topic file as **closed under review, not c
 - [[Binary Search Trees]]
 - [[N-ary Trees]]
 - [[Tries]]
+- [[Strings]]
+- [[Hashing]]
+- [[Design]]
+- [[Matrix]]
+- [[Union-Find]]
 - [[Sliding Window]]
 - [[Two Pointers]]
 - [[Prefix Sums & Difference Arrays]]
@@ -388,4 +393,6 @@ The practical consequence: treat each topic file as **closed under review, not c
 - [[Math & Number Theory]]
 - [[Linked List]]
 - [[Sorting & Custom Comparators]]
+- [[Greedy]]
 - [[Bit Manipulation]]
+- [[Intervals]]

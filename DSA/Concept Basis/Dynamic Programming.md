@@ -26,33 +26,33 @@ Four adjustments:
 | **What the index means** | ending exactly at `i` · prefix through `i` · interval `[i, j]` · position in a digit string |
 | **What the state is keyed by** | an array position · **a derived value** (a difference, a remainder, a ratio) requiring a hash map · a set, as a bitmask |
 | **Where the DP order comes from** | the input's own index · **a sort you impose** (by end time, by ratio, by size) · a topological order · interval length |
-| **What else is in the state** | nothing · capacity/budget · count of pieces · phase/mode · bitmask of used items · accumulated run-length · agent positions |
-| **Transition span** | `O(1)` look-back · scan all previous `j < i` · **a binary-searched predecessor** · split point `k` inside an interval · subset enumeration |
+| **What else is in the state** | nothing · capacity/budget · count of pieces · phase/mode · bitmask of used items · accumulated run-length · agent positions · **digit-sum / remainder** |
+| **Transition span** | `O(1)` look-back · scan all previous `j < i` · **a binary-searched predecessor** · split point `k` inside an interval · subset enumeration · **a prefix of a group** |
 | **Combining operation** | min/max · sum (counting) · product · expectation · game-theoretic minimax |
 | **Direction** | forward from base · backward from target · both roots (rerooting) |
 | **What is returned** | the value · a count · the object itself (reconstruction) |
-| **What makes the naive version too slow** | inner scan → binary search · window max → monotonic deque · range sum → prefix sums · a whole dimension → priority queue or greedy · absurd `n` → matrix power |
+| **What makes the naive version too slow** | inner scan → binary search · window max → monotonic deque · range sum → prefix sums · **inner max over a range of keys → Fenwick / segment tree** · a whole dimension → priority queue or greedy · absurd `n` → matrix power |
 | **Assumption that breaks** | cycles break memoisation · negatives break monotone transitions · loop order silently swaps combinations and permutations |
 
 ## Shape of this topic
 
 ```
 D1  Linear — "ending at" vs "prefix"     10
-D2  Knapsack — choose or don't            8
+D2  Knapsack — choose or don't           10
 D3  Multi-sequence                        7
 D4  Grid — beyond "ending at"             5
 D5  Front partition                       3
-D6  Interval                              7
+D6  Interval                              9
 D7  State machine                         2
 D8  Tree DP                               4
 D9  Bitmask                               4
-D10 Digit DP                              3
-D11 Optimisations                         8
+D10 Digit DP                              4
+D11 Optimisations                         9
 D12 Probability & expectation             3
-D13 Miscellaneous                         4
+D13 Miscellaneous                         5
 ```
 
-**68 native entries, plus 4 cross-listed (↗).** A ↗ entry is developed more fully in the named topic, but it lives here too — see [[README]] on cross-listing.
+**75 native entries, plus 3 cross-listed (↗).** A ↗ entry is developed more fully in the named topic, but it lives here too — see [[README]] on cross-listing.
 
 > [!info] **Numbers are stable IDs assigned in order of addition, not reading order.** Entries are grouped by family, so a later-added entry keeps its high number inside the family it belongs to. This keeps cross-file references from rotting every time the basis grows.
 
@@ -72,7 +72,7 @@ D13 Miscellaneous                         4
 | 6 | Decode Ways | LC **91** | **Variable-length look-back with validity conditions.** Transitions reach back one or two characters depending on whether the substring is legal. |
 | 7 | Word Break | LC **139** | **Scan every previous split point.** `dp[i]` looks at all `j < i` instead of a fixed offset — the `O(n²)` prefix shape. |
 | 8 | Longest Increasing Subsequence | LC **300** | **"Ending at" combined with scan-all-previous**, filtered by a comparison. The most reused shape in this file. |
-| 67 | Maximum Profit in Job Scheduling | LC **1235** | **Weighted interval scheduling — sort by end time so the past becomes a prefix.** Choosing non-overlapping intervals to maximise value looks like it needs a set, not an index, until you sort by end: now `dp[i] = max(dp[i-1], value[i] + dp[last job ending ≤ start[i]])`, and that predecessor is found by binary search rather than a scan. **The sort is what creates the DP order** — this is the canonical case of an input having no natural index until you impose one. Unweighted, it degenerates to the greedy "take the earliest-ending" ([[Heap]] #17), and knowing why weights break that greedy is the interview question. |
+| 67 | Maximum Profit in Job Scheduling | LC **1235** | **Weighted interval scheduling — sort by end time so the past becomes a prefix.** Choosing non-overlapping intervals to maximise value looks like it needs a set, not an index, until you sort by end: now `dp[i] = max(dp[i-1], value[i] + dp[last job ending ≤ start[i]])`, and that predecessor is found by binary search rather than a scan. **The sort is what creates the DP order** — this is the canonical case of an input having no natural index until you impose one. Unweighted, it degenerates to the greedy "take the earliest-ending" ([[Greedy]] #1; the sort-key half is [[Sorting & Custom Comparators]] #13), and knowing why weights break that greedy is the interview question. The interval *objects* — merge, sweep, calendars — are [[Intervals]], not this. Unweighted *events you attend at most once, with a heap of deadlines*, is [[Heap]] #17. |
 | 68 | Longest Arithmetic Subsequence | LC **1027** | **Index the state by a *value*, not by a position.** The state is `(index, common difference)`, and the difference is unbounded, so the second dimension is a hash map per index rather than an array. Turns a `O(n³)` scan into `O(n²)`. The move — *let the state be keyed by a derived quantity you cannot array-index* — is the same reframing that powers value-indexed BITs in [[Segment Trees]] #3, and it recurs whenever the thing that determines the future is a relationship rather than a location. |
 
 ## D2 · Knapsack — choose or don't choose
@@ -87,6 +87,8 @@ D13 Miscellaneous                         4
 | 14 | Combination Sum IV | LC **377** | The permutation counterpart of #13 — identical DP with the loops swapped. Kept because seeing the pair side by side is what makes the rule stick. |
 | 15 | Last Stone Weight II | LC **1049** | **Minimising a difference is subset-sum nearest to half.** Recognising an optimisation problem as a reachability problem. |
 | 16 | Ones and Zeroes | LC **474** | **Knapsack with two independent capacities.** Capacity is a vector, not a scalar. |
+| 70 | Knapsack 2 | AtCoder **EDPC-E** | **Invert the knapsack when capacity is huge and value is not.** `W` is `10⁹` so `dp[weight]` does not fit; `V` is small, so `dp[value] = minimum weight that achieves this value`, then the answer is the largest `v` with `dp[v] ≤ W`. Same invert-the-state instinct as Super Egg Drop (#65), applied to D2. The recognition signal is an asymmetric bound: one axis of the naive table is `10⁹`, the other is `10⁵`. |
+| 74 | Maximum Value of K Coins From Piles | LC **2218** | **Grouped knapsack: from each group you take a *prefix*, not an arbitrary subset.** Each pile is a stack, so taking `t` coins from it means the first `t` of its prefix sums. State is `(pile index, coins remaining)`; the transition tries every prefix of the current pile. Distinct from #12 — bounded knapsack is "up to `c` copies of the *same* item"; here the items in a group are different and the feasible sets are nested prefixes. Same shape as "exactly one item from each group" (the prefix is then length 0 or 1). |
 
 ## D3 · Multi-sequence
 
@@ -118,7 +120,7 @@ D13 Miscellaneous                         4
 
 | # | Problem | Source | The new idea |
 |---|---|---|---|
-| 29 | Palindrome Partitioning II | LC **132** | **`dp[i]` = best partition of prefix `i`; try every start of the final piece.** The prefix-partition shape. |
+| 29 | Palindrome Partitioning II | LC **132** | **`dp[i]` = best partition of prefix `i`; try every start of the final piece.** The prefix-partition shape. The `isPalindrome[l][r]` check this needs is the table in #75 — fill that first, then partition. |
 | 30 | Partition Array for Maximum Sum | LC **1043** | **Bounded piece length, with each piece's value depending on the whole piece** rather than summing its elements. |
 | 31 | Split Array Largest Sum | LC **410** | **`dp[i][k]` — prefix plus a piece count.** Also the first place you see that a monotone answer permits binary search instead of DP entirely (see #56). |
 
@@ -133,6 +135,8 @@ D13 Miscellaneous                         4
 | 36 | Strange Printer | LC **664** | **Layered covering.** Operations stack, so equal characters far apart can be produced by one stroke — the transition merges non-adjacent positions. |
 | 37 | Longest Palindromic Subsequence | LC **516** | **Expand an interval from both ends.** Match shrinks both, mismatch branches on one. |
 | 38 | Predict the Winner | LC **486** | **Two-player minimax on intervals.** Store the score *difference* so one table serves both players. |
+| 69 | Different Ways to Add Parentheses · Boolean Parenthesization | LC **241** · *GFG / Striver MCM* | **The split is an operator, and the state is every value (or True *and* False) the interval can evaluate to.** Matrix Chain (#32) stores a cost; this stores a *multiset of results*, because `T ∨ F` and `F ∨ T` are different contributions than a min. Boolean parenthesization is the same table with two counts per interval — ways to be True and ways to be False — combined by the operator at `k`. New because the recurrence is over *semantics of a symbol*, not over a numeric combine. |
+| 75 | Palindromic Substrings | LC **647** | **The `dp[i][j]` palindrome table: a range is a palindrome iff the ends match and the inside is a palindrome.** Fill by increasing interval length; `O(n²)` cells, `O(1)` each. Expand-around-centre is faster for *counting* ([[Two Pointers]] #6), but the table is the preprocessing #29 needs and the thing several interviewers ask for by name. Distinct from #37: LPS *optimises* over palindromic subsequences; this *classifies* contiguous ranges. Manacher is [[Strings]] #7. |
 
 ## D7 · State machine
 
@@ -145,8 +149,8 @@ D13 Miscellaneous                         4
 
 | # | Problem | Source | The new idea |
 |---|---|---|---|
-| 41 | House Robber III | LC **337** | **Return a tuple up the recursion** — `(best if I take this node, best if I don't)` — so the parent can choose without re-descending. |
-| 42 | Binary Tree Maximum Path Sum | LC **124** | **Return one quantity, record another.** You return the best *downward* path but update the global answer with the *through-node* path. The two differ, and conflating them is the classic bug. |
+| 41 | House Robber III | LC **337** | **Return a tuple up the recursion** — `(best if I take this node, best if I don't)` — so the parent can choose without re-descending. Dual-native with [[Binary Trees]] #20. |
+| 42 | Binary Tree Maximum Path Sum | LC **124** | **Return one quantity, record another.** You return the best *downward* path but update the global answer with the *through-node* path. The two differ, and conflating them is the classic bug. The tree-shaped statement — clamp negatives, then combine — is [[Binary Trees]] #19. |
 | 43 | Sum of Distances in Tree | LC **834** | **Rerooting.** Solve for one root, then transform to every other root in `O(n)` by adjusting along each edge, instead of `n` separate traversals. |
 | 44 | Karen and Supermarket | CF **815C** | **Tree knapsack — merging child DP tables.** Each subtree returns an array indexed by items taken, and a parent merges children pairwise. The surprise is the complexity: bounding merges by subtree size makes it `O(n²)`, not exponential. Where #41 returns two numbers, this returns a whole table. |
 
@@ -166,6 +170,7 @@ D13 Miscellaneous                         4
 | 49 | Numbers At Most N Given Digit Set | LC **902** | **Position-by-position with a tight flag.** The flag tracks whether the prefix still hugs `N`'s bound, which is what makes counting-below-a-limit tractable. |
 | 50 | Non-negative Integers without Consecutive Ones | LC **600** | **Carry a constraint between adjacent positions.** The state remembers the previous digit, so digit DP composes with a local rule. |
 | 51 | Counting Numbers | CSES **2220** | **The `started` / leading-zero flag.** Complete digit DP needs a second boolean beside `tight`, because leading zeros must not count as digits. LeetCode's digit problems dodge this, which is why #49 and #50 alone leave you unable to write a general digit DP. |
+| 73 | Count of Integers | LC **2719** | **Carry a running numeric constraint — digit sum, or value `mod m` — as another coordinate of the digit-DP state.** Tight and leading-zero tell you *what you are allowed to place*; they do not remember *what you have placed*. Counting `≤ N` whose digits sum to `s` (or lie in `[min_sum, max_sum]`, or `n ≡ k (mod m)`) needs that accumulator. New because #49–#51 are complete on the *bound* and silent on the *payload*. Same skeleton, one extra integer in the memo key. Count-set-bits on `1…n` is this payload in binary with a closed form, so you do not need the DP — [[Bit Manipulation]] #21. |
 
 ## D11 · Optimisations
 
@@ -181,6 +186,7 @@ D13 Miscellaneous                         4
 | 57 | Candies | AtCoder **EDPC-M** | **Prefix sums over DP states.** When a transition sums a contiguous *range* of previous states, precompute the row's prefix sums and each transition becomes `O(1)`. Turns `O(n·k²)` into `O(n·k)`. The canonical teaching problem, and LeetCode has nothing equivalent. |
 | 58 | Closest Subsequence Sum | LC **1755** | **Meet in the middle.** When `n ≈ 40`, `2ⁿ` is impossible but `2^(n/2)` is fine — split, enumerate both halves, then match across with sorting or binary search. |
 | 59 | Throwing Dice | CSES **1722** | **Matrix exponentiation for linear recurrences.** When `n` reaches `10¹⁸`, express the transition as a matrix and exponentiate by squaring for `O(k³ log n)`. The signal is a fixed-width recurrence with an absurd `n`. |
+| 71 | Flowers | AtCoder **EDPC-Q** · LC **2407** | **The inner `max` over previous states is a range query on keys, so a Fenwick or segment tree replaces the scan.** `dp[i] = v[i] + max{ dp[j] : a[j] < a[i] }` is LIS-with-values; patience (#52) cannot carry `v[i]`. Index the tree by compressed `a[i]`, point-update `dp[i]`, prefix-max query for the best legal predecessor. `O(n log n)` instead of `O(n²)`. Distinct from #52 (binary search on a *tails* array) and from #57 (prefix sums on the DP *row's own indices*). The inner loop is over a *value axis* — the structure is [[Segment Trees]] #2 / #3, used as a DP engine rather than as a range-query answer. |
 
 ## D12 · Probability & expectation
 
@@ -198,6 +204,7 @@ D13 Miscellaneous                         4
 | 64 | Unique Binary Search Trees | LC **96** | **Count structures by fixing a root and multiplying subtree counts.** The Catalan shape — combinatorial DP where the transition is a product over a split. |
 | 65 | Super Egg Drop | LC **887** | **Invert the state and the answer.** Instead of "minimum moves for `k` eggs and `n` floors," define "maximum floors coverable with `k` eggs and `m` moves." The strongest single move in this file. |
 | 66 | Grundy's Game | CSES **1730** | **Grundy numbers.** Impartial games decompose into independent piles; each position gets a Grundy value via `mex` of its moves, and the XOR of pile values decides the winner. Generalises the ad-hoc parity reasoning in #38. *Tail — mostly quant and trading interviews.* |
+| 72 | K Inverse Pairs Array | LC **629** | **DP over permutations: the state is "first `i` numbers, exactly `k` inversions" (or "length `i`, last placed is `j`").** Inserting `n` into a permutation of `1…n−1` adds between `0` and `n−1` new inversions depending on the slot, so `dp[i][k]` folds in `dp[i−1][k] … dp[i−1][k-(i-1)]` — and that range-sum is #57. Not knapsack (the items are positions in an order) and not bitmask TSP (you are not tracking a set). AtCoder T (Permutation) is the teaching version with comparison constraints between adjacent places. |
 
 ---
 
@@ -209,7 +216,6 @@ Developed more fully in the named topic, but you will meet them here and they ar
 |---|---|---|---|
 | ↗ | Longest Increasing Path in a Matrix | LC **329** | **Memoisation is only legal once you have proved acyclicity.** Strictly increasing values are what make the grid a DAG. The most important reminder in this file about *when DP is allowed at all*. [[Graphs]] #12. |
 | ↗ | Shortest Path Visiting All Nodes | LC **847** | Bitmask state driven by a BFS frontier rather than a recurrence — the same `(node, mask)` state as #46, reached by a different machine. Worth doing right after D9. [[Graphs]] #8. |
-| ↗ | Palindromic Substrings | LC **647** | The `dp[i][j]` "is this range a palindrome" table, which several interviewers ask for by name even though expand-around-centre is better. Strings basis. |
 | ↗ | Word Break II | LC **140** | Where DP stops and search begins: counting or testing is DP (#7), but *enumerating every solution* is backtracking with memoised feasibility as a pruning aid. [[Backtracking]] #16, where the memoised value is the whole set of completions rather than a boolean; the general test is [[Backtracking]] #14. |
 
 ---
@@ -237,6 +243,11 @@ Developed more fully in the named topic, but you will meet them here and they ar
 | Minimum Path Sum | LC **64** | D1 | As above. |
 | Triangle / Minimum Falling Path Sum | LC **120**, **931** | D1 | Same, with a different neighbour set. |
 | Minimum Insertion Steps to Make a String Palindrome | LC **1312** | #37 | `n − LPS`. |
+| Count Different Palindromic Subsequences | LC **730** | #75 · #37 | Interval palindrome table plus a count; the classification is #75, the optimisation shape is #37. |
+| Largest Sum of Averages | LC **813** | #30 | Front partition; piece value is a mean. |
+| Number of Digit One · Numbers With Repeated Digits | LC **233** · **1012** | #73 | Digit DP with a different payload (count of a digit, "already repeated"). |
+| Maximum Balanced Subsequence Sum | LC **2926** | #71 | Fenwick on a compressed key; same query. |
+| Build Array Where You Can Find The Maximum Exactly K Comparisons | LC **1420** | #72 | Permutation DP with a "current maximum" extra. |
 | Stone Game | LC **877** | #38 | Minimax interval with a parity shortcut. |
 | Best Time to Buy and Sell Stock with Fee | LC **714** | #39 | A phase machine with a constant subtracted. |
 | Count Vowels Permutation | LC **1220** | #39 | A five-state machine. |
@@ -245,6 +256,12 @@ Developed more fully in the named topic, but you will meet them here and they ar
 | Diameter of Binary Tree | LC **543** | #42 | Return-one-record-another with counts instead of sums. |
 | Longest Univalue Path | LC **687** | #42 | As above, with an equality guard. |
 | Constrained Subsequence Sum | LC **1425** | #53 | The same deque-prunes-dominated-states move as Jump Game VI. Do one, not both. |
+| Knapsack 1 | AtCoder **EDPC-D** | #9 | The ordinary 0/1 table; #70 is the invert. |
+| Profitable Schemes | LC **879** | #16 | Two capacities (members and profit). |
+| Minimize the Difference Between Target and Chosen Elements | LC **1981** | #74 | One pick from each row — grouped knapsack with prefix length 1. |
+| Longest Palindromic Substring | LC **5** | #75 | The *length* question; expand-around-centre is the better algorithm and lives in [[Two Pointers]] #6. The table is still #75. |
+| Palindrome Partitioning | LC **131** | #29 | Enumeration of every cut, not the min-cut count — [[Backtracking]]. |
+| Evaluate Expression to True *(min-cost variant)* | *GFG / InterviewBit* | #69 | Counting True and False is the idea; min-cost is the same table with min instead of sum. |
 
 ---
 
@@ -256,7 +273,7 @@ Developed more fully in the named topic, but you will meet them here and they ar
 - **Cherry Pickup (#27) and Cherry Pickup II (#25) both kept.** II teaches synchronised agents; I teaches that a round trip *is* two outbound trips. Defensible to merge if the reversal feels obvious to you.
 - **State machine (D7) as its own family.** Under your scheme it would sit in "ending at." Split for visibility, not because the state is fundamentally different. ==Fold it back if the separation feels artificial.==
 - **Split Array Largest Sum listed twice** (#31 and #56), once as partition DP and once as binary-search-on-answer. Intentional — recognising that a monotone answer replaces the DP is a separate idea from the DP itself.
-- **Palindromic substring DP excluded** to Strings. Arguable: some interviewers want the `dp[i][j]` table specifically.
+- **Palindromic substring `dp[i][j]` (#75) pulled native.** It was sitting as a Strings ↗ because expand-around-centre is the better *count*. The table is interval DP — #29 needs it, interviewers ask for it by name — so it belongs here; expand stays in [[Two Pointers]] #6.
 
 **What the re-sweep changed**
 
@@ -280,9 +297,11 @@ Three axis rows were added: *what the state is keyed by*, *where the DP order co
 - **Divide-and-conquer optimisation, Knuth optimisation, convex hull trick** remain excluded — genuinely competitive-programming machinery, out of scope rather than out of source.
 - **Grundy numbers (#66)** sits right on the scope boundary. Included because game theory does surface at trading firms, but skip it if you are not targeting those.
 - **SOS DP (sum over subsets)** excluded as CP-only. Lower confidence on this one than on the optimisations above.
-- **D13 is a real family, not a dumping ground** — but it is the section most likely to grow.
+- **D13 is a real family, not a dumping ground** — but it is the section most likely to grow. #72 (permutation / inversion DP) landed here because it is neither knapsack nor bitmask TSP; if a later pass grows a "combinatorial construction" family, this is the first move.
 
-**Completeness confidence: ~93%.** Unchanged in number but not in meaning. It rose from 88% after the source re-sweep, then should honestly have *fallen* when 4B found an outright absence in the family I was most confident about — and rises back now that the two missing axes are named. Treat the figure as "confidence given the axes currently listed," which is the only thing any of these numbers ever measured.
+**Gap pass after 4B.** A later completeness check against AtCoder EDPC, Striver MCM, and LC hards named six in-scope absences plus the palindrome table. All seven are now native in existing families — no new section: inverted knapsack and grouped knapsack in D2 (#70, #74); boolean parenthesization and the palindrome table in D6 (#69, #75); digit-sum / `mod m` in D10 (#73); Fenwick DP in D11 (#71); permutation / inversion DP in D13 (#72). Knuth / CHT / SOS / plug DP stay out of scope.
+
+**Completeness confidence: ~95%.** It rose from 88% after the source re-sweep, should honestly have *fallen* when 4B found an outright absence in the family I was most confident about, rose back once those two axes were named, and ticks up again now that the named in-scope cluster is filled. Treat the figure as "confidence given the axes currently listed," which is the only thing any of these numbers ever measured. Remaining miss risk is mostly D13 combinatorial constructions and CP-only optimisations I am deliberately not covering.
 
 ## Related Notes
 
@@ -292,9 +311,15 @@ Three axis rows were added: *what the state is keyed by*, *where the DP order co
 - [[Heap]]
 - [[Binary Search]]
 - [[Segment Trees]]
+- [[Prefix Sums & Difference Arrays]]
+- [[Two Pointers]]
 - [[Binary Trees]]
 - [[N-ary Trees]]
 - [[Tries]]
 - [[Backtracking]]
 - [[Math & Number Theory]]
 - [[Bit Manipulation]]
+- [[Greedy]]
+- [[Intervals]]
+- [[Strings]]
+- [[Matrix]]

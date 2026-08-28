@@ -19,7 +19,8 @@ A problem earns an entry only if solving it requires a mental move you did not a
 
 | Axis | Values |
 |---|---|
-| **What is stored** | raw values · indices · prefix sums · `(value, count)` pairs · a suspended frame · the cleaned output so far |
+| **What is stored** | raw values · indices · prefix sums · `(value, count)` pairs · a suspended frame · the cleaned output so far · **a stack per frequency** |
+| **What the O(1) query asks** | nothing — the stack *is* the model · the current minimum · **the most frequent value, LIFO among ties** |
 | **What triggers a pop, and why** | a match · a domain collision rule · domination by the incoming element · index expiry · **satisfaction** (this candidate has served its purpose) |
 | **Is each token's effect determined?** | yes, one outcome per symbol · **no, ambiguous** — the token could act several ways, so you carry a *range* of reachable states rather than one |
 | **Where the answer is read** | the popped element · what survives at the end · a counter accumulated across pops · the stack's depth |
@@ -38,14 +39,14 @@ STACK
 ├── S3 Collision / recency         1 idea
 ├── S4 Incremental cleaning        1 idea
 ├── S5 Simulation & verification   1 idea
-├── S6 Design (carried invariant)  2 ideas
+├── S6 Design (carried invariant)  3 ideas
 ├── S7 Monotonic stack             6 ideas
 └── S8 Stack as an explicit call stack   2 ideas
 QUEUE                              1 idea + 2 ↗
 DEQUE (monotonic)                  3 ideas + 2 ↗
 ```
 
-**23 native entries, plus 4 cross-listed (↗).** A ↗ entry is developed more fully in the named topic, but it lives here too — see [[README]] on cross-listing.
+**25 native entries, plus 4 cross-listed (↗).** A ↗ entry is developed more fully in the named topic, but it lives here too — see [[README]] on cross-listing.
 
 ---
 
@@ -96,6 +97,7 @@ Five distinct moves here, and they are commonly mistaken for one.
 |---|---|---|---|
 | 10 | Min Stack | LC **155** | **Auxiliary invariant stored per frame**, so an O(1) query survives arbitrary pops. |
 | 11 | Implement Queue using Stacks | LC **232** | **Amortised transfer between two stacks** — lazy reversal, plus the amortised-O(1) argument that justifies it. |
+| 25 | Maximum Frequency Stack | LC **895** | **The queried extreme is a frequency, and among equals you still need LIFO — so you keep a stack *per frequency*, not one min-per-frame.** `#10` stores a running min on each push. Here `pop` must return the most frequent value, breaking ties by recency, so a single stack cannot encode both. Maintain `val → freq`, `freq → stack<val>`, and a `maxFreq` counter: push increments freq and pushes onto that freq's stack; pop takes from `maxFreq`'s stack and decrements `maxFreq` when that stack empties. A heap keyed by frequency loses the LIFO among equals ([[Heap]] #15 is cooldown, not this). |
 
 ## S7 · Monotonic Stack
 
@@ -108,7 +110,7 @@ The single most important cluster in this file. Five genuinely different uses of
 | 14 | Trapping Rain Water | LC **42** | **Horizontal layers instead of vertical columns.** Pop the valley, bound it left and right, fill the slab. A new way of *seeing*, on machinery you already have from #13. |
 | 15 | Remove K Digits | LC **402** | **Greedy fused with monotonic popping under a budget.** The stack now enforces lexicographic optimality, not just ordering. |
 | 16 | Sum of Subarray Minimums | LC **907** | **Contribution counting.** Rather than enumerate subarrays, ask how many each element is responsible for: `(i - prevSmaller) * (nextSmaller - i)`. |
-| 17 | Maximal Rectangle | LC **85** | **Stack a 1D solution across rows.** Treat each row as the base of a histogram whose heights are running column counts, then run #13 once per row. The monotonic stack does not change; what is new is realising a 2D problem can be `n` copies of a 1D one. Developed further in the Matrix basis. |
+| 17 | Maximal Rectangle | LC **85** | **Stack a 1D solution across rows.** Treat each row as the base of a histogram whose heights are running column counts, then run #13 once per row. The monotonic stack does not change; what is new is realising a 2D problem can be `n` copies of a 1D one. ↗ from [[Matrix]] as Maximal Rectangle; native here because the stack argument is #13. |
 
 ## S8 · Stack as an Explicit Call Stack
 
@@ -117,7 +119,7 @@ Recursion *is* a stack. These are where you take that stack over manually, which
 | # | Problem | Source | The new idea |
 |---|---|---|---|
 | 18 | Binary Tree Inorder Traversal (iterative) | LC **94** | **Replace the call stack by hand.** Descend left pushing as you go, then pop, visit, and turn right. Once you can do this you can pause a traversal mid-flight, which recursion cannot. ↗ developed further in [[Binary Trees]] #1. |
-| 19 | Flatten Nested List Iterator | LC **341** | **A stack that survives between calls.** The traversal state lives in the object, so `next()` resumes where the last call stopped and nothing is flattened until asked for. #18 made the stack explicit; this makes it *persistent*. The same laziness over a search you *generate* rather than traverse is [[Backtracking]] #18, and over a tree it is [[Binary Search Trees]] #14. ↗ developed further in the Design basis. |
+| 19 | Flatten Nested List Iterator | LC **341** | **A stack that survives between calls.** The traversal state lives in the object, so `next()` resumes where the last call stopped and nothing is flattened until asked for. #18 made the stack explicit; this makes it *persistent*. The same laziness over a search you *generate* rather than traverse is [[Backtracking]] #18, and over a tree it is [[Binary Search Trees]] #14. The class wrapper is [[Design]] ↗ Flatten Nested List Iterator. Browser History *discards* the unused branch instead — [[Design]] #9. |
 
 ---
 
@@ -127,7 +129,7 @@ Recursion *is* a stack. These are where you take that stack over manually, which
 
 | # | Problem | Source | The new idea |
 |---|---|---|---|
-| 20 | Design Circular Queue | LC **622** | **Ring buffer arithmetic.** Wraparound with modulo, and the full-versus-empty ambiguity — both indices coincide in each case, so you must either keep a size counter or waste one slot. The only idea in this file that is about the queue *as a container* rather than as a tool. |
+| 20 | Design Circular Queue | LC **622** | **Ring buffer arithmetic.** Wraparound with modulo, and the full-versus-empty ambiguity — both indices coincide in each case, so you must either keep a size counter or waste one slot. The only idea in this file that is about the queue *as a container* rather than as a tool. Two-ended is [[Design]] #11. |
 | ↗ | BFS / shortest path on unweighted graphs | LC **1091** etc. | The FIFO discipline is what makes the layer-equals-distance argument work. [[Graphs]] #2. |
 | ↗ | Binary Tree Level Order Traversal | LC **102** | Queue size at the top of the loop delimits a level. [[Binary Trees]] #2. |
 
@@ -178,7 +180,7 @@ Two more that people expect to find here and should not: **time-expiring windows
 
 ## Build notes
 
-- **22 native keepers plus 4 cross-listed.** 17 excluded as variations.
+- **25 native keepers plus 4 cross-listed.** 17 excluded as variations. Gap pass added #25 (FreqStack) into S6.
 - Keeper ratio is roughly **one in two candidates**, which is what puts the full basis near 250 rather than 500.
 - LC 862 was missed on the first pass. It surfaced by asking "does the *eviction reason* differ?" rather than "does the data structure differ" — that question is now probe 2 in the shared list.
 - **Three entries (#17, #18, #19) were previously exiled** to Matrix, Trees and Design under the old ownership rule. They are back, because a stack file that omits "how to write a traversal without recursion" is not a stack file.
@@ -190,6 +192,8 @@ Twenty-five plain-language descriptions were navigated against the family headin
 - **"Match brackets, but one symbol could be either an opener or a closer or nothing"** landed nowhere. That is #24, now added to S1. The axis it exposed — **is each token's effect determined or ambiguous?** — was absent, which is unsurprising given this file predated the axis method entirely. An axis table now exists and includes it.
 - **"Remove elements that can never be the answer again"** landed on both #12 and #21. Investigated and left alone: that is one idea (domination pruning) legitimately appearing on two containers, not two ideas collapsed into one. A collision is a *signal* to check, not automatically a fault.
 - **The re-sweep against CSES, AtCoder and Codeforces added exactly one entry** (#6), and that is a real result rather than a lazy one. LeetCode over-represents stacks and under-represents digit DP, flow and matrix exponentiation. Expect the old source constraint to have cost you heavily on [[Graphs]] and [[Dynamic Programming]], and barely at all here or on Arrays, Binary Search and Linked List.
+
+- **#25 (FreqStack) added on a later gap pass.** Min Stack (#10) stores a scalar per frame. The extreme here is a *count*, and among equals you still need LIFO, so the design is a stack per frequency. A heap of frequencies is the wrong tool.
 
 **Completeness confidence: ~94%.**
 
@@ -207,3 +211,7 @@ Twenty-five plain-language descriptions were navigated against the family headin
 - [[Backtracking]]
 - [[Math & Number Theory]]
 - [[Linked List]]
+- [[Greedy]]
+- [[Strings]]
+- [[Design]]
+- [[Matrix]]

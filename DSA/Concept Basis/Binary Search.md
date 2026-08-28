@@ -102,7 +102,7 @@ The search space stops being a line.
 | # | Problem | Source | The new idea |
 |---|---|---|---|
 | 15 | Median of Two Sorted Arrays | LC **4** | **Search a partition, not a value.** Choose how many elements to take from `A`; the cut in `B` is then forced by the size requirement. Check the four elements straddling the two cuts and shift. You never search for the answer at all — you search for the *split that makes the answer readable*, which appears nowhere else in this file. Binary search over the shorter array for `O(log min(m, n))`. |
-| 16 | Search a 2D Matrix · Search a 2D Matrix II | LC **74** · **240** | **Two matrices that look identical and are not.** In 74 the rows chain, so row-major flattening gives a genuine 1D sorted array and one binary search works. In 240 rows and columns are sorted independently and no flattening exists — instead you walk from the **top-right corner**, eliminating one row or one column per step in `O(m + n)`. Recognising which structure you have is the entire problem. |
+| 16 | Search a 2D Matrix · Search a 2D Matrix II | LC **74** · **240** | **Two matrices that look identical and are not.** In 74 the rows chain, so row-major flattening gives a genuine 1D sorted array and one binary search works. In 240 rows and columns are sorted independently and no flattening exists — instead you walk from the **top-right corner**, eliminating one row or one column per step in `O(m + n)`. Recognising which structure you have is the entire problem. ↗ from [[Matrix]]; the flatten is [[Matrix]] #1. |
 | 17 | Find K Closest Elements | LC **658** | **Binary search over window starts.** The predicate compares two elements a fixed distance apart — `a[mid]` against `a[mid + k]` — rather than one element against a target. Once you see the answer as "which window," the search space is `n - k` positions and the comparison is what makes it monotone. |
 
 ## B6 · Unbounded and continuous domains
@@ -174,8 +174,8 @@ Developed more fully in the named topic, but you will meet them while studying b
 | Maximum Running Time of N Computers | LC **2141** | #10 | Decomposable check with a **clamp** — `sum(min(bᵢ, t)) ≥ n·t`, because no battery can contribute more than the runtime itself. The clamp is a genuine wrinkle worth meeting once; it is not a separate idea. |
 | Divide Array Into Arrays / Cutting Ribbons | classic | #10 | Same `ceil`-and-sum allocation check. |
 | K-th Smallest Prime Fraction | LC **786** | #12 | Value-range search over fractions, counting with two pointers. |
-| Time Based Key-Value Store | LC **981** | #21 | `upper_bound` inside a hash bucket. |
-| Snapshot Array | LC **1146** | #21 | Same, indexed by version. |
+| Time Based Key-Value Store | LC **981** | #21 | `upper_bound` inside a hash bucket. The versioning model is [[Design]] #4. |
+| Snapshot Array | LC **1146** | #21 | Same search, indexed by version. The COW-vs-history model is [[Design]] #5. |
 | Search Suggestions System | LC **1268** | #21 | Sort, then `lower_bound` per prefix. A trie is the better answer — [[Tries]] #6. |
 | Kth Smallest Element in a BST | LC **230** | [[Binary Search Trees]] #2 | In-order traversal with a counter. Not a binary search despite the tree. |
 | Count of Smaller Numbers After Self | LC **315** | [[Segment Trees]] | Needs a BIT or merge sort, not a binary search. |
@@ -234,3 +234,7 @@ One near-miss worth recording: **"find the value closest to `x`"** resolves only
 - [[Two Pointers]]
 - [[Math & Number Theory]]
 - [[Linked List]]
+- [[Greedy]]
+- [[Strings]]
+- [[Design]]
+- [[Matrix]]

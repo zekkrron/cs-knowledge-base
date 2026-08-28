@@ -99,7 +99,7 @@ Developed more fully in the named topic, but you will meet them while studying t
 |---|---|---|---|
 | ↗ | Range Sum Query - Immutable | LC **303** | **The baseline you must rule out first.** No updates means prefix sums answer in `O(1)` with four lines and no structure. Reaching for a segment tree when the data is static is the most common way to lose points on this topic. [[Prefix Sums & Difference Arrays]] #1. |
 | ↗ | Sliding Window Maximum | LC **239** | A segment tree answers this in `O(n log n)` and a monotonic deque answers it in `O(n)`. Listed as the canonical **when not to use a segment tree** — a moving window is not a general range query. [[Stack and Queue]] #21. |
-| ↗ | Longest Increasing Subsequence | LC **300** | LIS as a segment tree over the *value* axis: for each element, query `max` over all smaller values and update at its own. Same `O(n log n)` as patience, but it survives generalisations patience cannot handle, like weighted LIS. The clearest payoff of #3's value-indexing idea. [[Dynamic Programming]] #52. |
+| ↗ | Longest Increasing Subsequence | LC **300** · **2407** | LIS as a segment tree over the *value* axis: for each element, query `max` over all smaller values and update at its own. Same `O(n log n)` as patience, but it survives generalisations patience cannot handle — weighted LIS, "LIS with max jump `k`". The clearest payoff of #3's value-indexing idea. Patience is [[Dynamic Programming]] #52; the Fenwick / segment-tree engine is [[Dynamic Programming]] #71. |
 | ↗ | Kth Ancestor of a Tree Node | LC **1483** | Binary lifting is a sparse table on a tree — literally the same doubling precomputation as #9, applied to ancestors instead of ranges. [[Graphs]] #29. |
 
 ---
@@ -116,9 +116,9 @@ Developed more fully in the named topic, but you will meet them while studying t
 | Count of Range Sum | LC **327** | #3 | Value-indexed BIT over prefix sums instead of over elements. |
 | Create Sorted Array through Instructions | LC **1649** | #3 | Two rank queries per insertion. |
 | Queries on a Permutation With Key | LC **1409** | #3 | BIT over positions with a moving front. |
-| My Calendar I / II | LC **729** · **731** | #11 | Interval overlap with a sorted map; the compression idea is #11's, and a `TreeMap` is the better answer at this size. |
+| My Calendar I / II | LC **729** · **731** | #11 | Interval overlap with a sorted map; the compression idea is #11's, and a `std::map` is the better answer at this size. [[Intervals]] #11 · #13. |
 | Rectangle Area II | LC **850** | #11 | Sweep line with a segment tree over compressed y-coordinates. The classic application, no new machinery. |
-| Number of Flowers in Full Bloom | LC **2251** | #11 | Difference array on compressed coordinates, then binary search. |
+| Number of Flowers in Full Bloom | LC **2251** | #11 | Difference array on compressed coordinates, then binary search. Queries-as-events without a tree is [[Intervals]] #7. |
 | Corporate Flight Bookings | LC **1109** | #4 | A difference array is enough when all updates precede all queries. Worth doing precisely to see that lazy propagation was unnecessary. |
 | Range Frequency Queries | LC **2080** | #7 | Positions bucketed by value, then binary search — a merge sort tree turned inside out. |
 | Longest Substring of One Repeating Character | LC **2213** | #6 | Struct nodes carrying prefix and suffix run lengths. Same augmentation principle. |
@@ -146,9 +146,9 @@ The one description that resolved to nothing was **"I keep inserting and need th
 
 **What I am uncertain about**
 
-- **Order-statistic trees / policy-based data structures** (`__gnu_pbds::tree`, or a balanced BST with subtree counts). They subsume #3 and #7 in a few lines. This was the **third** file to flag the missing sorted-container topic, after [[Heap]] and [[Binary Search]], which is what tipped it from a note into a confirmed gap — and it is now **closed** by [[Sorted Containers & Order Statistics]], where #1 and #3 here are the implementations it selects between.
+- **Order-statistic trees / policy-based data structures** (`__gnu_pbds::tree`, or a balanced BST with subtree counts). They subsume #3 and #7 in a few lines. This was the **third** file to flag the missing sorted-container topic, after [[Heap]] and [[Binary Search]], which is what tipped it from a note into a confirmed gap — and it is now **closed** by [[Sorted Containers & Order Statistics]], whose #12 is the C++ fork (BIT vs pbds).
 - **Segment tree beats** (range chmin/chmax with amortised complexity) — excluded, high confidence. Pure competitive programming.
-- **Li Chao tree, divide-and-conquer over queries, offline dynamic connectivity** — excluded as CP, consistent with the same call in [[Dynamic Programming]].
+- **Li Chao tree, divide-and-conquer over queries, offline dynamic connectivity** — Li Chao and D&C stay CP here. The DSU-with-rollback half of offline connectivity is now [[Union-Find]] #9; the time-segment-tree wrapping stays excluded here.
 - **Iterative bottom-up segment trees** — a shorter and faster implementation of #1, excluded as an implementation detail. Mild doubt: if you ever need to write one under time pressure it is the better one to know.
 - **How much of this belongs at all.** I have marked five entries [core] on the belief that value-indexed BIT counting and coordinate compression do surface in Indian SDE loops while lazy propagation mostly does not. That judgement is the biggest single risk in this file, and it is a scoping judgement rather than a technical one — worth checking against your actual target companies.
 
@@ -167,3 +167,6 @@ The one description that resolved to nothing was **"I keep inserting and need th
 - [[Prefix Sums & Difference Arrays]]
 - [[Sorted Containers & Order Statistics]]
 - [[Bit Manipulation]]
+- [[Intervals]]
+- [[Matrix]]
+- [[Union-Find]]

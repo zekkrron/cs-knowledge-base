@@ -19,7 +19,7 @@ created: 2026-08-27
 | **Where the overflow is** | an intermediate product · a factorial · an exponentiation · the `lcm` of two large numbers |
 | **Under a modulus** | `+` and `×` are free · **`÷` needs an inverse** · a negative result needs normalising · the modulus is prime, or it is not |
 | **Direction of counting** | iterate the objects and sum their parts · **iterate the parts and count the objects each appears in** |
-| **What breaks** | `int` overflow before you notice · `double` losing precision above `2⁵³` · `%` returning negative in C++, Java, Go · a sieve you cannot allocate · assuming the modulus is prime |
+| **What breaks** | `int` overflow before you notice · `double` losing precision above `2⁵³` · `%` returning negative in C++ · a sieve you cannot allocate · assuming the modulus is prime |
 
 ## Shape of this topic
 
@@ -27,18 +27,18 @@ created: 2026-08-27
 M1  Doing the arithmetic yourself         4 ideas
 M2  Euclid, and what follows from it      3 ideas
 M3  Primes, factors, divisors             3 ideas
-M4  Counting                              5 ideas
+M4  Counting                              6 ideas
 M5  Digits and bases                      3 ideas
 M6  Invariants instead of search          4 ideas
 M7  Integers in geometry                  1 idea
 M8  Randomness                            1 idea
 M9  Modular arithmetic in practice        1 idea
-                                          + 6 cross-listed ↗
+                                          + 7 cross-listed ↗
 ```
 
-**25 native entries, plus 6 cross-listed (↗).** See [[README]] on cross-listing.
+**26 native entries, plus 7 cross-listed (↗).** See [[README]] on cross-listing.
 
-> [!info] **Numbers are stable IDs assigned in order of addition, not reading order.** #25 was added by the reverse sweep and sits inside M4.
+> [!info] **Numbers are stable IDs assigned in order of addition, not reading order.** #25 and #26 were added by later sweeps and sit inside M4.
 
 ## Named algorithms in this file
 
@@ -52,6 +52,7 @@ M9  Modular arithmetic in practice        1 idea
 | **Sieve of Eratosthenes** | #9 |
 | Smallest-prime-factor sieve | #9 |
 | **nCr mod p** *(factorial + inverse tables)* | #11 |
+| **Stars and bars** · combinations with repetition | #26 |
 | **Pascal's Triangle** | #12 |
 | **Catalan numbers** | #13 |
 | **Inclusion–exclusion** | #14 |
@@ -74,7 +75,7 @@ The operators are taken away, or the numbers outgrow them.
 | 1 | Pow(x, n) | LC **50** | **Doubling: `aᵏ` needs `O(log k)` multiplications, because squaring halves the exponent.** Read `k` in binary and multiply in the base whenever the bit is set. The reason this is the file's first entry is that the same doubling reappears everywhere — `aᵏ mod m` is the workhorse of #7 and #11, and replacing the number by a **matrix** turns any linear recurrence into `O(log n)`, which is how you get the `n`-th Fibonacci number for `n = 10¹⁸`. Edge cases that are the actual test: negative `n` (invert), and `n = INT_MIN` (negating it overflows). |
 | 2 | Divide Two Integers | LC **29** | **Division without `/`: subtract the largest shifted copy of the divisor that still fits, repeatedly.** Doubling again, read from the other end — you are building the quotient's binary representation one bit at a time, so it is `O(log n)` rather than the `O(quotient)` of repeated subtraction. Kept as its own entry because the *overflow discipline* is the content: work in `long`, or negate both operands to be negative rather than positive, since `−2³¹` has a magnitude that `int` cannot hold and `INT_MIN / −1` is the one case that must be special-cased. A favourite precisely because it is impossible to pass without thinking about representation limits. |
 | 3 | Multiply Strings · Add Strings | LC **43** · **415** | **When the number will not fit in any primitive, arithmetic becomes digit-array work with explicit carries.** Addition is a single reversed pass; multiplication needs the index identity that is the real lesson — the product of digits `i` and `j` lands in positions `i + j` and `i + j + 1`, so you accumulate into an `m + n` buffer and normalise carries once at the end rather than shifting and adding `n` times. New because you are implementing the representation, not using it, and because the leading-zero strip at the end is where the wrong answers live. |
-| 4 | Reverse Integer | LC **7** | **Check for overflow *before* you cause it, because after the fact the evidence is gone.** In C++ and Java signed overflow gives you either undefined behaviour or a wrapped value you cannot distinguish from a legitimate result, so the test has to be `res > INT_MAX / 10` (or equal, with a digit check) *before* the multiply. New in general form: **detect a boundary by inverting the operation rather than by performing it**, which is also why you compare `a > limit / b` instead of `a * b > limit`. Small, universally applicable, and the thing an interviewer is actually watching for on any integer problem. |
+| 4 | Reverse Integer | LC **7** | **Check for overflow *before* you cause it, because after the fact the evidence is gone.** In C++ signed overflow is **undefined behaviour**, so the test has to be `res > INT_MAX / 10` (or equal, with a digit check) *before* the multiply. New in general form: **detect a boundary by inverting the operation rather than by performing it**, which is also why you compare `a > limit / b` instead of `a * b > limit`. Small, universally applicable, and the thing an interviewer is actually watching for on any integer problem. |
 
 ## M2 · Euclid, and what follows from it
 
@@ -101,6 +102,7 @@ The operators are taken away, or the numbers outgrow them.
 | 13 | Unique Binary Search Trees | LC **96** | **Catalan numbers, and the recurrence's *shape* is the recognisable part: `Cₙ = Σ Cᵢ · C_{n−1−i}`.** Split on the root, multiply the independent left and right counts, sum over every split. Worth an entry because the same numbers count valid parenthesis strings, triangulations of a polygon, monotone lattice paths under the diagonal, and stack-sortable permutations — so **recognising the recurrence tells you the answer before you have solved the problem.** The closed form `C(2n, n)/(n+1)` is the follow-up, and it needs #11 to evaluate under a modulus. |
 | 14 | Ugly Number III · Nth Magical Number | LC **1201** · **878** | **Inclusion–exclusion: count what each condition allows, subtract the double-counted overlaps, and the overlap of "divisible by `a`" and "divisible by `b`" is "divisible by `lcm(a, b)`".** So the count of numbers `≤ x` divisible by any of `a, b, c` is a signed sum over the `2³ − 1` non-empty subsets, with `lcm` as the intersection operator. New because the counting function is what a binary search on the answer then consumes (↗ below) — **the pair "monotone counting function + binary search" is the standard way to answer "the `n`-th number with property P" without generating anything.** Watch `lcm` overflow, per #5. |
 | 25 | Count Unique Characters of All Substrings | LC **828** | **Swap the order of summation: instead of iterating the objects and summing their parts, iterate the parts and count how many objects each one appears in.** Summing over all `O(n²)` substrings is hopeless; asking instead "for each character occurrence, how many substrings does it contribute to?" gives a per-element formula from its neighbouring occurrences, and the total falls out in `O(n)`. The cleanest instance to hold is `Σ over all subarrays of their sums = Σ a[i] · (i+1) · (n−i)`, where the factor counts the subarrays containing index `i`. New and unreasonably broad — it is what makes "sum of subarray minimums" tractable (↗ below, with a monotonic stack supplying the neighbour boundaries), and **its probabilistic form is linearity of expectation**: `E[Σ Xᵢ] = Σ E[Xᵢ]`, so you price each element's contribution independently and never reason about the joint distribution at all. Same move, two vocabularies. The bitwise form — Total Hamming Distance, summing over 32 independent bit positions — is [[Bit Manipulation]] #7. |
+| 26 | Count Sorted Vowel Strings | LC **1641** | **Stars and bars: indistinguishable items into bins is a binomial, not a search.** Non-negative solutions of `x₁ + … + xₖ = n` number `C(n + k − 1, k − 1)`. Two transformations you must own: **`xᵢ ≥ 1`** is `yᵢ = xᵢ − 1`, so `C(n − 1, k − 1)`; **upper bounds** `xᵢ ≤ c` is inclusion–exclusion (#14) on top of this, not a third identity. LC 1641 is combinations-with-repetition: a sorted length-`n` word over 5 letters is a non-decreasing sequence, which is exactly `C(n + 4, 4)`. New against #11 because #11 is *how to evaluate* `nCr`; this is *which `nCr` you are looking at* when the objects are identical. Derangements stay out — they are #14 on permutations, asked rarely. |
 
 ## M5 · Digits and bases
 
@@ -137,7 +139,7 @@ The operators are taken away, or the numbers outgrow them.
 
 | # | Problem | Source | The new idea |
 |---|---|---|---|
-| 24 | The four things that go wrong under a modulus | *concept* | **`%` is not the mathematical mod, and `(a·b) % m` overflows long before `m` does.** Four facts, each of which has cost people a submission. **One:** in C++, Java and Go, `−3 % 5` is `−3`, so any subtraction under a modulus needs `((x % m) + m) % m` — Python is the exception and this is the most common cross-language bug in the basis. **Two:** with `m ≈ 10⁹`, the product of two reduced values reaches `10¹⁸`, which fits in `int64` but *not* in `int32`, so the accumulator type is load-bearing; at `m ≈ 10¹⁸` even `int64` fails and you need `__int128` or a `mulmod`. **Three:** reduce after every operation, not at the end. **Four:** `%` is a division instruction and roughly twenty times the cost of an add, so in a tight loop `if (x >= m) x -= m` after an addition is a real speedup. Not an algorithm, and the most reliably useful entry in the file. |
+| 24 | The four things that go wrong under a modulus | *concept* | **`%` is not the mathematical mod, and `(a·b) % m` overflows long before `m` does.** Four facts, each of which has cost people a submission. **One:** in C++, `−3 % 5` is `−3`, so any subtraction under a modulus needs `((x % m) + m) % m` — Python is the exception and this is the most common cross-language bug in the basis. **Two:** with `m ≈ 10⁹`, the product of two reduced values reaches `10¹⁸`, which fits in `int64` but *not* in `int32`, so the accumulator type is load-bearing; at `m ≈ 10¹⁸` even `int64` fails and you need `__int128` or a `mulmod`. **Three:** reduce after every operation, not at the end. **Four:** `%` is a division instruction and roughly twenty times the cost of an add, so in a tight loop `if (x >= m) x -= m` after an addition is a real speedup. Not an algorithm, and the most reliably useful entry in the file. |
 
 ---
 
@@ -151,6 +153,7 @@ The operators are taken away, or the numbers outgrow them.
 | ↗ | Single Number | LC **136** | XOR cancellation — the algebra lives in [[Bit Manipulation]] #3; the aggregate-identity-instead-of-storage framing is [[Arrays]] #3. |
 | ↗ | Shuffle an Array · Random Pick Index | LC **384** · **398** | Fisher–Yates and reservoir sampling: the other two sampling techniques, both about uniformity proofs rather than about generation from a weaker source. [[Arrays]] #11 · #12. |
 | ↗ | Sum of Subarray Minimums | LC **907** | #25's contribution technique at full strength: a monotonic stack supplies each element's dominance boundaries, and the per-element count multiplies out. The most-asked instance of the summation swap. [[Stack and Queue]] S7. |
+| ↗ | Count total set bits from 1 to n | *GFG / Striver* | #25 over a complete integer range: one closed form per bit position, `O(log n)`. The reason you can price bits independently is [[Bit Manipulation]] #21. |
 
 ---
 
@@ -172,7 +175,8 @@ The operators are taken away, or the numbers outgrow them.
 | Four Divisors | LC **1390** | #10 | Divisor enumeration with a count check. |
 | Perfect Number | LC **507** | #10 | Divisor sum by `√n` enumeration. |
 | Unique Paths II *(obstacles)* | LC **63** | — | The closed form dies the moment the grid is not free; it is DP again. [[Dynamic Programming]] D4. |
-| Combinations · Permutations count | — | #11 | The formula; *listing* them is [[Backtracking]] K1. |
+| Combinations · Permutations count | — | #11 | The formula; *listing* them is [[Backtracking]] K1. Stars-and-bars *shape* is #26. |
+| Distribute Candies Among Children II | LC **2929** | #26 · #14 | Stars and bars, then inclusion–exclusion for the per-child cap. |
 | Generate Parentheses *(count only)* | LC **22** | #13 | Catalan; enumerating them is [[Backtracking]] #11. |
 | Number of Ways to Reorder Array to Get Same BST | LC **1569** | #11 · #13 | Multinomial coefficients over subtree sizes. |
 | Count Numbers with Unique Digits | LC **357** | #11 | A permutation product per digit length. |
@@ -181,7 +185,7 @@ The operators are taken away, or the numbers outgrow them.
 | Nim with XOR *(Sprague–Grundy)* | *classic* | #19 | The general theory. Real, and out of interview scope. |
 | Elimination Game | LC **390** | #20 | Josephus-flavoured reindexing on a shrinking range. |
 | Excel Sheet Column Number | LC **171** | #15 | The inverse conversion. |
-| Roman to Integer · Integer to Roman | LC **13** · **12** | — | A greedy lookup table, not arithmetic. Greedy basis. |
+| Roman to Integer · Integer to Roman | LC **13** · **12** | — | A greedy lookup table, not arithmetic. [[Greedy]] #15; the decode direction is a left-to-right scan, not a greedy. |
 | Add Two Numbers *(as linked lists)* | LC **2** | #3 | Carry propagation on a list. [[Linked List]] ↗; the reverse-order variant is [[Linked List]] #5. |
 | Chinese Remainder Theorem | *classic* | — | Real, genuinely CP. Excluded on scope per [[README]]. |
 | Möbius function · Euler's totient sieve | *classic* | #9 · #10 | Multiplicative functions by sieve. Beyond interview scope, same machinery. |
@@ -218,7 +222,7 @@ Three collisions, all checked and cleared. "The `n`-th number divisible by `a` o
 - **Bit Manipulation overlap, now closed.** The hedge named XOR, `lowbit`, subset enumeration and popcount, and expected M5/M6 to be re-cut. Those ideas are now [[Bit Manipulation]] K1–K5; Power of Two / add-without-operators / Single Number are retargeted above. **M5 and M6 did not need a re-cut** — digital root and Josephus are not bit ideas, and the hedge overstated the overlap. Left visible because a hedge that names the wrong families is as misleading as a stale gap flag.
 - **Where probability really belongs.** #25 covers linearity of expectation; conditional-probability DP is excluded to [[Dynamic Programming]] D12, which already exists as a family. That split is defensible but nobody looking for "expected value problems" will guess it lands in two places.
 - **Whether #10's harmonic bound is one idea or two.** The closed forms from a factorisation, and the `O(N log N)` sieve over multiples, are arguably unrelated. They are merged because the question "how many divisors" is what sends you to either, and the choice between them is the lesson.
-- **Combinatorics recall is the weakest part.** Stars and bars, derangements, multinomials and Burnside are all folded into #11 or excluded, and unlike the algorithmic families there is no curated interview list that enumerates combinatorial identities — so the sweep had nothing external to check against. If something is missing from this file, it is a counting identity.
+- **Combinatorics recall.** Stars and bars is now #26. Derangements, multinomials and Burnside stay folded into #11 / #14 or out of scope — unlike the algorithmic families there is no curated interview list of identities. If something is still missing from this file, it is a counting identity.
 - **#8 has no clean canonical problem.** It is cited as "classic" because LeetCode's primality questions are either trivial or subsumed by the sieve, which is a small symptom of the sourcing gap [[README]] warns about.
 
 **Completeness confidence: ~85%**, still among the lowest in the basis after [[Arrays]]. M1, M2 and M3 are tight and have dense external representation. The uncertainty is concentrated in M4 for the recall reason above. The Bit Manipulation boundary is closed; what remains fuzzy is that this topic is defined by *what mathematics happens to be useful*, which is a fuzzier edge than a mechanism gives you.
@@ -236,3 +240,5 @@ Three collisions, all checked and cleared. "The `n`-th number divisible by `a` o
 - [[Linked List]]
 - [[Sorting & Custom Comparators]]
 - [[Bit Manipulation]]
+- [[Greedy]]
+- [[Strings]]

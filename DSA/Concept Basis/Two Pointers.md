@@ -20,6 +20,7 @@ Both pointers moving left to right with a maintained interval between them is a 
 > - **The binding constraint** (#3) — the shorter wall limits the area no matter what the other side does, so moving the taller one cannot help.
 > - **Speed arithmetic** (#7) — after `k` steps the gap has changed by exactly `k`, which forces a meeting.
 > - **A finished prefix** (#10) — everything behind the slow pointer is already correct and will never be revisited.
+> - **A mismatch budget** (#20) — the comparison no longer names the move; you fork, once.
 >
 > If you can state which of these applies, you can derive the code. If you memorise the code, you will move the wrong pointer under pressure.
 
@@ -28,7 +29,7 @@ Both pointers moving left to right with a maintained interval between them is a 
 | Axis | Values |
 |---|---|
 | **Pointer geometry** | converging from both ends · **diverging from a centre** · same direction at different speeds · one pointer per sequence · read and write on one array · a fixed outer plus a sweeping inner |
-| **What justifies the discard** | sortedness · the binding-constraint argument · speed arithmetic · pigeonhole · a greedy exchange argument · nothing (the scan is genuinely `O(n²)`) |
+| **What justifies the discard** | sortedness · the binding-constraint argument · speed arithmetic · pigeonhole · a greedy exchange argument · **a budget of mismatches** · **pairwise elimination of a special vertex** · nothing (the scan is genuinely `O(n²)`) |
 | **Is the input sorted, and by whom** | given sorted · **you sort it first** · order is meaningful and cannot be touched |
 | **How many pointers** | two · three (one pinned, two converging) · `k`, one per sequence |
 | **What is written** | nothing · overwrite at the slow pointer · swap · write from the far end |
@@ -39,7 +40,7 @@ Both pointers moving left to right with a maintained interval between them is a 
 ## Shape of this topic
 
 ```
-P1  Converging & diverging on one sequence   6 ideas
+P1  Converging & diverging on one sequence   8 ideas
 P2  Two speeds on one sequence               3 ideas
 P3  Read and write on one array              5 ideas
 P4  One pointer per sequence                 3 ideas
@@ -48,7 +49,7 @@ P6  Pointer-arithmetic identities            1 idea
                                              + 5 cross-listed ↗
 ```
 
-**19 native entries, plus 5 cross-listed (↗).** See [[README]] on cross-listing.
+**21 native entries, plus 5 cross-listed (↗).** See [[README]] on cross-listing.
 
 > [!info] **Numbers are stable IDs assigned in order of addition, not reading order.**
 
@@ -58,12 +59,14 @@ P6  Pointer-arithmetic identities            1 idea
 
 | # | Problem | Source | The new idea |
 |---|---|---|---|
-| 1 | Two Sum II — Input Array Is Sorted | LC **167** | **On sorted data, the comparison tells you which pointer to move, and the discarded candidate is gone for good.** If the sum is too small, no partner further left can help the current left element, so `l` advances and an entire row of the pair matrix is eliminated. The `O(n)` argument *is* the entry — the loop is trivial. Comparing two characters while converging (LC 125, LC 344) is the same geometry with no discard reasoning at all, which is why it is not a separate entry. |
+| 1 | Two Sum II — Input Array Is Sorted | LC **167** | **On sorted data, the comparison tells you which pointer to move, and the discarded candidate is gone for good.** If the sum is too small, no partner further left can help the current left element, so `l` advances and an entire row of the pair matrix is eliminated. The `O(n)` argument *is* the entry — the loop is trivial. Comparing two characters while converging (LC 125, LC 344) is the same geometry with no discard reasoning at all, which is why it is not a separate entry. One allowed mismatch is #20. |
 | 2 | 3Sum | LC **15** | **Pin one element and the problem drops to `(k−1)`-Sum; deduplication is a separate concern from correctness.** The reduction is what generalises — 4Sum is a second pinned loop, `k`-Sum is recursion down to #1 — and the part everyone gets wrong is orthogonal to it: skipping equal values at all three positions to avoid repeated triples. Keeping those two ideas mentally separate is the point, because a correct search with broken dedup looks like a wrong algorithm. |
 | 3 | Container With Most Water | LC **11** | **The binding-constraint argument, on data that is not sorted at all.** The area is limited by the shorter wall, so moving the taller one can never improve on the current pair — whatever it meets, the short wall still caps it. This is the most important "why" in the file, because it proves the technique does not require sortedness, only a *monotone objective in the constraint you relax*. Recognising that shape is what lets you invent a two-pointer solution rather than recall one. |
 | 4 | Trapping Rain Water | LC **42** | **Commit a final answer at each step instead of discarding a candidate.** Carry running maxima from both ends and always advance the smaller one — because for that side, `min(maxLeft, maxRight)` is already known and cannot change, so the water above that index can be settled now. Distinct from #3: same geometry, opposite use — #3 *eliminates*, this *finalises*. `O(1)` space where the monotonic-stack solution needs `O(n)` ([[Stack and Queue]] #14). |
 | 5 | Valid Triangle Number | LC **611** | **Counting: when a pair qualifies, an entire block of partners qualifies with it.** Sort, pin the largest side, converge — and when `a[l] + a[r] > c`, every index between `l` and `r` also works, so add `r − l` and move `r` rather than testing each one. New because the return type is a count, so a single arithmetic step replaces an inner loop. Same reasoning powers LC 259 and LC 16's "how close can I get". |
-| 6 | Longest Palindromic Substring | LC **5** | **Pointers that *diverge* from a centre, and there are `2n − 1` centres, not `n`.** Expand outward while the characters match; the even-length case is why the centre count is not `n`, and forgetting it is the classic bug. New geometry — every entry above converges, and this is the only place the interval *grows* from the inside. The DP formulation and Manacher's linear-time version are the follow-ups ([[Dynamic Programming]] ↗ palindromic substrings; Strings basis for Manacher). |
+| 6 | Longest Palindromic Substring | LC **5** | **Pointers that *diverge* from a centre, and there are `2n − 1` centres, not `n`.** Expand outward while the characters match; the even-length case is why the centre count is not `n`, and forgetting it is the classic bug. New geometry — every entry above converges, and this is the only place the interval *grows* from the inside. The DP table (`dp[i][j]` = ends match and inside is a palindrome) is [[Dynamic Programming]] #75; Manacher's linear-time version is [[Strings]] #7. |
+| 20 | Valid Palindrome II | LC **680** | **Converging with a budget of one mismatch.** A mismatch is not "move the pointer the comparison names" — both skips might still work, and you are allowed to drop exactly one character. Try skipping left, try skipping right; if either remaining scan is a palindrome, accept. New against #1 (no retries) and against #16 (a *planned* second pass after a successful forward match, not a fork at the first failure). The discard argument has to survive the skip: everything already matched is still settled; the budget is the only extra state. This is the axis cell *resets on failure*. `k` mismatches is no longer two pointers — Valid Palindrome III (LC **1216**) is edit-distance DP. |
+| 21 | Find the Celebrity | LC **277** | **Pairwise elimination of a special vertex: one comparison discards one of the pair forever.** A celebrity knows nobody; everyone knows the celebrity. Ask `knows(i, j)`: if true, `i` is out (would have out-degree); if false, `j` is out (someone doesn't know them). Two pointers on `0…n−1` burn `n − 1` people; one candidate remains. Then a linear *verify* — the candidate knows nobody, everyone knows them — because elimination only rejects, it does not prove. New discard argument against #1 (not sortedness) and #3 (not a numeric binding constraint): the comparison names *who cannot be the answer*. Building the graph and reading degrees is `O(n²)` and is the thing this exists to avoid. The characterisation — unique vertex with in-degree `n−1`, out-degree `0` — is ↗ [[Graphs]]. |
 
 ## P2 · Two speeds on one sequence
 
@@ -114,7 +117,7 @@ In-place rearrangement. **The recurring hazard is that writing destroys data you
 | ↗ | Longest Substring Without Repeating Characters | LC **3** | The same-direction case: both pointers advance monotonically and the interval between them is a maintained window. The largest sub-family of two pointers by problem count, and it has its own file — [[Sliding Window]] #3. |
 | ↗ | Merge k Sorted Lists | LC **23** | #14 with `k` pointers, where finding the smallest head becomes a heap query rather than a comparison. [[Heap]] #7. |
 | ↗ | Median of Two Sorted Arrays | LC **4** | Not a linear walk at all — binary search *the partition point* of one array, which fixes the other's by arithmetic. The problem that looks like #14 and is not. [[Binary Search]] #15. |
-| ↗ | Interval List Intersections | LC **986** | #14's merge walk over intervals: advance whichever ends first, emit the overlap. Intervals basis. |
+| ↗ | Interval List Intersections | LC **986** | #14's merge walk over intervals: advance whichever ends first, emit the overlap. [[Intervals]] #3. |
 | ↗ | Trapping Rain Water II | LC **407** | #4 in two dimensions, where "process the smaller side" becomes "process the lowest boundary cell", which needs a heap. [[Heap]] #22. |
 
 ---
@@ -123,7 +126,9 @@ In-place rearrangement. **The recurring hazard is that writing destroys data you
 
 | Problem | Source | Collapses into | Why |
 |---|---|---|---|
-| Valid Palindrome | LC **125** | #1 | Converging comparison with no discard argument. |
+| Valid Palindrome | LC **125** | #1 | Converging comparison with no discard argument. One skip is #20. |
+| Valid Palindrome III | LC **1216** | — | `k` mismatches is edit distance, not a budget you fork on. [[Dynamic Programming]] #18. |
+| Palindromic Substrings | LC **647** | #6 | Same expand, counting centres instead of tracking the longest. The `dp[i][j]` table is [[Dynamic Programming]] #75. |
 | Reverse String · Reverse Vowels | LC **344** · **345** | #1 · #13 | Converging swap; reversal is the primitive #13 composes. |
 | Squares of a Sorted Array | LC **977** | #1 | Converge, write outward-in — the write direction is #12's hazard. |
 | Two Sum Less Than K | LC **1099** | #1 | Same sweep, tracking a best instead of an exact hit. |
@@ -137,11 +142,11 @@ In-place rearrangement. **The recurring hazard is that writing destroys data you
 | Remove Duplicates from Sorted Array II | LC **80** | #10 | The finished-prefix invariant with a count of 2. |
 | String Compression | LC **443** | #10 | Write-behind compaction with run counting. |
 | Sort Array By Parity | LC **905** | #11 | Two-way partition; Dutch flag with one boundary removed. |
-| Partition Labels | LC **763** | — | Last-occurrence sweep, a greedy interval idea. Intervals basis. |
+| Partition Labels | LC **763** | — | Last-occurrence sweep. [[Prefix Sums & Difference Arrays]] #15; the covering reading is [[Greedy]] #8. |
 | Backspace String Compare | LC **844** | #14 | One pointer per string, walking backwards with skips. |
 | Intersection of Two Arrays II | LC **350** | #14 | The merge walk, emitting matches. |
 | Shortest Unsorted Continuous Subarray | LC **581** | — | Two independent end-to-middle max/min sweeps that never interact. Two scans, not two pointers. |
-| Rotate Image | LC **48** | #13 | Transpose then reverse rows — the same compose-reversals identity in 2D. |
+| Rotate Image | LC **48** | #13 | Transpose then reverse rows — the same compose-reversals identity in 2D. Native at [[Matrix]] #4. |
 | Reverse Words in a String | LC **151** | #13 | Reverse all, then reverse each word. |
 | Enumerate a deleted middle block by fixing `l` and sweeping `r` | *classic — the [[README]] criterion example* | [[Sliding Window]] #8 | When the cost is monotone this is a complement window; when it is not, the `O(n²)` enumeration is the same fixed-outer, sweeping-inner geometry with no discard argument to exploit. |
 | Longest Word in Dictionary through Deleting | LC **524** | #15 | Greedy subsequence check run per candidate. |
@@ -153,9 +158,10 @@ In-place rearrangement. **The recurring hazard is that writing destroys data you
 
 **Borderline calls, and which way I went**
 
+- **#20 native in P1, not a new family.** It fills the existing axis cell *resets on failure* / *a budget of mismatches*. Folding it into #1 would hide the fork; a seventh family for one retry would be the opposite overfit.
 - **#3 and #4 kept separate.** Same geometry, same "advance the smaller side" rule, and I nearly merged them. Split because the *use* of the step inverts: #3 discards a candidate it will never need, #4 finalises an answer it can never revise. Under probe 2 — what triggers the move and why — they differ, and #4 is where "I can settle this cell now" is learned.
 - **#1 and #5 kept separate.** Both converge on sorted data; #5 returns a count and replaces an inner loop with arithmetic. Same call as [[Sliding Window]] #5, and made for the same reason.
-- **#6 (diverging from a centre) native rather than cross-listed to Strings.** The palindrome *machinery* belongs to Strings and DP, but "pointers can move outward, and there are `2n − 1` centres" is a geometry claim, and this file is organised by geometry. Cross-listed the deeper treatments instead.
+- **#6 (diverging from a centre) native rather than cross-listed to Strings.** The palindrome *machinery* belongs to Strings and DP, but "pointers can move outward, and there are `2n − 1` centres" is a geometry claim, and this file is organised by geometry. The DP table is [[Dynamic Programming]] #75; Manacher is [[Strings]] #7.
 - **#13 (rotate by three reversals) kept as an entry.** It looks like a trick rather than an idea, and it is asked constantly, generalises to matrices and sentences, and the alternative cyclic-replacement solution needs a GCD argument most people cannot produce. An identity you should simply own.
 - **#17 (quickselect) native here.** [[Heap]] #3 names it and moves on; nothing else develops it. It is a partition built by converging pointers, so this is its home.
 - **#18 given its own family for one entry.** Slightly awkward. The alternative was burying it in P2, but it is not a speed argument — it is a path construction — and burying it under the wrong justification is exactly the naming failure step 7b exists to catch.
@@ -172,13 +178,15 @@ Two collisions, both checked and cleared. "Move everything matching a rule to on
 
 **What I am uncertain about**
 
-- **The boundary with a future Linked List basis.** Four entries (#7, #9, #14, #18) are list problems, and a Linked List file would want all of them. Under the cross-listing rule that is fine — they would appear in both — but I have written them as native here, so those cross-links will need adding rather than the entries moving.
+- **The Linked List boundary is now closed.** Four entries (#7, #9, #14, #18) are list problems; they stay native here and ↗ [[Linked List]].
 - **Whether #5 and [[Sliding Window]] #5 should be one idea in two files.** They are the same contribution-counting insight on two geometries. Currently native in both, which the cross-listing rule permits, but a reader might reasonably see one concept counted twice.
 - **Cyclic-replacement rotation** (the GCD-cycles algorithm) is excluded in favour of #13's reversals. It is a genuinely different algorithm, not a variation — kept out on scope grounds, since nobody wants it in an interview. Moderate confidence.
 - **Three-pointer problems beyond the pinned-plus-converging shape.** I could not name one that is not a variation of #2 or #11. Possibly an empty cell, possibly thin recall.
 - **Recall is likely thinnest on in-place array manipulation (P3)**, where the problem space is large, the ideas are few, and the difference between the two is exactly what an exclusions table can get wrong.
 
-**Completeness confidence: ~90%.** The justifications in P1 and P2 I would call complete — those are the arguments the topic exists to teach, and there are not many. The risk is concentrated in P3, where I have collapsed a lot of problems into four entries, and at the Linked List boundary, which does not exist yet.
+- **#21 (Celebrity) added on a later gap pass.** It fills a discard argument that was missing: the comparison names who *cannot* be the answer, not which pointer the monotone sum moves. Native here, ↗ [[Graphs]] for the degree characterisation.
+
+**Completeness confidence: ~90%.** The justifications in P1 and P2 I would call complete — those are the arguments the topic exists to teach, and there are not many. #20 filled the mismatch-budget cell rather than adding a family. #21 filled the special-vertex elimination cell. Remaining risk is P3's collapse.
 
 ## Related Notes
 
@@ -190,6 +198,13 @@ Two collisions, both checked and cleared. "Move everything matching a rule to on
 - [[Binary Trees]]
 - [[Prefix Sums & Difference Arrays]]
 - [[Arrays]]
+- [[Dynamic Programming]]
 - [[Math & Number Theory]]
 - [[Linked List]]
 - [[Sorting & Custom Comparators]]
+- [[Greedy]]
+- [[Intervals]]
+- [[Graphs]]
+- [[Strings]]
+- [[Hashing]]
+- [[Matrix]]

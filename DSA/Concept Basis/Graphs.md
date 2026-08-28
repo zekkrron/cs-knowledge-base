@@ -17,7 +17,9 @@ The axes graph solutions actually vary along, enumerated before any problem was 
 | **Edge weights** | none · uniform · non-negative · `{0,1}` only · negative · multiplicative · capacities |
 | **How path cost combines** | sum · max edge (bottleneck) · product |
 | **State augmentation** | plain node · node + budget · node + parity · node + bitmask |
+| **Visited payload** | boolean · **mapped copy** (old → new) |
 | **Processing direction** | forward from a source · multi-source · backward / reversed edges · meet in the middle · **inward, peeling the boundary away** |
+| **How multiple searches combine** | meet *during* the search (#4) · **finish both, then min/add the distance fields** · **one field induces the graph the next algorithm sees** |
 | **What is computed** | reachability · distance · cycle · ordering · component structure · spanning tree · specialised walk |
 | **What is returned** | a cost · a count · the object itself (reconstruction) |
 | **Assumption that breaks** | cycles break DAG memoisation · non-uniform weights break BFS · negatives break Dijkstra · sum-cost breaks for bottleneck · directed cycle logic breaks on undirected |
@@ -25,18 +27,18 @@ The axes graph solutions actually vary along, enumerated before any problem was 
 ## Shape of this topic
 
 ```
-G1  Traversal & connectivity      5 ideas
+G1  Traversal & connectivity      6 ideas
 G2  Implicit / constructed graphs 3 ideas
 G3  Cycles & ordering             5 ideas
 G4  Coloring & partition          1 idea
 G5  Union-Find                    3 ideas
-G6  Weighted shortest path        8 ideas
+G6  Weighted shortest path       11 ideas
 G7  Spanning & structure          6 ideas
 G8  Specialised walks             1 idea
 G9  Flow & matching               1 idea   ← tail
 ```
 
-**33 native entries, plus 5 cross-listed (↗).** A ↗ entry is developed more fully in the named topic, but it lives here too — see [[README]] on cross-listing.
+**37 native entries, plus 7 cross-listed (↗).** A ↗ entry is developed more fully in the named topic, but it lives here too — see [[README]] on cross-listing.
 
 > [!info] **Numbers are stable IDs assigned in order of addition, not reading order.** Entries are grouped by family, so a later-added entry keeps its high number inside the family it belongs to. This keeps cross-file references from rotting every time the basis grows.
 
@@ -51,6 +53,7 @@ G9  Flow & matching               1 idea   ← tail
 | 3 | Rotting Oranges | LC **994** | **Multi-source BFS.** Seed the queue with *all* sources at distance 0 and you get nearest-source distance for every node in one sweep, instead of running #2 once per source. |
 | 4 | Word Ladder | LC **127** | **Bidirectional BFS.** Search from both ends and stop when the frontiers meet. Turns `b^d` into roughly `2·b^(d/2)` — the reason it works is that you always expand the *smaller* frontier. |
 | 5 | Word Ladder II | LC **126** | **Reconstruct the paths, not just the distance — and get *all* of them.** BFS to fix every node's layer while recording parent sets, then DFS backwards. A distance-only sweep throws away exactly what this needs, which is why the two-phase split is forced rather than stylistic. |
+| 37 | Clone Graph | LC **133** | **Visited carries a payload — the copy — not a boolean.** Flood fill (#1) only needs "have I been here." Cloning needs "where is the copy of this node," so the map `original → clone` *is* the visited set: if you have already cloned `u`, reuse that node when a neighbour points at `u` again, otherwise you duplicate vertices and the graph is not a clone. DFS or BFS both work; the idea is the map, not the frontier. The list form — old-to-new, with an in-place weave that skips the hash map — is [[Linked List]] #9. Same instinct, different container. ↗ from [[Hashing]] as Copy List / Clone Graph. |
 
 ## G2 · Implicit & Constructed Graphs
 
@@ -82,9 +85,9 @@ G9  Flow & matching               1 idea   ← tail
 
 | # | Problem | Source | The new idea |
 |---|---|---|---|
-| 14 | Number of Provinces | LC **547** | **DSU itself** — path compression plus union by rank, and the near-constant amortised cost. Connectivity without traversal. |
-| 15 | Evaluate Division | LC **399** | **DSU carrying relational data.** Store a ratio (or offset) along each parent pointer and compose it during find. The set structure now answers *how* two things relate, not merely whether. |
-| 16 | Last Day Where You Can Still Cross | LC **1970** | **Reverse the timeline.** DSU can merge but not split, so process removals backwards and they become additions. The general trick for "connectivity as things disappear." |
+| 14 | Number of Provinces | LC **547** | **DSU itself** — path compression plus union by rank, and the near-constant amortised cost. Connectivity without traversal. Dual-native with [[Union-Find]] #1. |
+| 15 | Evaluate Division | LC **399** | **DSU carrying relational data.** Store a ratio (or offset) along each parent pointer and compose it during find. The set structure now answers *how* two things relate, not merely whether. Dual-native with [[Union-Find]] #3. |
+| 16 | Last Day Where You Can Still Cross | LC **1970** | **Reverse the timeline.** DSU can merge but not split, so process removals backwards and they become additions. The general trick for "connectivity as things disappear." Dual-native with [[Union-Find]] #4. |
 
 ## G6 · Weighted Shortest Path
 
@@ -98,6 +101,9 @@ G9  Flow & matching               1 idea   ← tail
 | 22 | Path With Minimum Effort | LC **1631** | **Dijkstra when cost is not a sum.** Path cost here is the *maximum* edge, not the total. Dijkstra generalises to any combining operation that never improves as the path grows — which also covers max-product (LC 1514). Alternatives: binary search on the answer plus BFS, or incremental DSU. |
 | 23 | Number of Ways to Arrive at Destination | LC **1976** | **Carry an aggregate alongside the distance.** Maintain a path count during relaxation, and know when to overwrite it (strictly shorter path found) versus add to it (equal-length path found). Generalises to counting edges, minimum hops, or any statistic riding along with Dijkstra. |
 | 24 | Flight Routes | CSES **1196** | **K-th shortest path.** Keep the best `k` distances per node instead of a single best, and stop expanding a node after it has been popped `k` times. Deliberately relaxes the "finalise once" invariant that makes #17 correct. |
+| 34 | Flight Discount · Minimum Weighted Subgraph With the Required Paths · Find Edges in Shortest Paths | CSES **1195** · LC **2203** · **3123** | **Finish two (or three) Dijkstras, then combine the distance arrays — you do not meet during the search.** Dijkstra from `s`; Dijkstra from `t` on the **reversed** graph; then anything "special" at a vertex `x` or on an edge `u → v` is `dist_s[u] + special + dist_t[v]`. CSES 1195: one coupon halves an edge, so the answer is the min over all edges of `d₁[u] + ⌊w/2⌋ + dₙ[v]`. LC 3123: an edge lies on *some* shortest `s–t` path iff that sum equals `dist_s[t]`. LC 2203: three terminals, min over a meeting vertex of `d_a[x] + d_b[x] + d_t[x]`. Distinct from #4: bidirectional BFS *stops when the frontiers meet*; here both searches run to completion and the meeting is an algebraic min. Distinct from Pacific Atlantic: those two fills intersect *sets*; these two fills add *numbers*. |
+| 35 | Minimum Time to Visit a Cell In a Grid | LC **2577** | **The cost of an edge depends on *when* you arrive.** A cell with value `t` cannot be entered before time `t`; arriving early means waiting, and the wait often has to preserve parity because you can step back and forth. Dijkstra still works with `(time, cell)` in the heap, but "once popped, final" is now about arrival *time*, and a neighbour's cost is a function of the current clock, not a static `w(u,v)`. New because every other G6 entry treats weights as fixed. The same clock-and-wait shape is LC **3341** / **3342**. |
+| 36 | Number of Restricted Paths From First to Last Node | LC **1786** | **A distance field can *build* a DAG, and a second algorithm then runs on that DAG.** Dijkstra from `n` gives dist-to-sink; keep only edges `u → v` where `dist[v] < dist[u]` (strictly closer to the sink); that subgraph is acyclic, so path-counting DP is legal. #12's move, except the DAG was not given — it was *induced*. New because #12 starts from an already-acyclic graph and #17 stops at the distances. The forced order is the idea: shortest paths first, DP second. |
 
 ## G7 · Spanning & Structure
 
@@ -135,8 +141,10 @@ Developed more fully in the named topic, but you will meet them here and they ar
 | ↗ | Word Search | LC **79** | **DFS with undo.** Mark a cell used, recurse, then *unmark it on the way out* — the first time a traversal's visited set is temporary rather than permanent. Every entry in G1 relies on visited being monotone; this one deliberately breaks that. [[Backtracking]] #8. |
 | ↗ | Lowest Common Ancestor of a Binary Tree | LC **236** | The recursive "found in both subtrees means I am the answer" argument, and the binary-lifting alternative that reuses #29's table. [[Binary Trees]] #7. |
 | ↗ | Maximum Students Taking Exam | LC **1349** | Profile DP over a grid, which reads as a graph problem and is not one. Useful here precisely as a negative example — recognising when *not* to reach for a traversal. [[Dynamic Programming]] #47. |
-| ↗ | Number of Islands II | LC **305** | #14 run incrementally as land is added, decrementing the component count on each successful union. Union-Find basis. |
+| ↗ | Number of Islands II | LC **305** | #14 run incrementally as land is added, decrementing the component count on each successful union. Union-Find basis. Native at [[Union-Find]] #2. |
 | ↗ | Sum of Distances in Tree | LC **834** | **Rerooting.** Solve for one root, then derive the answer for every other root in `O(n)` by adjusting along each edge as you move the root one step. The alternative is `n` separate traversals, so this is the graph-shaped answer to "compute something for *every* starting node." [[Dynamic Programming]] #43. |
+| ↗ | Find the Celebrity | LC **277** | Unique vertex with in-degree `n−1` and out-degree `0`. Building the graph is `O(n²)`; pairwise elimination is `O(n)` then a verify. Native at [[Two Pointers]] #21. |
+| ↗ | Most Stones Removed · Regions Cut By Slashes · Remove Max Edges | LC **947** · **959** · **1579** | DSU modelling: union through row/col keys, split a cell then union, two forests with shared edges first. Native at [[Union-Find]] #7 · #8 · #6. |
 
 ---
 
@@ -149,7 +157,6 @@ Developed more fully in the named topic, but you will meet them here and they ar
 | Pacific Atlantic Water Flow | LC **417** | #1 + #3 | Multi-source fill from two border sets, then intersect. |
 | Number of Connected Components | LC **323** | #1 | Same count, explicit adjacency instead of a grid. |
 | Find if Path Exists in Graph | LC **1971** | #1 | Reachability with an early exit. |
-| Clone Graph | LC **133** | #1 | Visited set whose payload is the copied node. |
 | 01 Matrix | LC **542** | #3 | Multi-source BFS from every zero. |
 | Walls and Gates | LC **286** | #3 | Multi-source BFS from every gate. |
 | Message Route | CSES **1667** | #5 | Single-path reconstruction — the easy half of #5. |
@@ -173,6 +180,12 @@ Developed more fully in the named topic, but you will meet them here and they ar
 | Swim in Rising Water | LC **778** | #22 | Bottleneck path on a grid. |
 | Path With Maximum Minimum Value | LC **1102** | #22 | Bottleneck, maximising the minimum. |
 | Investigation | CSES **1202** | #23 | Four aggregates carried through Dijkstra instead of one. |
+| Second Minimum Time to Reach Destination | LC **2045** | #24 | Second-shortest path, with a wait-for-signal period that is usually `+2` once you have a cycle. The k-th machinery is #24; the wait is #35's clock, not a third idea. |
+| Minimum Cost to Reach Destination in Time · Minimum Cost to Reach City With Discounts · Shortest Path in a Grid with Obstacles Elimination | LC **1928** · **2093** · **1293** | #18 | Extra state is a budget (time left, discounts left, obstacles you may still smash). Same augmentation as stops-used. |
+| Shortest Path with Alternating Colors | LC **1129** | #18 | Extra state is last colour / parity, which the axis already lists. |
+| Reachable Nodes In Subdivided Graph | LC **882** | #17 | Dijkstra, then count how far the leftover moves reach along each edge. Arithmetic on #17. |
+| Minimum Cost of a Path With Special Roads | LC **2662** | #6 + #17 | Implicit graph of special roads, then ordinary Dijkstra. |
+| Find Minimum Time to Reach Last Room I · II | LC **3341** · **3342** | #35 | Clock-and-wait on a grid; named in #35. |
 | Find Critical and Pseudo-Critical Edges in MST | LC **1489** | #25 | MST run repeatedly with an edge forced in or out. |
 | Planets Cycles | CSES **1751** | #30 | Functional graph with per-node cycle lengths reported. |
 | De Bruijn Sequence · Teleporters Path | CSES **1002**, **1693** | #31 | Eulerian circuit on a different construction. |
@@ -187,8 +200,11 @@ Developed more fully in the named topic, but you will meet them here and they ar
 - **Kruskal vs Prim (#25).** Merged. Different machinery — DSU versus heap — but the idea being learned is "grow a minimum spanning structure greedily," and the second one teaches implementation rather than insight. ==Split it if you find Prim genuinely surprising when you get there.==
 - **Bridges vs articulation points (#26).** Merged. Identical low-link computation, different comparison.
 - **Bus Routes (LC 815).** Excluded into #6, but reluctantly. "Choosing the non-obvious thing to be a node" may deserve standalone status — it is the same skill that makes #8 hard.
-- **Reversing edges.** Not given its own entry. It appears inside #27 and is load-bearing in #28, but on its own it is a step rather than an idea.
-- **Clone Graph (LC 133).** Excluded. "Visited set carrying a payload" recurs in Copy List with Random Pointer, so it may belong in a cross-cutting basis rather than here.
+- **Reversing edges.** Still not a standalone entry. It is a step inside #27 and #28, and it is *load-bearing* in #34 (Dijkstra from `t` is Dijkstra from `t` on the reversed graph). A step that appears in three families is a reflex, not a fourth idea.
+- **#34 vs #4 vs Pacific Atlantic.** Kept native, against the earlier "composition" instinct. Combining two BFS *sets* is composition (#1+#3). Combining two Dijkstra *distance arrays* is a different object — the answer is a min of sums over vertices or edges — and it is the only way several Hard/CSES shortest-path questions become tractable. Bidirectional BFS (#4) is also not this: it meets *during* the search.
+- **#36 vs #12.** Kept split. #12 is "the input is already a DAG". #36 is "Dijkstra *produces* the DAG". Merging them would hide the forced order.
+- **#35 vs Swim in Rising Water (#22).** Swim is a bottleneck (the max edge on the path). #35 is a clock: you wait, then move. Same grid, different cost model.
+- **Clone Graph (LC 133) promoted to #37.** "Visited set carrying a payload" is not flood fill, and the list form ([[Linked List]] #9) is the weave trick, not the map. Dual-native with that entry on the old-to-new mapping; native here because a graph-driller meets Clone Graph constantly.
 - **Directed vs undirected cycle detection (#9, #10).** Kept split, deliberately. The obvious transfer fails, and a failed transfer is exactly what earns an entry under this criterion.
 - **Binary lifting (#29) filed under Graphs, not Trees.** The technique is identical in both places and [[Binary Trees]] points here. Filed where the *functional graph* framing lives, since that is the more general statement.
 
@@ -207,16 +223,25 @@ Thirty-five plain-language descriptions were navigated against the family headin
 
 One collision, checked and cleared: "count the paths between two nodes" reaches both #23 (counting *shortest* paths under relaxation) and the DAG path-counting excluded into #12. Different machinery, genuinely different problems, correctly separated already.
 
+**User-requested rare-hard pass (G6).** Three natives added after a sweep of LC Hards and CSES shortest-path tasks that were not already in the file:
+
+- **"Shortest `s–t` path, except one edge is discounted / the path must go through `x` / which edges lie on some shortest path"** all collided on #17 and on #4, and both were wrong. That is **#34**. The axis it exposed — *how multiple searches combine* — had "meet during the search" (#4) and nothing for **finish both, then combine the arrays**.
+- **"You cannot enter a cell until time `t`, and waiting has a parity"** landed on #22 (bottleneck / rising water) and is not that. That is **#35**. Static weights was an unstated G6 assumption.
+- **"Count paths that always move closer to the sink"** landed on #12 and #23, both incomplete. That is **#36**.
+
+Looked at and excluded rather than promoted: LC 2045 (k-th + wait), LC 1928 / 2093 / 1293 (budget state = #18), LC 1129 (parity state = #18), LC 882 (arithmetic on #17), LC 2662 (#6+#17). 2-SAT and A* stay out of scope.
+
 **Still open**
 
 - **A\* and heuristic search** — omitted as interview-irrelevant. Low confidence, flagging it.
 - **Graph colouring with `k > 2`** — greedy works when degree is bounded, and it is NP-hard in general. Excluded as a backtracking problem rather than a graph one. Moderate confidence.
 - **2-SAT** (implication graph plus SCC) — excluded as competitive-programming scope, though closer to the boundary than I would like.
 - **Union-Find rollback and offline queries** — still thin at three entries. Most of the remaining machinery is genuinely CP.
+- **[[Union-Find]] is now written.** G5 stays native (dual-native #14 · #15 · #16). Islands II stays ↗ and points at [[Union-Find]] #2. Rollback stays excluded in both files.
 - **Grid problems are heavily represented** in the exclusions. Still the place a wrong merge would hide.
-- **Six entries cite CSES** (#20, #24, #27, #28, #32, and #29 jointly). A LeetCode-only run loses five of them outright.
+- **Six entries cite CSES** (#20, #24, #27, #28, #32, #34, and #29 jointly). A LeetCode-only run loses the cleanest copy of #34 (Flight Discount); LC 2203 and 3123 still cover the idea.
 
-**Completeness confidence: ~94%**, up from 90% before the re-sweep.
+**Completeness confidence: ~94%** on the original families; G6 is the one that just grew and I would not be shocked if another time-dependent or multi-terminal variant is still hiding.
 
 ## Related Notes
 
@@ -229,3 +254,9 @@ One collision, checked and cleared: "count the paths between two nodes" reaches 
 - [[N-ary Trees]]
 - [[Backtracking]]
 - [[Bit Manipulation]]
+- [[Greedy]]
+- [[Linked List]]
+- [[Two Pointers]]
+- [[Hashing]]
+- [[Union-Find]]
+- [[Matrix]]

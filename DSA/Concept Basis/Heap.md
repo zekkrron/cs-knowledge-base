@@ -38,13 +38,13 @@ H2  Top-K — the size-k heap       5 ideas
 H3  K-way merge & lazy generation 4 ideas
 H4  Two heaps                     3 ideas
 H5  Scheduling & simulation       4 ideas
-H6  Greedy with regret            2 ideas
+H6  Greedy with regret            3 ideas
 H7  Structural greedy             2 ideas
 H8  Heap-ordered traversal        2 ideas
-                                  + 5 cross-listed ↗
+                                  + 7 cross-listed ↗
 ```
 
-**24 native entries, plus 5 cross-listed (↗).** See [[README]] on cross-listing.
+**25 native entries, plus 7 cross-listed (↗).** See [[README]] on cross-listing.
 
 > [!info] **Numbers are stable IDs assigned in order of addition, not reading order.** Entries are grouped by family, so a later-added entry keeps its high number inside the family it belongs to. This keeps cross-file references from rotting every time the basis grows.
 
@@ -78,7 +78,7 @@ Skip these and you will write correct but needlessly slow heap code, and you wil
 | 7 | Merge k Sorted Lists | LC **23** | **One candidate per source.** The heap holds `k` items — the current head of each list — so its size is the *number of sources*, unrelated to the answer's size. Pop the min, then push that source's successor. Contrast H2, where `k` was the answer size. |
 | 8 | Find K Pairs with Smallest Sums | LC **373** | **Traverse a sorted grid that is never built.** Conceptually there is an `n × m` matrix of pair sums, sorted along both axes. Push only the neighbours of what you pop, and you walk the smallest `k` cells while materialising almost nothing. The move is *generating candidates lazily instead of enumerating them*. |
 | 9 | Ugly Number II | LC **264** | **The heap feeds itself.** Output becomes input: pop the smallest, multiply it by each factor, push the results back. The sequence has no precomputed source at all. Requires deduplication, which is where the `seen` set enters. |
-| 10 | Smallest Range Covering Elements from K Lists | LC **632** | **A sliding window across `k` sorted lists at once.** The heap supplies the current minimum and you track the maximum separately, so popping the min is what advances the window's left edge. Fuses the merge machinery of #7 with two-pointer thinking. |
+| 10 | Smallest Range Covering Elements from K Lists | LC **632** | **A sliding window across `k` sorted lists at once.** The heap supplies the current minimum and you track the maximum separately, so popping the min is what advances the window's left edge. Fuses the merge machinery of #7 with two-pointer thinking. The *window is not over one array* half is [[Sliding Window]] #16. |
 
 ## H4 · Two heaps
 
@@ -92,8 +92,8 @@ Skip these and you will write correct but needlessly slow heap code, and you wil
 
 | # | Problem | Source | The new idea |
 |---|---|---|---|
-| 14 | Meeting Rooms II | LC **253** | **The heap's `size` is the answer.** Sort by start, push each end time, pop everything that has already finished. What the heap tracks is *how many things are live right now*, and you never read its contents. First problem where the heap is a counter, not a selector. |
-| 15 | Task Scheduler | LC **621** | **A cooldown park beside the heap.** Pop the most frequent, then hold it in a waiting area until its cooldown expires before it may re-enter. Two containers with a *time-triggered* transfer, where #13's transfer was budget-triggered. |
+| 14 | Meeting Rooms II | LC **253** | **The heap's `size` is the answer.** Sort by start, push each end time, pop everything that has already finished. What the heap tracks is *how many things are live right now*, and you never read its contents. First problem where the heap is a counter, not a selector. The event-list form — type codes, `active`, queries as events — is [[Intervals]] #6; the difference-array form is [[Prefix Sums & Difference Arrays]] #18. |
+| 15 | Task Scheduler | LC **621** | **A cooldown park beside the heap.** Pop the most frequent, then hold it in a waiting area until its cooldown expires before it may re-enter. Two containers with a *time-triggered* transfer, where #13's transfer was budget-triggered. Frequency-as-heap-key is not FreqStack — that needs LIFO among equals ([[Stack and Queue]] #25). |
 | 16 | Single-Threaded CPU | LC **1834** | **Offline sort meets online heap.** Sort by availability time to decide *when* something becomes a candidate; heap by priority to decide *which* candidate to run. The clock jumps forward when the heap empties. Separating "eligible" from "chosen" is the transferable move. |
 | 17 | Maximum Number of Events That Can Be Attended | LC **1353** | **Heap keyed by deadline.** Sweep day by day, admit every event that has started, and greedily attend the one that expires soonest. The exchange argument — taking the tightest deadline first is never worse — is the actual content, and it is a proof you should be able to give aloud. |
 
@@ -104,6 +104,7 @@ Skip these and you will write correct but needlessly slow heap code, and you wil
 | # | Problem | Source | The new idea |
 |---|---|---|---|
 | 18 | Course Schedule III | LC **630** | **Retroactive eviction.** Take every course as you meet it, and the moment you overrun the deadline, drop the longest course you have already taken — including, possibly, the one you just added. A max-heap of accepted durations makes that eviction `O(log n)`. Astonishing the first time: you commit to things specifically so you can un-commit later. |
+| 25 | Furthest Building You Can Reach | LC **1642** | **Regret that *downgrades* a resource instead of dropping the choice.** You may use ladders (unlimited height, scarce count) or bricks (exact height, plentiful). Greedy: spend bricks everywhere, and whenever you would need more bricks than you have, retroactively convert the *largest* brick-spend so far into a ladder — a max-heap of those heights. #18 *discards* a past course; this *converts* a past brick-use into a ladder-use. The heap still holds the worst past decision; what you do to it is different. Split from #18 because the transfer does not hold: knowing "drop the longest" does not tell you "replace the most expensive brick spend with a ladder." |
 | 19 | Maximum Average Pass Ratio | LC **1792** | **Rank by marginal gain, not by value.** The heap is ordered by how much the ratio would *improve* if this class got the next student, which is a derived quantity that changes after every pop. The general shape of "distribute `k` units of a resource optimally" — and the trap is that ordering by current value gives the wrong answer. |
 
 ## H7 · Structural greedy
@@ -134,7 +135,9 @@ Developed more fully in the named topic, but you will meet them while studying h
 | ↗   | Path With Minimum Effort          | LC **1631** | Dijkstra where path cost is the **maximum edge** rather than the sum, which is the clean demonstration that the heap frontier works for any combining operation that never improves as a path grows. [[Graphs]] #22.                                                                                                   |
 | ↗   | Min Cost to Connect All Points    | LC **1584** | **Prim's MST** — the same heap frontier as Dijkstra with the key changed from "distance from source" to "distance from the tree." The pair makes it obvious that the heap is the reusable part. [[Graphs]] #25.                                                                                                        |
 | ↗   | Minimum Number of Refueling Stops | LC **871**  | **A heap removes an entire DP dimension.** Instead of a table over stop counts, defer every decision: drive past every station, and when you run dry, retroactively take fuel from the biggest tank you passed. Regret greedy (H6) meeting DP elimination. [[Dynamic Programming]] #54.                                |
-| ↗   | Design Twitter                    | LC **355**  | #7's k-way merge behind an API, merging followee feeds lazily on read rather than fanning out on write. The read-versus-write-fanout tradeoff is the interview content. Design basis.                                                                                                                                  |
+| ↗   | Design Twitter                    | LC **355**  | #7's k-way merge behind an API, merging followee feeds lazily on read rather than fanning out on write. The read-versus-write-fanout tradeoff is the interview content. Native at [[Design]] #8.                                                                                                                                  |
+| ↗   | Smallest Range *(the window)*     | LC **632**  | Members come from `k` sources; shrinking means advancing the list that owns the min. Native here as the heap of heads (#10). [[Sliding Window]] #16. |
+| ↗   | Median via ordered multiset       | LC **295** / **480** | Native here as two heaps (#11) and lazy deletion (#12). In C++ a `multiset` with a cursor at the median is shorter and generalises to any fixed rank — which the two-heap split cannot. [[Sorted Containers & Order Statistics]] #7. |
 
 ---
 
@@ -159,20 +162,19 @@ Developed more fully in the named topic, but you will meet them while studying h
 | Minimum Cost to Hire K Workers | LC **857** | #6 | Sort by wage ratio, size-`k` heap on quality. Same template. |
 | Maximum Subsequence Score | LC **2542** | #6 | Literally #6 with the two arrays renamed. |
 | Total Cost to Hire K Workers | LC **2462** | #7 | Two heaps as two sources; the merge machinery is unchanged. |
-| Employee Free Time | LC **759** | #7 | Merge `k` sorted interval lists, then read the gaps. |
+| Employee Free Time | LC **759** | #7 | Merge `k` sorted interval lists, then read the gaps. The complement-of-a-union half is [[Intervals]] #4. |
 | Kth Smallest Element in a Sorted Matrix | LC **378** | #8 | The same virtual sorted grid. Worth doing anyway for the value-range binary search alternative, [[Binary Search]] #12. |
 | Kth Smallest Prime Fraction | LC **786** | #8 | Virtual grid of fractions. |
 | Super Ugly Number | LC **313** | #9 | #9 with an arbitrary factor list. |
 | Smallest Number in Infinite Set | LC **2336** | #9 | Lazy generation plus a pointer for the untouched tail. |
 | Number of Orders in the Backlog | LC **1801** | #13 | Two heaps facing each other as an order book; the transfer rule is a domain detail. |
-| Car Pooling | LC **1094** | #14 | Active-resource counting; a difference array is the better solution. |
+| Car Pooling | LC **1094** | #14 | Active-resource counting; a difference array is the better solution. Named in [[Intervals]] #6. |
 | Divide Intervals Into Minimum Number of Groups | LC **2406** | #14 | Provably identical to Meeting Rooms II. |
-| Meeting Rooms III | LC **2402** | #14 | #14 plus a second heap of free rooms for tie-breaking. |
+| Meeting Rooms III | LC **2402** | #14 | #14 plus a second heap of free rooms for tie-breaking. The label-a-room half is [[Intervals]] #9. |
 | Reorganize String | LC **767** | #15 | Cooldown of exactly one, so you park a single element. |
 | Longest Happy String | LC **1405** | #15 | Cooldown with a run-length cap. |
 | Rearrange String k Distance Apart | LC **358** | #15 | The general-`k` version of #15 — the same parked queue. |
 | Process Tasks Using Servers | LC **2071** | #16 | Free pool and busy pool with time advancing; #15 and #16 composed. |
-| Furthest Building You Can Reach | LC **1642** | #18 | Regret greedy where the revision is a downgrade rather than a drop. Excluded reluctantly — see the audit. |
 | Construct Target Array With Multiple Sums | LC **1354** | #21 | Reverse the process so it becomes monotone, then drive it with a max-heap. |
 | Maximum Score From Removing Stones | LC **1753** | #20 | Two pops and a push; the closed-form answer makes the heap unnecessary. |
 | Swim in Rising Water | LC **778** | ↗ LC 1631 | Bottleneck Dijkstra on a grid. |
@@ -184,11 +186,11 @@ Developed more fully in the named topic, but you will meet them while studying h
 
 **Borderline calls, and which way I went**
 
-- **Furthest Building You Can Reach (LC 1642) excluded into #18.** The least comfortable call in this file. Course Schedule III drops a past choice entirely; LC 1642 *downgrades* one resource into another. Under a strict reading both are "revise a past greedy decision with a heap," so they merge — but the downgrade framing is different enough that ==you should split them if #18 does not transfer to 1642 when you try it==.
+- **Furthest Building You Can Reach (LC 1642) split from #18 as #25.** The least comfortable call in the original file, now acted on. Course Schedule III drops a past choice entirely; LC 1642 *downgrades* one resource into another. The heap still holds the worst past decision; what you do to it is different, and #18 does not transfer.
 - **Minimum Number of Refueling Stops cross-listed rather than made native.** It is arguably the cleanest regret-greedy problem there is and could headline H6. Left as ↗ because the *reason* it matters is the DP dimension it eliminates, which is developed properly in the DP file.
 - **Heapify (#1) as an entry at all.** It is a fact rather than a problem-solving move. Kept because it is asked directly and because heapsort depends on it.
 - **Lazy deletion (#2) stated in mechanics and then re-taught in #12.** Deliberate duplication — you will not absorb it as an abstraction, only through Sliding Window Median.
-- **Meeting Rooms II (#14) versus a difference array.** Kept as a heap entry, though for the pure counting version a difference array is strictly better. The heap earns its place only when you must know *which* resources are active, not merely how many.
+- **Meeting Rooms II (#14) versus a difference array.** Kept as a heap entry, though for the pure counting version a difference array is strictly better. The heap earns its place only when you must know *which* resources are active, not merely how many. [[Intervals]] #6 is the event-list form of the same count; #8/#9 there are where the live *set* (or labels) actually need a heap.
 - **Two heaps (#11) and lazy deletion (#12) kept split.** #11 is a balance invariant; #12 is a deletion workaround. They co-occur constantly but are independent ideas — you need #12 for #23, which has no median in it at all.
 
 **Step 4B — reverse sweep**
@@ -204,7 +206,7 @@ Also confirmed by the sweep: the missing sorted-container topic is real. **"I ke
 - **Interval heaps and double-ended priority queues** (`O(1)` access to both min and max in one structure) — excluded as out of scope. Two separate heaps is what interviews want. Reasonable confidence.
 - **Fibonacci and pairing heaps** — excluded as competitive-programming and theory scope. High confidence.
 - **Soft heaps, `d`-ary heaps** — excluded. `d`-ary is worth one sentence if a cache-locality question ever comes up, which it will not.
-- **Median maintenance via a balanced BST or ordered multiset** — the alternative to #11 and #12, and genuinely the better tool in C++ where `multiset` exists. Belongs to a Sorted-Container basis that does not exist yet. **This is the most likely real gap in the file.**
+- **Median maintenance via a balanced BST or ordered multiset** — the alternative to #11 and #12, and genuinely the better tool in C++ where `multiset` exists. Now ↗ [[Sorted Containers & Order Statistics]] #7. Gap closed.
 - **The scheduling family (H5) is the one most at risk of a wrong merge.** Five near-identical-looking problems collapsed into four entries; if any exclusion is wrong it is in there.
 - **`k`-way merge with an indexed heap for external sorting** — real, but a systems-design question rather than a DSA one.
 
@@ -226,3 +228,7 @@ Also confirmed by the sweep: the missing sorted-container topic is real. **"I ke
 - [[Sorted Containers & Order Statistics]]
 - [[Linked List]]
 - [[Sorting & Custom Comparators]]
+- [[Greedy]]
+- [[Intervals]]
+- [[Design]]
+- [[Matrix]]

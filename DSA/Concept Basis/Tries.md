@@ -72,7 +72,7 @@ The most under-appreciated part of the topic. **Drop the alphabet to `{0, 1}` an
 
 | # | Problem | Source | The new idea |
 |---|---|---|---|
-| 7 | Maximum XOR of Two Numbers in an Array | LC **421** | **Greedy descent by a maximisation rule.** Insert every number as 32 bits, then for each number walk down preferring the *opposite* bit at each level, since setting a higher bit always beats anything below it. New on two counts: the key is not a string, and the descent is not a match but an optimisation — you take the best available branch and fall back only when it is absent. If you learn one thing from this file beyond #1, learn this; "maximise XOR" is otherwise a hopeless `O(n²)`. |
+| 7 | Maximum XOR of Two Numbers in an Array | LC **421** | **Greedy descent by a maximisation rule.** Insert every number as 32 bits, then for each number walk down preferring the *opposite* bit at each level, since setting a higher bit always beats anything below it. New on two counts: the key is not a string, and the descent is not a match but an optimisation — you take the best available branch and fall back only when it is absent. If you learn one thing from this file beyond #1, learn this; "maximise XOR" is otherwise a hopeless `O(n²)`. When the objective wants the *same* bit (max pairwise AND) or you are constructing one number under a budget, there is no tree — you filter a list from the MSB down. That is [[Bit Manipulation]] #22. |
 | 8 | Maximum XOR With an Element From Array | LC **1707** | **Restrict which keys are eligible, without rebuilding the trie.** The partner must satisfy `nums[j] ≤ m`, and there are two clean answers, both generally useful. **Offline:** sort the queries by `m` and the array by value, then insert incrementally so the trie only ever contains eligible keys — an *activation window*. **Online:** store `min` at each node and refuse to descend into a subtree whose minimum exceeds `m`. The second is the reusable one: **a subtree extremum stored at each node turns a constraint into a pruning rule**, which works for any monotone filter, not just XOR. |
 | 9 | Count Pairs With XOR in a Range | LC **1803** | **Count an entire subtree instead of descending into it.** To count partners with `x ⊕ y < k`, follow `k`'s bits: at each level one child's whole subtree is *certainly* below the bound, so you add its `passCount` and stop, and you continue into the other. `O(32)` per query rather than `O(n)`. This is the same decomposition a segment tree uses — express the query as `O(log)` complete subtrees — and it converts the trie from an optimiser (#7) into a counter. |
 | 10 | Persistent binary trie — max XOR over a subarray | *classic — CF/CSES flavour; the range-restricted form of #7* **[tail]** | **Version the trie so a query can run against a range of insertions.** Keep a root per prefix of the array, each sharing all untouched nodes with its predecessor, and a query on `[l, r]` descends `root[r]` and `root[l-1]` together, using the difference of their `passCount`s to decide whether a branch exists *within the window*. New because the set you query is no longer "everything inserted" but an arbitrary contiguous slice of insertion history. Exactly the persistence idea from [[Segment Trees]] #13, and the reason it works here is the same: a trie is a tree of shared paths, so copying one path is `O(32)`. |
@@ -94,7 +94,7 @@ Three entries where the trie is untouched and the **key** is transformed. The ch
 |---|---|---|---|
 | 13 | Prefix and Suffix Search | LC **745** | **Index one string under many derived keys, so a two-sided query becomes a one-sided lookup.** Insert every `suffix + '#' + word` for each word; then the query `(prefix, suffix)` becomes a single lookup of `suffix + '#' + prefix`. Nothing about the trie changed — the *key* absorbed the second constraint. Generalises far beyond this problem: whenever a structure supports one kind of query and you need a conjunction, ask whether the extra condition can be folded into the key. |
 | 14 | Stream of Characters | LC **1032** | **Insert the words reversed, because a stream can only grow at the end.** Characters arrive one at a time and you must answer "does any dictionary word end here", which is a *suffix* query on what you have seen. A trie cannot do suffixes — so reverse the dictionary on the way in, and walk the received characters backwards on the way out, turning it back into a prefix query. The transferable move: **when the query is on the wrong end, reverse the data.** |
-| 15 | Number of Distinct Substrings in a String | LC **1698** | **Insert every suffix and the trie contains every substring — one node per distinct one.** The bridge from strings to substrings, and the reason the suffix-structure family exists at all. It also comes with the boundary you must know: this is `O(n²)` nodes, fine for `n ≈ 1000` and hopeless beyond, at which point the real tools are a **suffix automaton, suffix array or suffix tree** (Strings basis). Knowing that a suffix trie is the naive form of a named family is worth more than the problem. |
+| 15 | Number of Distinct Substrings in a String | LC **1698** | **Insert every suffix and the trie contains every substring — one node per distinct one.** The bridge from strings to substrings, and the reason the suffix-structure family exists at all. It also comes with the boundary you must know: this is `O(n²)` nodes, fine for `n ≈ 1000` and hopeless beyond, at which point the real tools are a **suffix array, LCP, or suffix automaton** ([[Strings]] #8 · #9 · #10). Knowing that a suffix trie is the naive form of a named family is worth more than the problem. |
 
 ## T6 · Space and representation
 
@@ -109,7 +109,7 @@ The trie's real cost is memory, and both entries are about paying less.
 
 | # | Problem | Source | The new idea |
 |---|---|---|---|
-| 18 | Aho–Corasick | *classic — the scaled form of #11; usable on LC 1032 and LC 616* **[tail]** | **Add a failure link to every trie node and the trie becomes a finite automaton over the text.** When the next character has no child, follow the failure link — the longest proper suffix of the current match that is also a prefix in the trie — instead of restarting. One pass finds *all* occurrences of *all* patterns in `O(text + total pattern length + matches)`. This is KMP's failure function generalised from one pattern to a set, which is exactly the right way to hold it: **KMP is Aho–Corasick on a trie with one branch.** #11 pruned a branching search; this eliminates backtracking entirely on a linear one. |
+| 18 | Aho–Corasick | *classic — the scaled form of #11; usable on LC 1032 and LC 616* **[tail]** | **Add a failure link to every trie node and the trie becomes a finite automaton over the text.** When the next character has no child, follow the failure link — the longest proper suffix of the current match that is also a prefix in the trie — instead of restarting. One pass finds *all* occurrences of *all* patterns in `O(text + total pattern length + matches)`. This is KMP's failure function generalised from one pattern to a set, which is exactly the right way to hold it: **KMP is Aho–Corasick on a trie with one branch** ([[Strings]] #1). #11 pruned a branching search; this eliminates backtracking entirely on a linear one. |
 
 ---
 
@@ -120,7 +120,7 @@ The trie's real cost is memory, and both entries are about paying less.
 | ↗ | Word Break II | LC **140** | The trie replaces the "is `s[i..j]` a word" check inside a DP, so transitions are discovered by *descending from `i`* rather than tested one by one — dropping a factor of the word length. The clean example of a trie accelerating someone else's recurrence. [[Dynamic Programming]] basis. |
 | ↗ | Concatenated Words | LC **472** | Sort by length, then for each word run a DP over the trie of the shorter words already inserted. Composes ↗ LC 140 with an insertion order that guarantees the pieces exist. [[Dynamic Programming]] basis. |
 | ↗ | Design In-Memory File System | LC **588** | The same map-of-children structure with path components as the alphabet — a trie over tokens rather than characters. [[N-ary Trees]] #11. |
-| ↗ | KMP · Z-function · string hashing | *classic* | The **non-trie** route to substring and single-pattern problems, and usually the better one. Reach for a trie when you have a *set* of patterns or a prefix query; reach for these when you have one pattern or need substring equality. Strings basis. |
+| ↗ | KMP · Z-function · string hashing | *classic* | The **non-trie** route to substring and single-pattern problems, and usually the better one. Reach for a trie when you have a *set* of patterns or a prefix query; reach for these when you have one pattern or need substring equality. [[Strings]] #1 · #4 · #5. |
 
 ---
 
@@ -143,7 +143,7 @@ The trie's real cost is memory, and both entries are about paying less.
 | Prefix-based rate limiter · URL router | *systems* | #5 | Longest-prefix-match on tokens. |
 | Bitwise ORs of Subarrays | LC **898** | — | Not a trie. Set-of-reachable-values, which is a [[Dynamic Programming]] idea. |
 | Group Anagrams · Isomorphic Strings | LC **49** · **205** | — | Canonical-key hashing. No prefix question, so no trie. |
-| Suffix array construction | *classic* | #15 | The scalable replacement, and it belongs to the Strings basis. |
+| Suffix array construction | *classic* | #15 | The scalable replacement. Native at [[Strings]] #8; LCP is [[Strings]] #9. |
 | Compressed trie for a spell-check dictionary | — | #16 · #17 | The two space entries applied together. |
 
 ---
@@ -157,7 +157,7 @@ The trie's real cost is memory, and both entries are about paying less.
 - **#2 (counts) kept as its own entry rather than folded into #1.** The code is nearly the same; the contract is not. A flag gives you a set, a count gives you a multiset with deletion, and "how would you delete from your trie" is a standard follow-up that a flag-based implementation simply cannot answer.
 - **Four concept entries with no clean judge problem (#10, #12, #16, #17), all tagged [tail] except #17.** Consistent with the `MISSING representative` convention used in [[Binary Search Trees]] and [[Segment Trees]]. #17 is untagged because the memory follow-up genuinely does get asked right after LC 208.
 - **Aho–Corasick kept native, KMP cross-listed.** Aho–Corasick *is* a trie with extra pointers, so it belongs here; KMP is a string algorithm that happens to be its degenerate case, so it belongs to Strings. Stating the relationship in both directions is the point.
-- **Suffix automata and suffix arrays cross-listed to Strings, not native.** #15 holds the boundary — insert all suffixes, `O(n²)`, and here is where you stop — which I think is the right amount for a trie file. A reader whose target includes contest work would want them here.
+- **Suffix automata and suffix arrays cross-listed to [[Strings]], not native.** #15 holds the boundary — insert all suffixes, `O(n²)`, and here is where you stop. [[Strings]] #8 · #9 · #10 are the scalable forms.
 
 **Step 4B — reverse sweep**
 
@@ -170,14 +170,14 @@ Two collisions, both checked and cleared. "Which stored word is a prefix of my q
 
 **What I am uncertain about**
 
-- **Where the boundary with the Strings basis sits.** This is the largest risk in the file. Suffix arrays, suffix automata, KMP and Z all touch trie territory, and I have drawn the line at *does the structure branch on a shared prefix*. Defensible, but a different line would move three or four entries.
+- **Where the boundary with [[Strings]] sits.** Drawn at *does the structure branch on a shared prefix*. KMP, Z, hashing, suffix array and SAM are now native there (#1, #4, #5, #8, #10); Aho–Corasick stays here. The line held.
 - **Whether #12 is in scope.** Fuzzy search is systems-flavoured and has no judge representative, so it may be tail-of-the-tail. Included because the sweep found it and because "descend carrying state, prune on a monotone bound" is a shape that recurs.
 - **Ternary search tries** — excluded. A space-time compromise between #17's array and map, genuinely used, but almost never asked. Moderate confidence.
 - **Bitwise tries for `AND`/`OR` extremal queries** rather than XOR — excluded, since the greedy argument mostly collapses and other techniques win. Mild uncertainty.
 - **Merkle tries** (Patricia-Merkle, `git`, blockchain state) — named in #16 but not developed. That is system-design scope, not DSA.
 - **The exclusions table is short relative to the entries**, which is unusual and slightly suspicious. Tries have fewer near-duplicate judge problems than DP or heaps do, so I think it is real rather than a sign of under-collection — but it is the opposite of the [[Binary Search]] pattern and worth a second look if something feels missing.
 
-**Completeness confidence: ~90%.** The core is solid and #1–#7 plus #11 I would call complete. The uncertainty is almost entirely at the Strings boundary and in how much of the automaton and suffix-structure world should have been pulled inside.
+**Completeness confidence: ~90%.** The core is solid and #1–#7 plus #11 I would call complete. The Strings boundary is now a file, not a hedge.
 
 ## Related Notes
 
@@ -189,3 +189,6 @@ Two collisions, both checked and cleared. "Which stored word is a prefix of my q
 - [[Sorted Containers & Order Statistics]]
 - [[Backtracking]]
 - [[Bit Manipulation]]
+- [[Greedy]]
+- [[Strings]]
+- [[Design]]

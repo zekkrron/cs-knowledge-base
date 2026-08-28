@@ -41,10 +41,10 @@ L3  Rewiring in place                     5 ideas
 L4  Sorting a list                        1 idea
 L5  The list inside a design              3 ideas
 L6  Circular lists                        1 idea
-                                          + 11 cross-listed ↗
+                                          + 12 cross-listed ↗
 ```
 
-**16 native entries, plus 11 cross-listed (↗).** See [[README]] on cross-listing.
+**16 native entries, plus 12 cross-listed (↗).** See [[README]] on cross-listing.
 
 > [!tip] **The ↗ table is long and four of its rows point at the tree files, which is the point.** Half of what curated lists call "linked list problems" are really *a tree being rewired into a list* (LC 114, 426, 117) or *another technique running over a list* (LC 1171, 1019). Those ideas belong where their mechanism belongs; they are cross-listed here so that arriving from the linked-list side still finds them.
 
@@ -97,7 +97,7 @@ Everything below is built from these three. Get them wrong and nothing else work
 |---|---|---|---|
 | 7 | Reverse Nodes in k-Group · Reverse Between | LC **25** · **92** | **To reverse a sublist you need handles on the node *before* it and the node *after* it, and you must capture both before you start destroying links.** So the bookkeeping is `groupPrev` and `groupNext`, then reverse the interior with #1, then stitch: `groupPrev.next` to the group's new head, and the group's new tail to `groupNext`. New because #1 assumed the sublist was the whole list, and the stitching is where every bug lives. Two details that are the actual content: **check that `k` nodes remain before reversing anything** (a partial final group must be left alone), and use a dummy (#2) so the first group's `groupPrev` exists. This is the hardest pure-pointer problem that gets asked, and it is asked a lot. |
 | 8 | Partition List · Odd Even Linked List | LC **86** · **328** | **Build two independent chains with their own tail pointers, then concatenate — one pass, stable, `O(1)` space.** Rather than moving nodes around inside one list, you *unbuild* it into two and rebuild once. New because it inverts the usual approach: no node is ever inserted into the middle of anything, so there is no shifting and no lost-pointer hazard, and stability is free because each chain preserves arrival order. The step people forget is **terminating the second chain with `null`**, without which you get a cycle. Generalises straight to `k` chains, which is bucket-sorting a list, and to LC 328's odd/even split by position rather than by value. |
-| 9 | Copy List with Random Pointer | LC **138** | **Weave the copies into the original list so each node can find its own copy in `O(1)`, then unweave.** The obvious solution maps old node to new node in a hash map and does a second pass to fix the random pointers, which is `O(n)` space. The trick is to interleave — `A → A' → B → B' → …` — because then `node.random.next` *is* the copy of `node.random`, so the random pointers are set with pure pointer arithmetic and no lookup table at all. Then separate the two lists in a third pass. New in general form: **when you need a mapping from old to new, storing it inside the structure can be cheaper than storing it beside the structure.** The same instinct as the in-place marking tricks in [[Arrays]] A1. |
+| 9 | Copy List with Random Pointer | LC **138** | **Weave the copies into the original list so each node can find its own copy in `O(1)`, then unweave.** The obvious solution maps old node to new node in a hash map and does a second pass to fix the random pointers, which is `O(n)` space. The trick is to interleave — `A → A' → B → B' → …` — because then `node.random.next` *is* the copy of `node.random`, so the random pointers are set with pure pointer arithmetic and no lookup table at all. Then separate the two lists in a third pass. New in general form: **when you need a mapping from old to new, storing it inside the structure can be cheaper than storing it beside the structure.** The same instinct as the in-place marking tricks in [[Arrays]] A1. The graph form — hash map as visited payload, no weave possible — is [[Graphs]] #37. |
 | 10 | Flatten a Multilevel Doubly Linked List | LC **430** | **Splice a child list into the middle of its parent, which means saving the parent's continuation before you lose it and repairing `prev` on both seams.** Walk forward; on hitting a node with a child, push `node.next` (the continuation) somewhere safe, attach the child, and clear the child pointer — then when the spliced-in run ends, reattach what you saved. Either an explicit stack or a recursive flatten that returns the sublist's tail. New because it is the only entry where the list is being *restructured across levels*, and because a doubly linked list doubles the number of links you must fix — the `prev` you forget is the one nobody tests until they do. |
 | 16 | Delete Node in a Linked List | LC **237** | **You cannot delete a node without its predecessor — so instead of removing this node, become the next one and remove that.** Given only a pointer to the node, copy `next`'s value into it and splice `next` out; the node object survives but the *list* is correct. New because it is the sharpest statement of what a node pointer actually gives you: **a handle on a node grants no access to the link pointing at it**, which is the deprivation the dummy head (#2) works around from the other side. Worth knowing its limits, because that is the follow-up — it fails on the tail (there is nothing to impersonate) and it is illegal if any external reference to the node's identity or value matters, which is why real APIs pass the predecessor or use a doubly linked list. |
 
@@ -140,6 +140,7 @@ Everything below is built from these three. Get them wrong and nothing else work
 | ↗ | BST to Sorted Doubly Linked List · Populating Next Right Pointers II | LC **426** · **117** | The other two faces of the same rewiring hazard. LC 426 threads `prev`/`next` during an inorder walk; LC 117 uses the **already-threaded level above as a linked list** to build the next one, which is how you reach `O(1)` space. Both are "a tree becomes a list in place". [[Binary Search Trees]] #13 and [[Binary Trees]] #18. |
 | ↗ | Remove Zero Sum Consecutive Nodes | LC **1171** | **A prefix-sum hash map, but keyed to *nodes* rather than indices.** Store `runningSum → node`; seeing a sum twice means the run between them is zero, so you splice by pointing the first node's `next` past the second. Two list-specific consequences: you need a dummy head (#2) because the zero-run may start at the head, and you must **evict the stale map entries** for the nodes you just removed, which the array version never has to think about. The prefix machinery is [[Prefix Sums & Difference Arrays]] #5. |
 | ↗ | Next Greater Node in Linked List | LC **1019** | A monotonic stack over a structure you can only walk forwards — which is the one thing a list is actually good at, so the technique transfers unchanged and only the *output indexing* gets awkward. Worth doing once, to confirm that "no random access" costs nothing here. [[Stack and Queue]] S7. |
+| ↗ | Clone Graph | LC **133** | The same old-to-new mapping as #9, on a graph — visited carries the copy, not a boolean. No weave possible, so the hash map *is* the answer. Native at [[Graphs]] #37. |
 
 ---
 
@@ -162,13 +163,12 @@ Everything below is built from these three. Get them wrong and nothing else work
 | Copy List with Random Pointer *(hash map)* | LC **138** | #9 | The `O(n)`-space route, named in the entry. |
 | Design Linked List | LC **707** | #2 | An API wrapper; sentinels make it short. |
 | Implement a stack / queue with a list | — | #2 | Head insertion, or head and tail pointers. |
-| LRU with an `OrderedDict` / `LinkedHashMap` | — | #12 | The library doing #12 for you. Say the name, then implement it anyway. |
-| Design Browser History | LC **1472** | #12 | A doubly linked list with a cursor, or two stacks. |
-| All O(1) Data Structure | LC **432** | #13 | Buckets of keys in a doubly linked list of counts. |
+| LRU with `list` + `unordered_map` | — | #12 | There is no library LRU map in C++. Write the two structures; say the name, then implement it anyway. |
+| Design Browser History | LC **1472** | #12 | A list with a cursor, or two stacks. Truncation of the forward branch is the idea — [[Design]] #9. |
+| All O(1) Data Structure | LC **432** | #13 | Buckets of keys in a doubly linked list of counts. Same `minFreq` as #13; Design ↗ it with LFU. |
 | Josephus / circular elimination | LC **1823** | #15 | The `O(n)` recurrence beats simulating a circular list. [[Math & Number Theory]] #20. |
 | XOR linked list · unrolled linked list | *concept* | — | Memory-layout curiosities. Worth naming in a systems conversation, not an algorithmic idea. |
 | Convert Sorted Array to BST | LC **108** | #6 | The indexable counterpart, where the middle is picked directly. [[Binary Search Trees]] #10. |
-| Clone Graph | LC **133** | #9 | The same old-to-new mapping problem, on a graph. [[Graphs]]. |
 | Maximum Twin Sum of a Linked List | LC **2130** | #4 | Split, reverse, walk together — and sum instead of comparing. |
 | Swapping Nodes in a Linked List | LC **1721** | #4 | Two fixed-offset walks, then swap values. Swapping *nodes* is #7. |
 | Linked List Components | LC **817** | — | One pass with a set membership check; nothing about lists. |
@@ -210,8 +210,8 @@ The procedural fix, which applies retroactively to every file: **after 4B, grep 
 
 **What I am uncertain about**
 
-- **The Design boundary is the real question for this file.** #12, #13 and #14 are all "design a class", and a Design basis would want all three plus LC 1472 and LC 432. My cut was to keep the ones whose difficulty is the *list reasoning* and exclude the ones whose difficulty is the API. That is a thinner line than I would like.
-- **Whether L6 should exist.** One entry, and a borderline one. If Intervals or a Design file absorbs circular structures, this family should probably fold into L3.
+- **The Design boundary is closed.** #12, #13 and #14 stay because the difficulty is the *list reasoning*. [[Design]] ↗ LRU/LFU and natives Browser History (#9) and the pairing sentence; LC 432 stays an exclusion of #13. The cut held.
+- **Whether L6 should exist.** One entry, and a borderline one. Intervals did not absorb circular structures. Folding into L3 is still optional, not forced.
 - **Recall is thinnest on doubly linked lists.** #10, #12 and #13 use them; nothing systematically covers the `prev`-maintenance failure modes, and there is no curated list of doubly-linked problems to sweep against because most sources treat them as an implementation detail.
 - **Nothing here covers memory and cache behaviour** beyond the opening warning. That is a systems topic rather than a DSA one, but it is the honest answer to "when would you actually use this", and a reader who only has this file will not be able to give it.
 - **The tail-scope question does not arise**, which is itself mildly suspicious — every other file has at least one entry that is real but rarely asked. Either this topic genuinely has no tail, or I have excluded it as variation. I lean towards the former, since the topic is small and heavily asked at the shallow end.
@@ -230,3 +230,5 @@ The procedural fix, which applies retroactively to every file: **after 4B, grep 
 - [[Math & Number Theory]]
 - [[Sorted Containers & Order Statistics]]
 - [[Sorting & Custom Comparators]]
+- [[Design]]
+- [[Hashing]]

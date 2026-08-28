@@ -39,14 +39,14 @@ A BST is a binary tree plus one sentence: *everything in the left subtree is sma
 ```
 S1  The invariant, and how easily it is misread   2 ideas
 S2  Exploiting the order                          4 ideas
-S3  Maintaining and repairing it                  3 ideas
+S3  Maintaining and repairing it                  4 ideas
 S4  Shape, balance, augmentation                  3 ideas
 S5  Order-dependent traversal                     2 ideas
 S6  The BST as a live container                   2 ideas
                                                   + 3 cross-listed ↗
 ```
 
-**16 native entries, plus 3 cross-listed (↗).** See [[README]] on cross-listing.
+**17 native entries, plus 3 cross-listed (↗).** See [[README]] on cross-listing.
 
 ---
 
@@ -55,7 +55,7 @@ S6  The BST as a live container                   2 ideas
 | # | Problem | Source | The new idea |
 |---|---|---|---|
 | 1 | Validate Binary Search Tree | LC **98** | **The BST property is global, not local.** Checking `left.val < node.val < right.val` at each node is the classic wrong answer — it accepts trees where a deep left descendant exceeds a distant ancestor. The fix is to carry an open interval `(low, high)` downward, narrowing it at each step, which makes this an information-flows-**down** problem wearing BST clothing ([[Binary Trees]] #8). Worth doing precisely *because* the intuitive solution fails; the alternative solution — inorder must be strictly increasing — is #2 in disguise. |
-| 2 | Kth Smallest Element in a BST | LC **230** | **Inorder is sorted, and that is the master fact.** Every order question reduces to a position in that sequence: the `k`-th smallest is a counted walk, the **successor** is one step forward, the **predecessor** one step back, the **mode** is the longest run of equal values in `O(1)` space, and two-sum becomes two pointers over the inorder array. Stopping early gives `O(k)`; augmenting nodes with subtree sizes gives `O(h)` and is #12. |
+| 2 | Kth Smallest Element in a BST | LC **230** | **Inorder is sorted, and that is the master fact.** Every order question reduces to a position in that sequence: the `k`-th smallest is a counted walk, the **successor** is one step forward, the **predecessor** one step back, and two-sum becomes two pointers over the inorder array. Stopping early gives `O(k)`; augmenting nodes with subtree sizes gives `O(h)` and is #12. The **mode** — longest run of equals — is #17, because grouping duplicates is a different use of adjacency than taking a difference. |
 
 ## S2 · Exploiting the order
 
@@ -72,7 +72,8 @@ Four different ways the invariant lets you avoid work.
 
 | # | Problem | Source | The new idea |
 |---|---|---|---|
-| 7 | Insert into a BST | LC **701** | **Insertion is forced, always lands at a leaf — and its *order* determines the shape.** There is exactly one legal position for a new key, found by the same descent as #3. The consequence matters far more than the code: **inserting sorted data builds a linked list**, which is why unbalanced trees happen in practice and why #11 exists. This is also the mechanism behind building a BST as a tool to answer counting questions (↗ LC 315). Duplicates need an explicit policy — forbid, send right, or keep a count in the node — and interviewers do ask which you chose. |
+| 7 | Insert into a BST | LC **701** | **Insertion is forced, always lands at a leaf — and its *order* determines the shape.** There is exactly one legal position for a new key, found by the same descent as #3. The consequence matters far more than the code: **inserting sorted data builds a linked list**, which is why unbalanced trees happen in practice and why #11 exists. This is also the mechanism behind building a BST as a tool to answer counting questions (↗ LC 315). Duplicates are #17, not a footnote. |
+| 17 | Find Mode in Binary Search Tree | LC **501** | **Duplicates are a policy, not an afterthought — and once they exist they cluster in inorder, so frequency is a run-length not a hash map.** On insert you must pick: forbid, always send right (or left), or keep a count in the node. The count-in-node version is what order-statistic trees actually do under the hood (#12). On a tree that already has duplicates, a hash map of frequencies ignores the invariant; one inorder pass with `prev` and a streak counter is `O(1)` extra space because equals sit next to each other. #2 used adjacency for *difference*; this uses it for *grouping*. Interviewers ask "what if there are duplicates?" after #7 — the answer is this entry. |
 | 8 | Delete Node in a BST | LC **450** | **The three-case surgery.** A leaf detaches; a one-child node is bypassed; a two-child node is overwritten by its **inorder successor**, which is then deleted from the right subtree. The only mutation with real content, and the reason is worth naming: deletion is the sole operation that must *choose* a replacement, and the successor is the unique key that preserves the invariant on both sides. |
 | 9 | Recover Binary Search Tree | LC **99** | **Repair by finding the inversions in the inorder sequence.** Two swapped nodes produce either one adjacent inversion or two separated ones, so a single inorder pass with a `prev` pointer identifies both offenders and you swap their values. New because it is neither a query nor an insertion — it is *diagnosis*, and it works by comparing the tree against the sorted sequence it is supposed to be. |
 
@@ -81,7 +82,7 @@ Four different ways the invariant lets you avoid work.
 | # | Problem | Source | The new idea |
 |---|---|---|---|
 | 10 | Convert Sorted Array to Binary Search Tree | LC **108** | **The middle element is the root.** Recursing on halves produces a height-balanced tree, and this is the *constructive* reason `O(log n)` is achievable at all. Read alongside #2 it is an isomorphism: sorted sequence and balanced BST are two views of one object, and #10 and #2 are the two directions of the conversion. |
-| 11 | Rotations, AVL and red-black trees | *concept — `TreeMap`, `std::map`, `std::set`* | **Why balance must be maintained, and why you never implement it.** An unbalanced BST degrades to `O(n)`, so real implementations rotate on insertion to hold height at `O(log n)`. You should be able to draw a single rotation and say which invariant it restores; you should not write one in an interview. What matters practically is knowing that the library structure is a balanced BST, so every `O(log n)` guarantee you rely on comes from here. *No coding representative — this is a concept entry, per the method's `MISSING` convention.* |
+| 11 | Rotations, AVL and red-black trees | *concept — `std::map`, `std::set`* | **Why balance must be maintained, and why you never implement it.** An unbalanced BST degrades to `O(n)`, so real implementations rotate on insertion to hold height at `O(log n)`. You should be able to draw a single rotation and say which invariant it restores; you should not write one in an interview. What matters practically is knowing that the library structure is a balanced BST, so every `O(log n)` guarantee you rely on comes from here. *No coding representative — this is a concept entry, per the method's `MISSING` convention.* |
 | 12 | Order-statistic trees | *concept — subtree-size augmentation · `__gnu_pbds::tree`* | **Augment each node with its subtree size and the tree answers rank questions.** `select(k)` becomes a descent comparing `k` against the left subtree's size; `rank(x)` accumulates sizes as it descends. Both `O(log n)`, where #2's counted walk was `O(k)`. The general principle is the one that also drives segment trees: **store an aggregate at each node and queries that were linear become logarithmic.** A value-indexed BIT is the more robust answer to the same questions ([[Segment Trees]] #3). |
 
 ## S5 · Order-dependent traversal
@@ -97,8 +98,8 @@ Here the BST is not the problem — it is the **tool**. You build it yourself be
 
 | # | Problem | Source | The new idea |
 |---|---|---|---|
-| 15 | Contains Duplicate III | LC **220** | **A balanced BST over a sliding window answers "is anything near this value".** Maintain a `TreeSet` of the last `k` elements and ask `ceiling(x - t)`, checking whether what comes back is `≤ x + t`. Two things are new: the set is **windowed**, so you evict as you advance, and the query is a **neighbourhood** rather than an exact match — which is precisely what a hash set cannot do and an ordered set can. |
-| 16 | My Calendar I | LC **729** | **`floorKey` and `ceilingKey` find an insertion's neighbours in `O(log n)`.** To check whether a new interval overlaps anything, you only ever need the interval starting just before it and the one just after — not a scan. Interval merging on a stream, "insert into a sorted structure and check both sides", and most calendar or booking problems are this one query pair. The reflex worth building: **whenever you need a neighbour rather than a match, reach for an ordered map.** |
+| 15 | Contains Duplicate III | LC **220** | **A balanced BST over a sliding window answers "is anything near this value".** Maintain a `std::set` of the last `k` elements and ask `s.lower_bound(x - t)`, checking whether what comes back is `≤ x + t`. Two things are new: the set is **windowed**, so you evict as you advance, and the query is a **neighbourhood** rather than an exact match — which is precisely what a hash set cannot do and an ordered set can. The hash-*bucket* solution (`id = x / (t+1)`, check adjacent buckets) is [[Hashing]] #8 — same problem, different licence. |
+| 16 | My Calendar I | LC **729** | **`lower_bound` and `--it` find an insertion's neighbours in `O(log n)`.** Ceiling is `m.lower_bound(start)`; floor is the previous iterator. To check whether a new interval overlaps anything, you only ever need the interval starting just before it and the one just after — not a scan. Interval merging on a stream, "insert into a sorted structure and check both sides", and most calendar or booking problems are this one query pair. The reflex worth building: **whenever you need a neighbour rather than a match, reach for `std::map`.** The interval question — live booking, Range Module, online k-booking — is [[Intervals]] I3. |
 
 ---
 
@@ -117,7 +118,6 @@ Here the BST is not the problem — it is the **tool**. You build it yourself be
 | Problem | Source | Collapses into | Why |
 |---|---|---|---|
 | Minimum Absolute Difference in BST | LC **530** | #2 | Adjacent pairs in the inorder sequence. |
-| Find Mode in Binary Search Tree | LC **501** | #2 | The longest run of equal values in inorder, in `O(1)` space. |
 | Two Sum IV — Input is a BST | LC **653** | #2 | Inorder to an array, then two pointers. |
 | Inorder Successor in BST | LC **285** | #2 or #3 | One inorder step, or a downward walk tracking the last left turn. |
 | Increasing Order Search Tree | LC **897** | #2 | Inorder, rewiring as you go. |
@@ -133,7 +133,7 @@ Here the BST is not the problem — it is the **tool**. You build it yourself be
 | BST to Sorted Doubly Linked List | LC **426** | #13 | In-place rewiring during inorder — the rewiring hazard is [[Binary Trees]] #18. |
 | Kth Largest Element in a BST | — | #13 | Reverse inorder, counted. |
 | My Calendar II · III | LC **731** · **732** | #16 | Overlap counting on top of the same neighbour queries; a sweep with coordinate compression scales better ([[Segment Trees]] #11). |
-| Data Stream as Disjoint Intervals | LC **352** | #16 | `floorKey`/`ceilingKey` then merge both sides. |
+| Data Stream as Disjoint Intervals | LC **352** | #16 | `lower_bound` / `--it`, then merge both sides. |
 | Contains Duplicate II | LC **219** | #15 | Index-only window — a hash map suffices, since no neighbourhood query is needed. |
 
 ---
@@ -145,7 +145,7 @@ Here the BST is not the problem — it is the **tool**. You build it yourself be
 - **Search and LCA merged into one entry (#3).** Both are "descend by comparison, discard a subtree." Merging them is the point: LCA looks like a harder problem and is not, once you see it as the same descent with a different stopping rule.
 - **Insert (#7) kept despite being three lines.** Not for the code — for the consequence. "Inserting sorted data builds a linked list" is the fact that motivates #11 and licenses ↗ LC 315, and burying it inside #8 would have hidden it.
 - **Two concept entries with no coding problem (#11, #12).** Uncomfortable, and correct. Rotations and size-augmentation are things you must be able to *discuss* and should never implement under time pressure. The method's `MISSING representative` convention exists for exactly this, and the alternative — dropping them — would leave the file unable to explain where `O(log n)` comes from.
-- **S6 exists at all.** The BST-as-tool framing overlaps heavily with the still-missing sorted-container topic. Included because a BST file that never shows you *using* a `TreeMap` has taught you the data structure and not the skill.
+- **S6 exists at all.** The BST-as-tool framing overlaps with [[Sorted Containers & Order Statistics]]. Included because a BST file that never shows you *using* a `std::map` has taught you the data structure and not the skill.
 - **Validate (#1) is arguably a [[Binary Trees]] problem.** It is information-flowing-down with a `(low, high)` parameter, and the machinery is not BST-specific. Kept here because the *lesson* — the invariant is global — is about the invariant, and that is this file's subject.
 
 **Step 4B — reverse sweep**
@@ -157,8 +157,8 @@ Thirty plain-language descriptions navigated against the family headings. **One 
 
 **What I am uncertain about**
 
-- **The sorted-container gap is closed.** S6 plus #12 cover the structure side; the usage side — windowed multisets, offline reordering, `bisect.insort` and the language-library realities — is now [[Sorted Containers & Order Statistics]]. Read its lattice before choosing a structure for anything here.
-- **Duplicate handling** is a sentence inside #7 rather than an entry. It is asked ("what if there are duplicates?") often enough that this may be under-weighted.
+- **The sorted-container gap is closed.** S6 plus #12 cover the structure side; the usage side — windowed multisets, offline reordering, and the C++ fork (`std::set` has no rank — BIT vs `__gnu_pbds`) — is now [[Sorted Containers & Order Statistics]]. Read its lattice before choosing a structure for anything here.
+- **Duplicate handling promoted to #17.** Was a sentence inside #7; interviewers ask it often enough that the grouping-via-inorder move deserves its own row.
 - **Treaps, splay trees, scapegoat trees** — excluded as competitive-programming or theory scope. High confidence.
 - **B-trees and B+ trees** — excluded as a database and systems topic, not DSA. Moderate confidence; they do come up in system design rounds, where they belong.
 - **Threaded BSTs** — excluded; Morris covers the useful half ([[Binary Trees]] #3).
@@ -177,3 +177,5 @@ Thirty plain-language descriptions navigated against the family headings. **One 
 - [[Sorted Containers & Order Statistics]]
 - [[Backtracking]]
 - [[Linked List]]
+- [[Intervals]]
+- [[Hashing]]

@@ -72,7 +72,7 @@ Both entries exist because **arity is no longer implicit**, so anything that has
 |---|---|---|---|
 | 5 | Maximum Depth of N-ary Tree | LC **559** | **`max(left, right)` becomes a fold over children.** The base case of the family, and worth stating once: any *associative* combine — sum, max, count, min — generalises to arbitrary arity with no thought at all. Every entry below is a case where the combine is **not** simply associative, which is where the real content is. |
 | 6 | Diameter of N-ary Tree | LC **1522** | **You need the top *two* child depths, not `left` and `right`.** This is the genuine generalisation of return-one-record-another ([[Binary Trees]] #5), and the difference is structural rather than cosmetic: binary got its two candidates by having exactly two children, so the "pick the best two" step was invisible. With `k` children it becomes an explicit partial selection — track the two largest in one pass, or sort and take the front, `O(k log k)`. Once you see it, **"the answer combines the best `m` children"** is a reusable shape, and choosing between a linear scan and a sort is a real decision. |
-| 7 | Number of Nodes in the Sub-Tree With the Same Label | LC **1519** | **Merge child containers small-into-large, or the aggregation is quadratic.** When each node returns a *set* or *frequency map* rather than a number, the naive fold copies the same elements repeatedly and degrades to `O(n²)`. Always absorbing the smaller container into the larger caps the total at `O(n log n)` — each element is moved only when its container at least doubles. Small-to-large merging (DSU on tree) is the technique, and it exists *because* arity makes the per-node merge cost visible. |
+| 7 | Number of Nodes in the Sub-Tree With the Same Label | LC **1519** | **Merge child containers small-into-large, or the aggregation is quadratic.** When each node returns a *set* or *frequency map* rather than a number, the naive fold copies the same elements repeatedly and degrades to `O(n²)`. Always absorbing the smaller container into the larger caps the total at `O(n log n)` — each element is moved only when its container at least doubles. Small-to-large merging (DSU on tree) is the technique, and it exists *because* arity makes the per-node merge cost visible. ↗ from [[Union-Find]]; native here because the fold is on a tree, not a forest of parents. |
 
 ## N4 · Representation
 
@@ -164,3 +164,5 @@ One near-miss worth recording: **"the tree is one long path, so recursion overfl
 - [[Heap]]
 - [[Dynamic Programming]]
 - [[Tries]]
+- [[Design]]
+- [[Union-Find]]

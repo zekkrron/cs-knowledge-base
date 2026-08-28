@@ -18,8 +18,8 @@ Four files independently hit the same missing idea before this one was written: 
 > |---|---|---|
 > | the minimum (or maximum) | a **heap** | `O(log n)`, tiny constant |
 > | the minimum, plus arbitrary deletion | a heap with **lazy deletion** ([[Heap]] #12) | `O(log n)` amortised |
-> | the **neighbours** of a value — floor, ceiling | an **ordered set** (`TreeSet`, `std::set`) | `O(log n)` |
-> | the **rank** of a value, or the **k-th** value | a **value-indexed BIT** or an order-statistic tree | `O(log n)` |
+> | the **neighbours** of a value — floor, ceiling | an **ordered set** (`std::set` / `std::map`) | `O(log n)` |
+> | the **rank** of a value, or the **k-th** value | a **value-indexed BIT** or `__gnu_pbds::tree` ([[Binary Search Trees]] #12) | `O(log n)` |
 > | an arbitrary **aggregate** over a value range | a **segment tree** | `O(log n)` |
 >
 > Reaching past your actual need is the standard failure here — a segment tree where a heap would do is thirty lines you did not have to write and a bug surface you did not have to own. The reverse failure is worse and quieter: **a heap cannot answer "how many are smaller", and a hash map cannot answer "what is nearest"**, and discovering that halfway through is what loses the round.
@@ -34,8 +34,8 @@ Four files independently hit the same missing idea before this one was written: 
 | **What the sweep is over** | array positions · an order **you imposed** by sorting · time · queries reordered offline |
 | **Is the structure monotone?** | it only ever grows (offline sorting, activation windows) · it grows and shrinks |
 | **Where the order comes from** | the values themselves · a derived key · a compressed rank |
-| **Implementation** | balanced BST · **`bisect.insort` on a flat list** · value-indexed BIT · segment tree · two heaps facing each other · `SortedList` (block-based) |
-| **What breaks** | a heap cannot delete from the middle · a plain BST cannot answer rank without augmentation · **Python ships no ordered multiset** · large or sparse values cannot index an array · `O(n)` insert is fine at `10⁵` and fatal at `10⁷` |
+| **Implementation** | balanced BST · **`__gnu_pbds` order-statistic tree** · value-indexed BIT · segment tree · two heaps facing each other · (Python: `bisect.insort` / `SortedList`) |
+| **What breaks** | a heap cannot delete from the middle · a plain BST cannot answer rank without augmentation · **`std::multiset::erase(v)` wipes every copy** · **`std::set` cannot answer rank** · large or sparse values cannot index an array · `O(n)` insert is fine at `10⁵` and fatal at `10⁷` |
 
 ## Shape of this topic
 
@@ -45,10 +45,10 @@ S2  Neighbour queries                2 ideas
 S3  The windowed multiset            4 ideas
 S4  Making the structure monotone    2 ideas
 S5  Implementation realities         2 ideas
-                                     + 6 cross-listed ↗
+                                     + 7 cross-listed ↗
 ```
 
-**14 native entries, plus 6 cross-listed (↗).** See [[README]] on cross-listing.
+**14 native entries, plus 7 cross-listed (↗).** See [[README]] on cross-listing.
 
 > [!info] **Numbers are stable IDs assigned in order of addition, not reading order.** #14 was added by the reverse sweep and sits inside S4.
 
@@ -69,7 +69,7 @@ The pattern the other four files kept needing: **each element asks a question ab
 
 | # | Problem | Source | The new idea |
 |---|---|---|---|
-| 5 | My Calendar I | LC **729** | **`floorKey` and `ceilingKey` give you the two neighbours of an insertion, which is all an overlap check needs.** To know whether a new interval collides with anything, you only ever have to look at the interval starting just before it and the one just after — not at a scan. `O(log n)` per booking. The reflex to build: **when you need a *neighbour* rather than a *match*, an ordered map is the answer and a hash map is not.** ↗ developed in [[Binary Search Trees]] #16. |
+| 5 | My Calendar I | LC **729** | **`lower_bound` and `--it` give you the two neighbours of an insertion, which is all an overlap check needs.** Ceiling is `m.lower_bound(start)` (first key `≥ start`); floor is `--it` if that iterator is not `begin()`. To know whether a new interval collides with anything, you only ever have to look at the interval starting just before it and the one just after — not at a scan. `O(log n)` per booking. The reflex to build: **when you need a *neighbour* rather than a *match*, `std::map` is the answer and `unordered_map` is not.** ↗ developed in [[Binary Search Trees]] #16. The overlap *question* is [[Intervals]] #11. |
 | 6 | Exam Room | LC **855** | **Maintain a set of occupied positions and derive the answer from the *gaps between neighbours*.** Seating the next student means finding the largest gap, which is a property of consecutive pairs rather than of any element — so inserting or removing a seat invalidates exactly the one or two gaps touching it. New because the queried quantity **lives on the edges between container elements, not on the elements**, so every mutation must repair its local gaps. Same shape as merging intervals on a stream and as "largest gap after removing a point"; a heap of gaps with lazy deletion is the usual companion. |
 
 ## S3 · The windowed multiset
@@ -80,7 +80,7 @@ Insert *and* expire. The family that made this file necessary, because a deque h
 |---|---|---|---|
 | 7 | Sliding Window Median | LC **480** | **Keep a multiset and hold a cursor at the k-th position, advancing it as the window shifts.** Contrast the two-heaps-with-lazy-deletion solution ([[Heap]] #12): the multiset version is shorter, needs no rebalancing invariant, and generalises immediately from the median to *any* fixed rank — which the two-heap split cannot do without redesigning it. That generality is the entry. In C++ the cursor is a real iterator; elsewhere it is an index into a `SortedList` or a BIT rank query. |
 | 8 | Longest Continuous Subarray With Absolute Diff ≤ Limit | LC **1438** | **One multiset answers min *and* max together, where monotonic deques need two structures.** The deque solution is faster and is the right answer ([[Stack and Queue]] #22) — this entry is about knowing the trade: a multiset costs a `log` factor and buys you a *queryable* window, so the moment the predicate needs anything beyond the two extremes (a median, a count in a range, a nearest value) the deques cannot be patched and the multiset already works. **Learn the deque, but recognise the ceiling it has.** |
-| 9 | Contains Duplicate III | LC **220** | **A neighbourhood query over an expiring window.** "Is anything within `t` of this value among the last `k` elements" needs `ceiling(x − t)` on a set you are also evicting from as you advance — #5's query under #7's discipline, which is why it lives here rather than in either. New in combination: the container must support neighbour lookup *and* removal by identity, which rules out every heap. ↗ [[Binary Search Trees]] #15. |
+| 9 | Contains Duplicate III | LC **220** | **A neighbourhood query over an expiring window.** "Is anything within `t` of this value among the last `k` elements" needs `s.lower_bound(x − t)` on a set you are also evicting from as you advance — #5's query under #7's discipline, which is why it lives here rather than in either. New in combination: the container must support neighbour lookup *and* removal by identity, which rules out every heap. ↗ [[Binary Search Trees]] #15. The bucket form is [[Hashing]] #8. |
 | 10 | Finding MK Average | LC **1825** | **Partition the container into three ordered regions and maintain the boundaries.** The average of the middle after discarding the smallest `k` and largest `k` needs a low set, a middle set, a high set, and running sums — and every insertion or expiry may cascade one element across each boundary. New because it is the general form of the two-heaps idea ([[Heap]] #11): **any fixed number of ordered regions can be maintained, as long as each boundary is repaired after every mutation.** Fiddly, and the honest reason to know it is that it teaches boundary repair as a discipline rather than as a special case for medians. |
 
 ## S4 · Making the structure monotone
@@ -98,8 +98,8 @@ Both entries buy simplicity by arranging for the container to change in only one
 
 | # | Problem | Source | The new idea |
 |---|---|---|---|
-| 12 | `bisect.insort` and `SortedList` | *concept — Python's missing ordered multiset* | **Python has no built-in ordered set or multiset, and the two workarounds have different ceilings.** `bisect.insort` on a flat list is `O(n)` per insert — but the `n` is a memmove in C, so the constant is minuscule and it comfortably handles `n ≈ 10⁵`, which covers most interview constraints. `sortedcontainers.SortedList` is genuinely `O(n^{1/3})`-ish via blocks and gives you `bisect_left`, indexing and `pop(i)`, but it is a third-party import and not every judge has it. The portable fallback is a value-indexed BIT with compression, which is why #1 and #3 matter more in Python than anywhere else. **Know which of the three you would write, and say so out loud.** |
-| 13 | Multiset versus set — duplicates need counts | *concept — `std::multiset`, `TreeMap<V, Integer>`* | **The moment duplicates are possible, a set silently loses data and every count-based answer is wrong.** C++ gives `std::multiset` directly, with the trap that `erase(value)` removes *all* copies and you must `erase(find(value))` to remove one. Java and most other languages have no multiset, so the idiom is `TreeMap<value, count>` with manual increment, decrement, and **removal of the key when its count reaches zero** — forget that last step and `firstKey()` starts returning phantoms. Small, and it is the most common source of a wrong answer in this whole topic. |
+| 12 | `std::set` has no rank — BIT vs `__gnu_pbds` | *concept — C++ order statistics* | **`std::set` / `std::multiset` give you neighbours and min/max. They do not give you "how many are smaller" or "what is the k-th."** That is the fork this entry exists for. Portable answer: a value-indexed BIT over compressed values (#3, [[Segment Trees]] #3) — works everywhere, including contests that ban GNU extensions. C++-only shortcut: `__gnu_pbds::tree` with `tree_order_statistics_node_update` — `order_of_key(x)` is rank, `find_by_order(k)` is select, and the rest of the set interface still works. **Know which of the two you would write, and say so out loud.** Do not reach for pbds in an interview unless you can also write the BIT; interviewers who know the extension will ask. Python's `bisect.insort` / `SortedList` is the same fork in a language with no ordered set at all — same idea, different library, not a third concept. |
+| 13 | Multiset versus set — duplicates need counts | *concept — `std::multiset`; `map<T,int>` as a counted set* | **The moment duplicates are possible, a set silently loses data and every count-based answer is wrong.** C++ gives `std::multiset` directly, with the trap that **`erase(value)` removes *all* copies** — you must `erase(find(value))` (or `erase(it)`) to remove one. The other idiom is `map<T,int>` with manual increment, decrement, and **erasing the key when its count hits zero** — forget that last step and `begin()` starts returning phantoms. Small, and it is the most common source of a wrong answer in this whole topic. |
 
 ---
 
@@ -110,9 +110,10 @@ Both entries buy simplicity by arranging for the container to change in only one
 | ↗ | Find Median from Data Stream | LC **295** | Two heaps facing each other across the median, with a size invariant repaired on every insert. The special case of #10 that everyone learns first. [[Heap]] #11. |
 | ↗ | Kth Largest Element in a Stream | LC **703** | A size-`k` heap, inverted so the element you can evict cheaply is the one you no longer want. The cheapest structure that answers a *fixed* rank online — the lattice's first row. [[Heap]] #5. |
 | ↗ | IPO | LC **502** | Two structures with a one-way flow: items migrate from a list sorted by one key into a heap ordered by another as a budget grows. #11's monotonicity, applied online. [[Heap]] #13. |
-| ↗ | Longest Increasing Subsequence | LC **300** | The `O(n log n)` solution *is* a maintained ordered structure — the tails array, binary searched and overwritten. Worth knowing that the tails array is not itself an LIS, only the right length. [[Binary Search]] ↗ and [[Dynamic Programming]] #52; the value-indexed segment tree form is [[Segment Trees]] ↗ LC 300. |
+| ↗ | Longest Increasing Subsequence | LC **300** | The `O(n log n)` solution *is* a maintained ordered structure — the tails array, binary searched and overwritten. Worth knowing that the tails array is not itself an LIS, only the right length. [[Binary Search]] ↗ and [[Dynamic Programming]] #52; the value-indexed segment tree form (and weighted LIS) is [[Segment Trees]] ↗ LC 300 / [[Dynamic Programming]] #71. |
 | ↗ | Count of Range Sum | LC **327** | Range-counting over prefix values — the case where a hash map is not enough because the lookup is an inequality. The clearest demonstration of why this file exists. [[Prefix Sums & Difference Arrays]] #23. |
 | ↗ | Coordinate compression | LC **732** | Values up to `10⁹` cannot index an array; replace each by its rank and every counting structure above becomes available. The prerequisite for #1 and #3 on real data. [[Segment Trees]] #11. |
+| ↗ | Design a Leaderboard | LC **1244** | Hash the entity, order the scores; every update repairs both. The pairing is the Design idea; the ordered-side erase-then-insert is this file's #13. Native at [[Design]] #3. |
 
 ---
 
@@ -132,14 +133,13 @@ Both entries buy simplicity by arranging for the container to change in only one
 | Maximum Gap after removing a point       | *classic*            | #6             | Gaps live on the edges; repair the two that changed.                                                                                        |
 | Sliding Window Maximum                   | LC **239**           | #8             | A multiset works and a monotonic deque is strictly better. [[Stack and Queue]] #21.                                                         |
 | Sliding Window Minimum / range           | —                    | #8             | Same, with the other extreme.                                                                                                               |
-| Design a Number Container System         | LC **2349**          | #5             | A hash map from key to an ordered set — composition, not a new idea.                                                                        |
-| Stock Price Fluctuation                  | LC **2034**          | #13            | `TreeMap<price, count>` plus a latest-timestamp map. The exact multiset idiom.                                                              |
+| Design a Number Container System         | LC **2349**          | #5             | A hash map from key to an ordered set — composition, not a new idea. Also [[Design]] #3's pairing.                                                                        |
+| Stock Price Fluctuation                  | LC **2034**          | #13            | `map<price, int>` plus a latest-timestamp map. The counted-set idiom. Also [[Design]] #3.                                                              |
 | Top K Frequent Elements                  | LC **347**           | —              | Bucket by a bounded derived key; no ordering needed. [[Arrays]] #14.                                                                        |
 | Merge k Sorted Lists                     | LC **23**            | —              | A heap of size `k`; order is maintained across sources, not within a container. [[Heap]] #7.                                                |
-| Skip lists                               | *concept*            | #12            | Here, just another implementation of the same interface with the same complexities — worth naming (Redis uses one), not worth learning separately. It earns a full entry in [[Linked List]] #14 for a different reason: there it is the only way to get `O(log n)` search *without abandoning the container*. |
+| Skip lists                               | *concept*            | lattice · #5   | Ordered-set interface, not rank. Worth naming (Redis uses one), not worth learning separately here. It earns a full entry in [[Linked List]] #14 for a different reason: there it is the only way to get `O(log n)` search *without abandoning the container*. |
 | Merge sort tree · wavelet tree           | *concept*            | —              | "K-th smallest in a *position* range" rather than in the whole container. Out of scope, and genuinely CP.                                   |
 | Persistent order-statistic tree          | *concept*            | —              | Versioned rank queries. [[Segment Trees]] #13.                                                                                              |
-| Order-statistic tree via `__gnu_pbds`    | *concept*            | #12            | An implementation shortcut, C++-only. Mention it, do not rely on it.                                                                        |
 
 ---
 
@@ -151,7 +151,7 @@ Both entries buy simplicity by arranging for the container to change in only one
 - **#2 (merge-sort inversions) native despite involving no container.** Kept because the entry's content is the *choice*: divide-and-conquer supplies the ordering for free when you are offline, and a container is what you pay for when you are not. A file about ordered containers that never mentions the container-free alternative teaches the wrong reflex.
 - **#4 (LC 2102) kept as an entry, which is unusual** — it exists to tell you when to leave the topic. Same justification as [[Sliding Window]] #14 and [[Prefix Sums & Difference Arrays]] P8: the negative results are worth as much as the techniques, and they are the ones nobody writes down.
 - **#7, #8 and #9 all overlap with existing ↗ entries** in [[Heap]], [[Stack and Queue]] and [[Binary Search Trees]]. That is cross-listing working as intended, and each is written from *this* file's angle — the multiset's generality, the deque's ceiling, and the combination of neighbour-plus-expiry — rather than duplicating the other treatment.
-- **S5 exists at all.** Two entries about language libraries in a concept basis is a category violation, and I kept it anyway: "I know the idea but cannot produce an ordered multiset in Python" is a real, common, entirely avoidable failure, and the `TreeMap` count-to-zero bug is the most frequent wrong answer in the topic.
+- **S5 exists at all.** Two entries about language libraries in a concept basis is a category violation, and I kept it anyway: #12 is the C++ fork (`std::set` has no rank — BIT vs `__gnu_pbds`); #13 is the `erase(value)` / count-to-zero bug, which *is* the most frequent wrong answer in the topic. Rewritten from a Python-first draft on a later gap pass.
 - **#3 (BIT descent) is the most technical entry** and I considered making it tail scope. Left untagged because it is the operation that distinguishes this topic from [[Heap]], and because the `O(log² n)` version most people write is a visible tell.
 
 **Naming check.** Two retitles. #1 was drafted as "Count of Smaller Numbers After Self", which names a puzzle; it is now the sweep-and-rank *shape*, with the observation that the sweep direction is a choice. #11 was drafted as "offline processing", too vague to navigate to; it is now *sort the queries so the container only grows*, which is the actual move. #6 was checked and retitled from "Exam Room" to foreground that **the queried quantity lives on the gaps between elements**, since that is what a differently-dressed version would share.
@@ -166,13 +166,13 @@ Three collisions, all checked and cleared. "Median of a stream" reaches ↗ LC 2
 
 **What I am uncertain about**
 
-- **The Design boundary.** #4, LC 2034 and LC 2349 are all "design a class with these queries", and a Design basis would want them. I kept the ones whose difficulty is the *ordering*, and excluded those whose difficulty is the API. That cut is defensible and thin.
+- **The Design boundary is closed.** #4 stays because the queried rank only ever moves by one (leave this file, two heaps). LC 2034 and LC 2349 are composition, now also named as exclusions of [[Design]] #3. The cut held: ordering stays here, the API glue is Design.
 - **Whether #10 (LC 1825) is in scope.** It is a hard problem, rarely asked, and its lesson — boundary repair across `k` ordered regions — is arguably just #7 plus arithmetic. Kept because it is the general form of the two-heap idea and nothing else states that generalisation.
-- **Interval containers** — `RangeModule`, "insert an interval and merge", "count covered length" — sit exactly between this file and Intervals. #5 and #6 touch them; neither develops them. Expect Intervals to claim this.
+- **Interval containers are now claimed.** [[Intervals]] #11–#13 own Calendar I, Range Module, and online k-booking. #5 here stays the neighbour *query*; #6 stays gaps-as-the-queried-quantity.
 - **Recall is thinnest on S1's exclusion list.** LeetCode has a long tail of "count pairs satisfying an inequality" problems that all reduce to a rank sweep, and I collapsed them aggressively on the strength of the shape rather than by checking each.
 - **Balanced-BST rotations** are deliberately absent — [[Binary Search Trees]] #11 owns them, and this file assumes you will use the library.
 
-**Completeness confidence: ~90%.** The lattice and S1 I am confident about; they are the parts other files kept reaching for and the parts with clear external representation. The uncertainty is concentrated at the Design and Intervals boundaries, both of which are unwritten and both of which will pull entries.
+**Completeness confidence: ~90%.** The lattice and S1 I am confident about; they are the parts other files kept reaching for and the parts with clear external representation. The Design and Intervals hedges are closed.
 
 ## Related Notes
 
@@ -185,3 +185,7 @@ Three collisions, all checked and cleared. "Median of a stream" reaches ↗ LC 2
 - [[Binary Search]]
 - [[Backtracking]]
 - [[Linked List]]
+- [[Greedy]]
+- [[Intervals]]
+- [[Design]]
+- [[Hashing]]

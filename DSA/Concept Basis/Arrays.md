@@ -86,9 +86,9 @@ Four ways to store information you were told you had no room for.
 | # | Problem | Source | The new idea |
 |---|---|---|---|
 | 1 | First Missing Positive | LC **41** | **When the values are (nearly) a permutation of the indices, put value `v` at index `v − 1` and the array becomes a lookup table.** Cyclic placement: repeatedly swap the current value to its home slot until the slot already holds it, then move on. Each swap places one element permanently, so despite the inner loop the whole thing is `O(n)` — that amortised argument is the content. After the pass, the first index whose value is wrong *is* the answer. This is cyclic sort, and it is the highest-yield `O(1)`-space idea for arrays. |
-| 2 | Find All Numbers Disappeared in an Array | LC **448** | **Repurpose the input as scratch space.** You need a "have I seen `v`" bitset and have no memory, so negate `a[|v| − 1]` — the sign bit of each cell is a free flag, and the magnitudes stay readable. The same idea with a different hiding place solves Set Matrix Zeroes (LC **73**): use the **first row and column** as the marker storage, handling their own overlap as the one special case. New in general form: **if you may destroy the input, look for unused bits or an expendable region inside it.** Breaks on zeros and negatives, which is the check to state out loud. |
+| 2 | Find All Numbers Disappeared in an Array | LC **448** | **Repurpose the input as scratch space.** You need a "have I seen `v`" bitset and have no memory, so negate `a[|v| − 1]` — the sign bit of each cell is a free flag, and the magnitudes stay readable. The same idea with a different hiding place solves Set Matrix Zeroes (LC **73**): use the **first row and column** as the marker storage, handling their own overlap as the one special case. New in general form: **if you may destroy the input, look for unused bits or an expendable region inside it.** Breaks on zeros and negatives, which is the check to state out loud. Dual-native with [[Matrix]] #5 on the 2D two-pass. |
 | 3 | Missing Number | LC **268** | **Compare an aggregate of the indices against an aggregate of the values.** Expected sum minus actual sum, or `XOR` of both ranges, gives the discrepancy in one pass and `O(1)` space with no mutation at all. New because nothing is stored *anywhere* — the arithmetic identity does the work — and XOR extends it to "everything appears twice except one" (LC **136**, [[Bit Manipulation]] #3). Watch overflow on the sum version, which is why XOR is usually the better answer. |
-| 4 | Build Array from Permutation | LC **1920** | **Pack two numbers into one cell using the value range's headroom.** With all values `< n` you can store `old + n·new` in a single slot, complete the whole transform in one pass reading `a[i] % n` for old values, then divide out — `O(1)` space for an operation that appears to need a copy. Game of Life (LC **289**) is the same trick with two bits instead of two digits. The general statement is that **a bounded value range is unused capacity**, and it is the most reusable of the four because it does not need a permutation, only a bound. |
+| 4 | Build Array from Permutation | LC **1920** | **Pack two numbers into one cell using the value range's headroom.** With all values `< n` you can store `old + n·new` in a single slot, complete the whole transform in one pass reading `a[i] % n` for old values, then divide out — `O(1)` space for an operation that appears to need a copy. Game of Life (LC **289**) is the same trick with two bits instead of two digits. The general statement is that **a bounded value range is unused capacity**, and it is the most reusable of the four because it does not need a permutation, only a bound. Dual-native with [[Matrix]] #6 on simultaneous neighbourhood update. |
 
 ## A2 · Counting arguments that replace storage
 
@@ -100,13 +100,13 @@ Four ways to store information you were told you had no room for.
 
 ## A3 · The hash map as one-pass memory
 
-> [!info] There is no Hashing file in the basis and probably should be. These three live here because an array is what you are usually sweeping, and because leaving Two Sum out of the entire basis would be absurd. See the audit.
+> [!info] Dual-native with [[Hashing]]. These three live here because an array is what you are usually sweeping; they live there because the move is a hash map. See [[Hashing]] #1 · #3 · #6.
 
 | # | Problem | Source | The new idea |
 |---|---|---|---|
-| 7 | Two Sum | LC **1** | **Store what you have seen as you go, and look up the complement rather than searching for it.** The move that turns `O(n²)` into `O(n)`, and the reason it is one pass rather than two is worth stating: by the time you ask for `target − a[i]`, the map holds exactly the elements before `i`, so every pair is considered once and no element pairs with itself. This is the base case of the whole "prefix as a lookup key" family ([[Prefix Sums & Difference Arrays]] #4) — same shape, with the running fold replaced by the raw element. |
-| 8 | Group Anagrams | LC **49** | **A canonical form turns equivalence into dictionary lookup.** Two words are anagrams iff their sorted letters — or their 26-length count vector — agree, so mapping each item to that canonical key groups them in one pass. New because the key is *derived to erase exactly the distinction you want to ignore*, which is a modelling decision rather than a data-structure one, and the same idea identifies duplicate subtrees ([[Binary Trees]] #13) and duplicate folder structures ([[N-ary Trees]] #4). |
-| 9 | Longest Consecutive Sequence | LC **128** | **Only start counting from an element that has no predecessor, and the total stays linear.** Dump everything in a hash set, then for each `v` check whether `v − 1` is absent — if so, walk upward counting. Without that guard the walks overlap and the bound collapses; with it, every element is visited by exactly one walk. New because the linearity comes from an **amortisation argument about which starts you allow**, not from the data structure, and the sorting solution at `O(n log n)` is the thing this beats. |
+| 7 | Two Sum | LC **1** | **Store what you have seen as you go, and look up the complement rather than searching for it.** The move that turns `O(n²)` into `O(n)`, and the reason it is one pass rather than two is worth stating: by the time you ask for `target − a[i]`, the map holds exactly the elements before `i`, so every pair is considered once and no element pairs with itself. This is the base case of the whole "prefix as a lookup key" family ([[Prefix Sums & Difference Arrays]] #4) — same shape, with the running fold replaced by the raw element. Dual-native with [[Hashing]] #1. |
+| 8 | Group Anagrams | LC **49** | **A canonical form turns equivalence into dictionary lookup.** Two words are anagrams iff their sorted letters — or their 26-length count vector — agree, so mapping each item to that canonical key groups them in one pass. New because the key is *derived to erase exactly the distinction you want to ignore*, which is a modelling decision rather than a data-structure one, and the same idea identifies duplicate subtrees ([[Binary Trees]] #13) and duplicate folder structures ([[N-ary Trees]] #4). Dual-native with [[Hashing]] #3. |
+| 9 | Longest Consecutive Sequence | LC **128** | **Only start counting from an element that has no predecessor, and the total stays linear.** Dump everything in a hash set, then for each `v` check whether `v − 1` is absent — if so, walk upward counting. Without that guard the walks overlap and the bound collapses; with it, every element is visited by exactly one walk. New because the linearity comes from an **amortisation argument about which starts you allow**, not from the data structure, and the sorting solution at `O(n log n)` is the thing this beats. Dual-native with [[Hashing]] #6. |
 
 ## A4 · Rearrangement under a global rule
 
@@ -127,7 +127,7 @@ Two classics with no other home, both about arrays and both about `O(1)` space.
 
 | # | Problem | Source | The new idea |
 |---|---|---|---|
-| 13 | Insert Delete GetRandom O(1) | LC **380** | **Swap the victim with the last element, then pop — deletion becomes `O(1)` without breaking contiguity.** An array gives `O(1)` random access, which is what `getRandom` needs and no hash map or tree can provide; its weakness is `O(n)` deletion from the middle, and the swap-with-last trick removes it at the cost of destroying order. Pair it with a hash map from value to index and all three operations are `O(1)`. New because it is the one entry about the array's own **performance profile** rather than about a puzzle, and "which container gives me random access *and* fast deletion" is a design question you will be asked directly. |
+| 13 | Insert Delete GetRandom O(1) | LC **380** | **Swap the victim with the last element, then pop — deletion becomes `O(1)` without breaking contiguity.** An array gives `O(1)` random access, which is what `getRandom` needs and no hash map or tree can provide; its weakness is `O(n)` deletion from the middle, and the swap-with-last trick removes it at the cost of destroying order. Pair it with a hash map from value to index and all three operations are `O(1)`. New because it is the one entry about the array's own **performance profile** rather than about a puzzle, and "which container gives me random access *and* fast deletion" is a design question you will be asked directly. Dual-native with [[Design]] #1. |
 
 ---
 
@@ -163,18 +163,18 @@ Two classics with no other home, both about arrays and both about `O(1)` space.
 | Find All Anagrams in a String | LC **438** | #8 | Canonical key inside a fixed window — [[Sliding Window]] #2. |
 | Sort Characters By Frequency | LC **451** | #14 | Bucket by count, read downward. |
 | Kth Largest Element | LC **215** | #14 | Bucketing works when values are small; otherwise quickselect, [[Two Pointers]] #17. |
-| Wiggle Sort | LC **280** | #10 | One pass of local swaps; the "a local fix is always safe" argument is a greedy idea. Greedy basis. |
-| Non-decreasing Array | LC **665** | — | At most one repair, decided by a local comparison. Greedy basis. |
+| Wiggle Sort | LC **280** | #10 | One pass of local swaps; the "a local fix is always safe" argument is a greedy idea. [[Greedy]] #12. |
+| Non-decreasing Array | LC **665** | — | At most one repair, decided by a local comparison. [[Greedy]] #13. |
 | Previous Permutation | LC **31** | #10 | The mirror of the same three steps. |
 | Permutations (enumerate all) | LC **46** | — | Backtracking, not an array rearrangement. [[Backtracking]] #3; the recursion-free route via #10 is [[Backtracking]] #18. |
 | Shuffle the Array | LC **1470** | #4 | Index interleaving; the `O(1)`-space version is the packing trick. |
 | Linked List Random Node | LC **382** | #12 | Reservoir sampling on a list instead of an array. |
 | Random Pick with Weight | LC **528** | — | Prefix sums plus binary search. [[Binary Search]] #20. |
-| Design Underground System · Twitter | — | #13 | Container-choice design questions. Design basis. |
+| Design Underground System · Twitter | — | #13 | Container-choice. Native at [[Design]] #2 · #8. |
 | Product of Array Except Self | LC **238** | — | Prefix and suffix folds. [[Prefix Sums & Difference Arrays]] #10. |
-| Merge Intervals | LC **56** | — | Sort by start, then merge. Intervals basis. |
-| Spiral Matrix · Rotate Image | LC **54** · **48** | — | Boundary shrinking and transpose-then-reverse. Matrix basis. |
-| Flatten a 2D index to 1D (`r·cols + c`) | — | — | Arithmetic, not an idea. Used in [[Binary Search]] #16. |
+| Merge Intervals | LC **56** | — | Sort by start, then merge. [[Intervals]] #1. |
+| Spiral Matrix · Rotate Image | LC **54** · **48** | — | Boundary shrinking and transpose-then-reverse. Native at [[Matrix]] #3 · #4. |
+| Flatten a 2D index to 1D (`r·cols + c`) | — | — | Arithmetic from this file's side. Native as the coordinate system at [[Matrix]] #1. Used in [[Binary Search]] #16. |
 | Best Time to Buy and Sell Stock | LC **121** | — | Running extreme against the current value. [[Prefix Sums & Difference Arrays]] #9. |
 
 ---
@@ -186,9 +186,9 @@ Two classics with no other home, both about arrays and both about `O(1)` space.
 - **The file's scope, which is the only real decision here.** I could have written a 60-entry Arrays file by pulling back everything tagged `array`, and it would have duplicated five better-organised files. Instead the inclusion test was: *does this idea depend on the array being an array* — contiguous, randomly accessible, indices interchangeable with values? That test is what leaves 14 entries and 9 cross-lists, and it is why A1 is the largest family rather than something about scanning.
 - **#2 absorbed Set Matrix Zeroes rather than splitting it out.** Sign-bit marking and first-row-and-column marking are one idea — hide metadata inside the input — with two hiding places. Splitting would have implied a distinction that is not there.
 - **#6 and #14 kept separate**, and this is the split I am least sure of. Both bucket, both avoid a sort. Kept apart because the *licence* differs: #6 needs a proof that the answer cannot be inside a bucket, #14 only needs the key range to be bounded. When the reverse sweep produced both from different descriptions and they landed in the same family with different justifications, that confirmed the axis rather than the merge.
-- **A3 exists under protest.** Two Sum, Group Anagrams and Longest Consecutive Sequence are hash-map ideas that happen to sweep an array, and a Hashing file would want all three. Included because omitting them entirely was worse than filing them imperfectly, and flagged below.
+- **A3 dual-native with [[Hashing]].** Two Sum, Group Anagrams and Longest Consecutive Sequence stay here because the sweep is an array, and live there because the move is a hash map. The structural gap this file exposed is closed.
 - **#11 and #12 kept despite being "trivia".** Both are asked, both are about `O(1)` space over a sequence, and both have a *proof* as their content — the bias argument and the induction — which is exactly what an interview is probing. Neither has another home.
-- **#13 is a Design entry as much as an Arrays one.** Kept here because it is the only place the basis says out loud what an array is *good at*, which is the fact underlying every "which container" decision.
+- **#13 dual-native with [[Design]] #1.** Kept here because it is the only place the basis says out loud what an array is *good at*, which is the fact underlying every "which container" decision.
 - **Quickselect not native here.** It partitions an array in place and has an equal claim, but it is built from converging pointers, so [[Two Pointers]] #17 owns it and this file cross-references it from #14's exclusion row.
 
 **Naming check.** Three retitles. #1 was drafted as "First Missing Positive", which names a puzzle; it is now the index-value placement idea, with the amortisation argument foregrounded. #4 was drafted as "in-place permutation" and is now *pack two numbers into one cell using the value range's headroom*, since the headroom — not the permutation — is what transfers. #14 was drafted as "Top K Frequent" and is now *bucket by a bounded derived quantity*, because the derived-key insight is invisible under the problem's name. #10 was checked and kept: "next permutation" is a standard name that a differently-dressed version would still match.
@@ -203,14 +203,14 @@ Four collisions, all checked and cleared. "Numbers from 1 to n, one is missing, 
 
 **What I am uncertain about**
 
-- **A Hashing basis is missing, and this file is currently absorbing it.** Complement lookup, canonical keys, frequency maps, seen-sets and the `O(1)`-average caveat are a real topic. Three entries here and several in [[Prefix Sums & Difference Arrays]] are squatting on it. **This is the clearest structural gap the file exposes.**
+- **The Hashing gap is closed.** Complement lookup, canonical keys, frequency maps, last-seen, 4Sum-II, bucket-neighbourhood and the `unordered_map` caveat are [[Hashing]]. A3 stays dual-native.
 - **The boundary with Sorting.** Counting, bucket and radix sort are cross-listed, but #6 and #14 are bucketing ideas kept native. The cut is *bucketing to answer a question* versus *bucketing to produce sorted output*. **Reviewed when [[Sorting & Custom Comparators]] was written and upheld** — that file states the same boundary from its side in the same words, so the two descriptions cannot drift apart.
-- **The boundary with Matrix.** #2 pulls Set Matrix Zeroes in and #4 pulls Game of Life in, both because the *space trick* is the lesson. A Matrix file will want both, which cross-listing handles, but the entries would need splitting if Matrix claims the traversal side.
+- **The boundary with Matrix is closed.** #2 and #4 stay as hiding tricks; [[Matrix]] #5 / #6 dual-native the 2D two-pass and simultaneous neighbourhood. Traversal-side grid problems (spiral, rotate, flatten-as-coordinates) are Matrix natives; this file's exclusions point at those IDs.
 - ~~**In-place merge of two sorted halves** in `O(1)` space — the gap or Shell method. Genuinely a different algorithm, excluded on scope: it is real but nobody asks for it.~~ **Wrong on the facts** — it is a standing Indian-interview follow-up to LC 88, and it is now [[Two Pointers]] #19.
-- **The named-algorithm table covers only this file's own entries.** It started as a whole-array-chapter index spanning seven files and was cut back, because a cross-file index sitting inside one topic is a maintenance trap — every renumber elsewhere silently rots it, and the ↗ and exclusion tables below already carry those pointers with the reasoning attached. Building the wide version first still earned its keep: sweeping curated lists by *name* is what surfaced the gap method ([[Two Pointers]] #19), showed "leaders in an array" had no matchable row anywhere, and identified Intervals, Math and Matrix as the only array-chapter destinations with no file at all.
+- **The named-algorithm table covers only this file's own entries.** It started as a whole-array-chapter index spanning seven files and was cut back, because a cross-file index sitting inside one topic is a maintenance trap — every renumber elsewhere silently rots it, and the ↗ and exclusion tables below already carry those pointers with the reasoning attached. Building the wide version first still earned its keep: sweeping curated lists by *name* is what surfaced the gap method ([[Two Pointers]] #19), showed "leaders in an array" had no matchable row anywhere, and identified Intervals, Math and Matrix as the only array-chapter destinations with no file at all. [[Intervals]] is now written.
 - **Recall is thinnest on A1.** The `O(1)`-space index-trick literature is scattered across blog posts rather than curated lists, so there is no good external enumeration to sweep against — the same problem [[Prefix Sums & Difference Arrays]] has on its difference-array side.
 
-**Completeness confidence: ~87%**, the lowest in the basis, and for a structural reason rather than a sloppy one. Every other file is defined by a *mechanism*, so its boundary is self-evident; this one is defined by *what the other twelve files left behind*, so its boundary moves whenever a new file is written. Expect to re-cut it when Hashing, Sorting and Matrix exist.
+**Completeness confidence: ~90%.** Hashing and Matrix gaps that this file was absorbing are closed. Remaining residue is real residue.
 
 ## Related Notes
 
@@ -227,3 +227,9 @@ Four collisions, all checked and cleared. "Numbers from 1 to n, one is missing, 
 - [[Linked List]]
 - [[Sorting & Custom Comparators]]
 - [[Bit Manipulation]]
+- [[Greedy]]
+- [[Intervals]]
+- [[Strings]]
+- [[Hashing]]
+- [[Design]]
+- [[Matrix]]

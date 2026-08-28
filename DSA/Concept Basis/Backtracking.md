@@ -78,7 +78,7 @@ The partial solution stops being a list and becomes a set of **occupancy facts**
 
 | # | Problem | Source | The new idea |
 |---|---|---|---|
-| 6 | N-Queens | LC **51** | **Keep three sets — columns, and both diagonal families — so conflict checking is `O(1)` rather than a re-scan of the board.** The indexing is the content: cells on the same `↘` diagonal share `r + c`, and on the same `↙` diagonal share `r − c` (shift by `n` to keep it non-negative). Place row by row so rows never conflict by construction. New in general form: **derive an index that makes a constraint into a lookup**, which is the same instinct as canonical keys in [[Arrays]] #8. The bitmask version — three integers, `lowbit` to iterate free columns — is the standard follow-up and is worth writing once. |
+| 6 | N-Queens | LC **51** | **Keep three sets — columns, and both diagonal families — so conflict checking is `O(1)` rather than a re-scan of the board.** The indexing is the content: cells on the same `↘` diagonal share `r + c`, and on the same `↙` diagonal share `r − c` (shift by `n` to keep it non-negative). Place row by row so rows never conflict by construction. New in general form: **derive an index that makes a constraint into a lookup**, which is the same instinct as canonical keys in [[Arrays]] #8. The bitmask version — three integers, `lowbit` to iterate free columns — is the standard follow-up and is worth writing once. The same `r ± c` keys *walk* a matrix in [[Matrix]] #2. |
 | 7 | Sudoku Solver | LC **37** | **Return a boolean and let `true` unwind the entire stack, because you want one solution rather than all of them.** This is a different control flow from every entry above: `if (solve(next)) return true;` propagates success upward and *skips the undo*, since the board is now the answer. Second idea, and the one that actually decides whether your solver finishes: **choose the most-constrained cell next, not the next cell in reading order.** Picking the cell with the fewest legal candidates collapses the tree by orders of magnitude — this is the MRV heuristic from constraint satisfaction, and it is what separates a Sudoku solver that runs in milliseconds from one that hangs. |
 | 8 | Word Search | LC **79** | **The input itself is the state: mark the cell visited, recurse, unmark it.** No separate `visited` grid, no copies — you write a sentinel into the board and restore it on the way out, so memory is `O(depth)` rather than `O(depth · board)`. New because the thing being mutated is *shared and external*, which makes the undo non-negotiable in a way #1's private list never was: forget it and sibling branches see a corrupted board. The general statement is the one from [[Binary Trees]] #3 — **temporarily mutate the structure instead of allocating memory to describe it.** |
 
@@ -199,7 +199,7 @@ Four collisions, all checked and cleared. "All subsets with duplicates" reaches 
 
 **What I am uncertain about**
 
-- **The Greedy boundary.** #13's branch and bound needs a good incumbent fast, which in practice means a greedy first pass, and nothing here develops that. A Greedy basis will want to claim the bound-construction half.
+- **The Greedy boundary is now a ↗ row, not a hole.** #13's branch and bound still needs a fast incumbent; constructing that bound is [[Greedy]]'s job and is cross-listed from there. Nothing here develops a greedy *algorithm*; the prune licence stays.
 - **The Graphs boundary is thinner than the opening table implies.** #8 mark-and-unmark on a grid and a Hamiltonian-path search on a graph are the same code; I filed both here because the *undo* is the lesson, but Graphs has an equal claim and a reader looking under Graphs for "enumerate all paths" finds only the ↗ row.
 - **Constraint satisfaction as a topic.** #6, #7 and #12 are CSP ideas — occupancy sets, variable ordering, symmetry breaking — and a real CSP treatment would add constraint propagation and arc consistency. Out of scope for interviews as far as I can tell, but I am less sure of that than of the other scope calls.
 - **Whether #16 is one idea or two.** Memoising a collection, and the independence condition that licenses it, could reasonably be separate entries. Left merged because the condition is useless without the technique.
@@ -219,3 +219,5 @@ Four collisions, all checked and cleared. "All subsets with duplicates" reaches 
 - [[Sorted Containers & Order Statistics]]
 - [[Math & Number Theory]]
 - [[Bit Manipulation]]
+- [[Greedy]]
+- [[Matrix]]

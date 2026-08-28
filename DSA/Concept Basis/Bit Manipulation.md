@@ -15,7 +15,7 @@ created: 2026-08-27
 | **What the integer is standing in for** | the number itself · **a set of flags** (occupancy, an alphabet, used items) · **packed data** (a window of characters, several small fields) · a permutation of bits |
 | **Are the bits independent?** | **yes** — the answer is 32 scalar answers added up · **no, coupled by carry** · **no, coupled by a contiguous range** · **no, an aggregate that only grows** (OR) |
 | **The algebra** | XOR (self-inverse, cancellation) · AND (test, intersection) · OR (union, monotone) · `+` (XOR plus a carry that *moves*) |
-| **How you iterate** | all 32 positions · **only the set bits** (`lowbit`, Brian Kernighan) · all masks `0…2ⁿ−1` · **all submasks of a given mask** |
+| **How you iterate** | all 32 positions · **only the set bits** (`lowbit`, Brian Kernighan) · all masks `0…2ⁿ−1` · **all submasks of a given mask** · **MSB → LSB, keeping only candidates that still allow this bit** |
 | **How many times each value appears** | twice (XOR cancels) · **three / `k` (need mod-`k` per bit, or a state machine)** · mixed |
 | **Granularity of the operation** | one bit · **all bits below a cutoff** (prefix flip, Gray) · **a window of `k` consecutive bits** |
 | **What is returned** | a property of `n` · a constructed integer · a count · the unique / missing value · a set of masks |
@@ -25,17 +25,18 @@ created: 2026-08-27
 
 ```
 K1  The toolkit                           2 ideas
+K7  High bit and low mask                 2 ideas
 K2  XOR as cancellation                   4 ideas
-K3  Bits as independent coordinates       2 ideas
-K4  When bits are coupled                 5 ideas
+K3  Bits as independent coordinates       3 ideas
+K4  When bits are coupled                 6 ideas
 K5  An integer as a compact set           3 ideas
 K6  Representation                        2 ideas
                                           + 10 cross-listed ↗
 ```
 
-**18 native entries, plus 10 cross-listed (↗).** See [[README]] on cross-listing.
+**22 native entries, plus 10 cross-listed (↗).** See [[README]] on cross-listing.
 
-> [!info] **Numbers are stable IDs assigned in order of addition, not reading order.** #18 was added by the reverse sweep and sits inside K4.
+> [!info] **Numbers are stable IDs assigned in order of addition, not reading order.** #18 was added by the reverse sweep and sits inside K4. #19–#20 are K7 (the identities #1 did not name); #21 sits in K3; #22 sits in K4.
 
 ## Named algorithms in this file
 
@@ -43,7 +44,11 @@ K6  Representation                        2 ideas
 |---|---|
 | **`n & (n − 1)`** · clear lowest set bit · power of two | #1 |
 | **`n & −n`** · **lowbit** | #1 · #16 |
+| **`highestOneBit`** · isolate MSB · largest power of two `≤ n` | #19 |
+| **`n & ((1 << k) − 1)`** · `% 2ᵏ` | #20 |
 | **Brian Kernighan** *(popcount by clearing)* | #2 |
+| Count total set bits `1…n` | #21 |
+| Greedy from the MSB *(filter the set)* | #22 |
 | **Single Number** | #3 |
 | **Single Number III** *(split by a distinguishing bit)* | #4 |
 | **Single Number II** *(mod-3 / two-mask FSM)* | #5 |
@@ -66,8 +71,17 @@ Two identities, and the loop that uses them. Everything else in the file is an a
 
 | # | Problem | Source | The new idea |
 |---|---|---|---|
-| 1 | Power of Two, and the two identities | LC **231** | **`n & (n − 1)` clears the lowest set bit; `n & −n` isolates it.** Those are the only two things you have to memorise, and power-of-two is the one-line corollary: `n > 0 && (n & (n − 1)) == 0`, because a power of two has exactly one bit set and clearing it yields zero. Get / set / clear / toggle the `i`-th bit are then just `n & (1 << i)`, `n \| (1 << i)`, `n & ~(1 << i)`, `n ^ (1 << i)`. New because this is the *language* the rest of the file is written in — without these, every later entry is a magic constant. The one trap: **`1 << 31` is undefined or overflows a signed 32-bit int**; write `1 << i` in `unsigned` / `long`, or use `1L << i`. Power of four (LC **342**) is this plus "the single set bit sits on an odd position", usually checked against `0x55555555`. |
+| 1 | Power of Two, and the two identities | LC **231** | **`n & (n − 1)` clears the lowest set bit; `n & −n` isolates it.** Those are the only two things you have to memorise, and power-of-two is the one-line corollary: `n > 0 && (n & (n − 1)) == 0`, because a power of two has exactly one bit set and clearing it yields zero. Get / set / clear / toggle the `i`-th bit are then just `n & (1 << i)`, `n \| (1 << i)`, `n & ~(1 << i)`, `n ^ (1 << i)`. New because this is the *language* the rest of the file is written in — without these, every later entry is a magic constant. The one trap: **`1 << 31` is undefined or overflows a signed 32-bit int**; write `1 << i` in `unsigned` / `long`, or use `1L << i`. Power of four (LC **342**) is this plus "the single set bit sits on an odd position", usually checked against `0x55555555`. The duals — *highest* set bit, and "keep the bottom `k` bits" — are K7, not hiding in here. |
 | 2 | Number of 1 Bits | LC **191** | **Walk only the bits that are set: `while (n) { n &= n − 1; cnt++; }`.** That is Brian Kernighan, and it is `O(popcount)` rather than `O(32)` — which is the same instinct as iterating a graph's adjacency list instead of a dense 32-column scan. New because **the loop bound is the data, not the word size**, and because Hamming distance is then one extra XOR (LC **461**): the positions two numbers differ are exactly the set bits of `a ^ b`. Once you have this, "minimum bit flips to convert `a` to `b`" (LC **2220**) is the same line. |
+
+## K7 · High bit and low mask
+
+> [!tip] #1 named what you do to the *lowest* set bit. These two are the rest of the language: isolate the *highest* set bit, and keep only the bottom `k` bits. Neither falls out of Kernighan.
+
+| # | Problem | Source | The new idea |
+|---|---|---|---|
+| 19 | Largest power of two `≤ n` | *classic — `std::bit_floor` / `__builtin_clz`; GFG MSB* | **`n & −n` is the lowest set bit; the highest one has no one-line cousin, and you have to ask for it.** Fill every bit below the MSB (`n \|= n >> 1; n \|= n >> 2; … n \|= n >> 16`, then `(n + 1) >> 1`), or `1 << floor(log2 n)`, or `1ULL << (63 - __builtin_clzll(n))` / C++20 `std::bit_floor`. New because **lowbit and highbit are not symmetric** — two's complement gives you the bottom for free (#16) and does nothing for the top — and because bit-width, Number Complement (LC **476**: XOR with `(1 << bitlen) − 1`), and "the first bit at which `L` and `R` differ" (#10) all start from here. |
+| 20 | `n % 2ᵏ` without `%` | *classic — the mask inside #17* | **The bottom `k` bits of `n` are `n & ((1 << k) − 1)`, which is `n % 2ᵏ` when `k ≥ 0`.** A cutoff from the other end: #19 isolates one bit at the top, this *keeps a window at the bottom*. The DNA packer in #17 is exactly this (`& ((1 << 20) − 1)` to drop the character that fell off); a sliding window of bits, a Gray prefix, a bitmask of width `n` are all the same mask. New as an identity you should reach for instead of `%` or a substring — and because composing with #19 is how you build "all bits below the MSB" in one shot. |
 
 ## K2 · XOR as cancellation
 
@@ -87,16 +101,18 @@ The moment the operator does not mix bits, a pairwise or global question becomes
 | # | Problem | Source | The new idea |
 |---|---|---|---|
 | 7 | Total Hamming Distance | LC **477** | **Hamming distance adds over bits, so sum over pairs equals sum over bits of (count of 1s) × (count of 0s).** Each bit position contributes independently; a pair differs there iff one has 0 and one has 1. `O(32n)` instead of `O(n²)`. New as a *recognition* rather than a formula: **whenever the quantity is a sum of per-bit predicates, you never have to look at two numbers at once.** Same move: Largest Combination With Bitwise AND Greater Than Zero (LC **2275**) is just "max frequency of any single bit"; Sum of All Subset XOR Totals (LC **1863**) counts, per bit, how many subsets have it set. If a bitwise pair problem feels quadratic, this is the first thing to try. |
-| 8 | Counting Bits | LC **338** | **The answer for `i` is a function of a strictly smaller `i` you have already computed: `dp[i] = dp[i >> 1] + (i & 1)`, or `dp[i] = dp[i & (i − 1)] + 1`.** You fill `0…n` in linear time without ever popcounting from scratch. New because it is the DP-shaped form of #2: **a bit-property of `i` is a bit-property of `i` with one bit removed**, so the table is free. The two recurrences are worth both knowing — shift-and-add follows the binary representation, Kernighan-step follows the set-bit structure, and they disagree on nothing except which smaller index they jump to. |
+| 21 | Count total set bits from 1 to n | *GFG / Striver / InterviewBit* | **Contribution over a complete integer range, not over an array.** For bit `i`, the numbers `0…n` fall into blocks of length `2^{i+1}`, each contributing exactly `2^i` ones, plus a leftover partial block; sum over `i` in `O(log n)`. New because #7 prices bits of an *arbitrary* list and #8 *builds the array* of popcounts in `O(n)` — neither is the closed form, and a probe "how many 1-bits from 1 to n" landing on #8 is the wrong complexity. The summation swap is [[Math & Number Theory]] #25; the digit-DP form of the same count (binary digits, payload = "this bit is set") is [[Dynamic Programming]] #73. |
+| 8 | Counting Bits | LC **338** | **The answer for `i` is a function of a strictly smaller `i` you have already computed: `dp[i] = dp[i >> 1] + (i & 1)`, or `dp[i] = dp[i & (i − 1)] + 1`.** You fill `0…n` in linear time without ever popcounting from scratch. New because it is the DP-shaped form of #2: **a bit-property of `i` is a bit-property of `i` with one bit removed**, so the table is free. The two recurrences are worth both knowing — shift-and-add follows the binary representation, Kernighan-step follows the set-bit structure, and they disagree on nothing except which smaller index they jump to. If you only needed the *sum* of those popcounts, that is #21, not this table. |
 
 ## K4 · When bits are coupled
 
-Independence is the default and it is a trap. These four are the ways bits stop being independent.
+Independence is the default and it is a trap. Carry, a contiguous range, a monotone aggregate, a designed encoding, a sliding window of flips, and a candidate set that shrinks from the MSB — six different ways bits stop being independent.
 
 | # | Problem | Source | The new idea |
 |---|---|---|---|
-| 9 | Sum of Two Integers | LC **371** | **XOR is the sum *without* carry; `(a & b) << 1` is the carry; iterate until the carry vanishes.** Bits that looked independent under XOR get coupled the moment you add, because a carry walks into the next position. New because it is the one entry that *builds* `+` out of the other operators, and because the same loop with different combining rules is how you do subtraction, and how [[Math & Number Theory]] #2 builds a quotient one bit at a time. Watch the signed-int trap: in Java and C++ a left-shift of the sign bit is undefined or wraps, so the textbook solution is cleaner on `unsigned`. |
+| 9 | Sum of Two Integers | LC **371** | **XOR is the sum *without* carry; `(a & b) << 1` is the carry; iterate until the carry vanishes.** Bits that looked independent under XOR get coupled the moment you add, because a carry walks into the next position. New because it is the one entry that *builds* `+` out of the other operators, and because the same loop with different combining rules is how you do subtraction, and how [[Math & Number Theory]] #2 builds a quotient one bit at a time. Watch the signed-int trap: in C++ a left-shift into or of the sign bit is **undefined behaviour**, so the textbook solution is cleaner on `unsigned`. |
 | 10 | Bitwise AND of Numbers Range | LC **201** | **AND of every integer in `[L, R]` is the *common prefix* of `L` and `R`; everything below the first differing bit is zero, because some number in the range flipped it.** The implementation that makes this obvious: while `L < R`, clear `R`'s lowest set bit (`R &= R − 1`); when they meet, that value *is* the AND. New because this is the counterexample to K3 — **a contiguous range couples bits that a set of arbitrary numbers would not**, so you cannot AND each bit position independently against "does every number have it." The same common-prefix reasoning is how you find the highest bit at which two numbers differ, and it is the reason "AND of a subarray" is monotone in a way XOR of a subarray is not. |
+| 22 | Maximum AND of a pair · Minimize XOR | *GFG* · LC **2429** | **From the MSB down, keep only the candidates that can still take this bit — or place the bit in a constructed answer if the remaining budget allows it.** Pairwise max AND: if at least two numbers still have bit `i` set, drop everyone who doesn't, and set bit `i` in the answer; otherwise skip it. LC **2429** is the one-number form (place bits of `x` under a popcount constraint to minimise `num ^ x`); LC **3133** is the same placement into the holes of a given mask. New because **higher bits constrain the remaining set**, so you cannot decide bit 5 without having committed 31…6 — which is why this is K4, not K3. Distinct from [[Tries]] #7: XOR-max wants the *opposite* bit, so both branches have to stay alive and you need a tree; AND-max / construct-under-constraint can filter a list in place. Distinct from #10: a contiguous range couples bits; here an arbitrary set shrinks. |
 | 11 | Bitwise ORs of Subarrays | LC **898** | **OR only ever turns bits on, so the chain of distinct prefix-ORs ending at a fixed `r` has length at most 32.** As you extend a subarray leftward (or rightward), each new OR is a superset of the previous; a strictly-growing chain of bitsets on a 32-bit universe cannot be longer than 32. So "how many different ORs of subarrays" is `O(32n)`, not `O(n²)`. New and the most transferable coupling result in the file: **a monotone bitwise aggregate takes a logarithmic number of distinct values on a nested family of intervals.** Same fact drives Smallest Subarrays With Maximum Bitwise OR (LC **2411**), Shortest Subarray With OR at Least K (LC **3097**, ↗ [[Sliding Window]] #13), and the "OR-closest-to-target" family. AND-growing-toward-zero is the dual. |
 | 12 | Gray Code | LC **89** | **`i ^ (i >> 1)` produces a sequence where consecutive codes differ by exactly one bit — a Gray code.** The encoding is the idea: you *want* bits coupled, in the specific sense that walking the integers in order should walk the hypercube by single edges. Inverse Gray (binary from Gray) is a prefix-XOR of the Gray bits, which is also **Minimum One Bit Operations to Convert Number** (LC **1611**): converting `n` to 0 by flipping prefixes of bits *is* the inverse Gray of `n`. New because it is a designed coupling rather than an accidental one, and because the inverse showing up as an interview problem is the giveaway that Gray is not a curiosity. |
 | 18 | Minimum Number of K Consecutive Bit Flips | LC **995** | **A flip of `k` consecutive bits is a range-XOR of 1s, so the decision at `i` is forced: if `a[i]` is still wrong after earlier flips, you *must* flip at `i`, or you can never fix it.** Track the running flip-parity with a difference array (or a sliding window of flip events) so each position is `O(1)`. New because **the operation's granularity is a window**, not a bit and not a prefix — #12 flips everything below a cutoff, this flips a sliding block — and because greedily flipping at the leftmost defect is correct for the same reason a difference array is: later positions see the flip, earlier ones cannot be affected. If you cannot place this, you will reach for backtracking. The difference-array half is [[Prefix Sums & Difference Arrays]] #17. |
@@ -117,8 +133,8 @@ The bits are not always a number or a set. Sometimes they are the *encoding*, an
 
 | # | Problem | Source | The new idea |
 |---|---|---|---|
-| 16 | Two's complement, and why `n & −n` is lowbit | *concept — the question behind every signed-shift bug* | **`−n` is `~n + 1`, so the bits of `−n` are "flip everything, then add one" — which means `n` and `−n` share exactly the lowest set bit and disagree everywhere above it.** That is why `n & −n` isolates lowbit, and it is why #1's second identity is not a coincidence. The practical half is the bugs: **arithmetic right-shift (`>>` on a signed int in Java/C++) fills 1s from the left**, so `−1 >> 1` is still `−1`, not `INT_MAX`; Java's `>>>` is the logical shift you actually wanted for bit patterns; negating `INT_MIN` overflows; and a signed `1 << 31` is undefined in C++. New because the *representation* is load-bearing — the identities in K1 are facts about two's complement, not about "bits" in the abstract — and because mixing "I wanted a bit pattern" with "the language thinks this is a negative integer" is the most common silent failure in this topic. |
-| 17 | Repeated DNA Sequences | LC **187** | **Pack a small alphabet into a sliding integer instead of hashing a string.** DNA is 4 symbols, so two bits per character; a 10-character window is 20 bits, which fits in an `int`. Shift in a new character (`x = ((x << 2) \| code[s[i]]) & ((1 << 20) − 1)`) and shift out the one that fell off by the mask, and the window's identity is the integer. New because the mask is now **data, not a set of flags** — you are using the word as a rolling encoding, which is the bit-level form of a rolling hash ([[README]] Strings, unwritten) and the reason a fixed-length window over a tiny alphabet should never allocate a substring. UTF-8 validation (LC **393**) is the sibling: the *leading ones* of a byte encode how many continuation bytes follow, so the representation *is* the protocol. |
+| 16 | Two's complement, and why `n & −n` is lowbit | *concept — the question behind every signed-shift bug* | **`−n` is `~n + 1`, so the bits of `−n` are "flip everything, then add one" — which means `n` and `−n` share exactly the lowest set bit and disagree everywhere above it.** That is why `n & −n` isolates lowbit, and it is why #1's second identity is not a coincidence. The practical half is the bugs: **arithmetic right-shift (`>>` on a signed int) fills 1s from the left**, so `−1 >> 1` is still `−1`, not `INT_MAX`; the logical shift you actually wanted for bit patterns is a cast — `static_cast<unsigned>(n) >> 1`; negating `INT_MIN` overflows; and a signed `1 << 31` is undefined. New because the *representation* is load-bearing — the identities in K1 are facts about two's complement, not about "bits" in the abstract — and because mixing "I wanted a bit pattern" with "the language thinks this is a negative integer" is the most common silent failure in this topic. |
+| 17 | Repeated DNA Sequences | LC **187** | **Pack a small alphabet into a sliding integer instead of hashing a string.** DNA is 4 symbols, so two bits per character; a 10-character window is 20 bits, which fits in an `int`. Shift in a new character (`x = ((x << 2) \| code[s[i]]) & ((1 << 20) − 1)`) and shift out the one that fell off by the mask, and the window's identity is the integer. The mask is #20. New because the mask is now **data, not a set of flags** — you are using the word as a rolling encoding, which is the bit-level form of a rolling hash ([[Strings]] #5) and the reason a fixed-length window over a tiny alphabet should never allocate a substring. UTF-8 validation (LC **393**) is the sibling: the *leading ones* of a byte encode how many continuation bytes follow, so the representation *is* the protocol. |
 
 ---
 
@@ -147,7 +163,7 @@ Developed more fully in the named topic, but you will meet them while studying b
 |---|---|---|---|
 | Hamming Distance | LC **461** | #2 · #3 | `popcount(a ^ b)`. Named in #2. |
 | Minimum Bit Flips to Convert Number | LC **2220** | #2 | Same Hamming. |
-| Complementary / Number Complement | LC **476** · **1009** | #1 | Flip bits *up to the MSB*, not all 32 — a mask of `n`'s bit-width, then XOR. |
+| Complementary / Number Complement | LC **476** · **1009** | #19 · #20 | Flip bits *up to the MSB*: bit-width from #19, then XOR with the #20 mask. |
 | Power of Four | LC **342** | #1 | Power of two plus "the bit sits on an odd position." |
 | Swap two numbers without a temp | *classic* | #3 | `a ^= b; b ^= a; a ^= b`. XOR cancellation, and a good way to lose a value if `a` and `b` alias. |
 | Find the Difference | LC **389** | #3 | XOR of characters. |
@@ -172,12 +188,14 @@ Developed more fully in the named topic, but you will meet them while studying b
 | Next number with the same popcount *(snoob)* | *classic* | #1 · #13 | Next permutation of the bit pattern. Real, almost never asked; named so #13 is not mistaken for it. |
 | UTF-8 Validation | LC **393** | #17 | Leading ones encode length; named in the entry. |
 | Integer Replacement | LC **397** | — | Recursion / greedy on even-odd; bits help, the idea is a search. |
-| Concatenation of Consecutive Binary Numbers | LC **1680** | #16 | Track the current bit-width as you cross powers of two. |
-| Minimize XOR | LC **2429** | #1 | Greedy bit placement under a popcount constraint. |
+| Concatenation of Consecutive Binary Numbers | LC **1680** | #19 · #16 | Track the current bit-width as you cross powers of two. |
+| Minimize XOR | LC **2429** | #22 | The one-number form of MSB-greedy under a popcount constraint. Named in the entry. |
+| Minimum Array End | LC **3133** | #22 | Place the bits of `n−1` into the zero-holes of `x`. Same placement. |
 | Chalkboard XOR Game | LC **810** | #3 | If the total XOR is 0 you already lost; otherwise first player wins for `n` even. Game theory on #3. |
 | Josephus when `k = 2` | *classic* | — | Rotate the binary representation left by one. [[Math & Number Theory]] #20 is the general recurrence; this is a cute special case, not a second idea. |
 | SOS DP · bitset convolution · bitset Floyd | *CP* | — | Out of scope per [[README]]. #14 is the interview-facing fragment of SOS. |
-| Hardware popcount / SWAR tricks | — | #2 | Know `__builtin_popcount` exists; do not write the SWAR version in an interview. |
+| XOR linear basis · max subset XOR | *CP* | — | Gaussian elimination over GF(2). The bits analogue of Knuth/CHT — no clean LC, out of scope. |
+| Hardware popcount / SWAR tricks | — | #2 | Know `__builtin_popcount` exists; do not write the SWAR version in an interview. The smear in #19 (`n \|= n >> 1; …`) is the one SWAR-shaped loop that *is* worth knowing, because it is how you build `highestOneBit` without `clz`. |
 
 ---
 
@@ -193,6 +211,7 @@ Developed more fully in the named topic, but you will meet them while studying b
 - **#16 and #1 kept separate.** I nearly folded two's complement into the toolkit. Split because #1 is the identities you use and #16 is *why they are true, and the language-level ways they lie to you*. The signed-shift bugs do not belong in a Power-of-Two entry.
 - **#17 (packing) included, despite being "just a rolling hash in bits."** The Strings file is unwritten. Until it exists, this is the home for "the word *is* the window." Flagged to become a ↗ when Strings is written.
 - **#18 (windowed flips) included by 4B, not by the first pass.** See below.
+- **K7 split out of #1 rather than folded in.** Isolate-MSB and `% 2ᵏ` are identities, like #1, but they are not corollaries of lowbit — two's complement does not give you the top bit, and a bottom-k mask is a cutoff from the other end. A sentence in #1 would have stayed invisible to a probe.
 - **Snoob, UTF-8, Josephus-k=2, reverse-bits all excluded.** Reverse bits was the closest call — a named LeetCode easy — and I put the divide-and-conquer swap in the exclusion rather than as an entry because it is an implementation of #16, not a new algebra.
 
 **Naming check.** Four retitles. #1 was drafted as "Power of Two", which hides the two identities; it is now *the two identities, and power-of-two is the corollary*. #4 was drafted as "Single Number III", a sequel title; it is now *when two values survive, split on a bit they disagree on*. #10 was drafted as "Bitwise AND of Numbers Range", a problem name that reads like an implementation; it is now *AND of a range is the common prefix*. #11 was drafted as "Bitwise ORs of Subarrays"; it is now *a monotone OR-chain is at most 32 long*, which is what a differently-dressed version would share. #14 was kept as *iterate all submasks*, which is already the idea.
@@ -203,25 +222,27 @@ Twenty plain-language descriptions navigated against the family headings, in int
 
 - **"I can flip any `k` consecutive bits, make the whole array zeros, minimise the number of flips"** landed on #12 and was wrong. #12 flips a *prefix* (everything below a cutoff). This flips a *sliding window*, and the correctness argument is a forced greedy at the leftmost defect plus a difference array, not an encoding. The axis my draft table was missing is *granularity of the operation*: I had "one bit" and, inside #12, prefix flips, with no value for **a window of `k` consecutive bits**. That is **#18**.
 
-Two collisions, both checked and cleared. "Count the 1-bits" reaches #2 and #8, correctly — one number versus every number in `0…n`. "Use an int as a set" reaches #13, #14 and #15, which is the intended fan-out (universe / submasks of one mask / properties of an object).
+Two collisions, both checked and cleared. "Count the 1-bits" reaches #2 and #8, correctly — one number versus every number in `0…n`. A later gap pass found a third landing that was *wrong*: "how many 1-bits from 1 to n, without the array" was collapsing into #8 at `O(n)`. That is **#21**. "Use an int as a set" reaches #13, #14 and #15, which is the intended fan-out (universe / submasks of one mask / properties of an object).
 
 Descriptions that resolved cleanly, worth recording as the ones this file is for: "every value twice except one"; "every value twice except two"; "every value three times except one"; "AND of every integer between `L` and `R`"; "as I extend a subarray the OR only grows, how many distinct values"; "list every subset of this subset, not of the whole universe"; "why is `n & −n` the lowest set bit"; "two words share no letters."
 
 **Step 4C — inward sweep**
 
 - **4C-iii (hedges) first.** [[Math & Number Theory]]'s audit named this file explicitly: *"a Bit Manipulation basis will want XOR properties, `lowbit`, subset enumeration and popcount tricks. Expect this file's M5 and M6 to be re-cut then."* Honoured: Power of Two / Four is now #1 here (Math's exclusion is retargeted); "add without operators" is #9 (Math had collapsed it into M1); Single Number's ↗ now points here rather than only at Arrays. M5 and M6 did **not** need a re-cut — digital root and Josephus are not bit ideas, and the hedge overstated the overlap. Recorded because a hedge that names the wrong families is as misleading as a stale gap flag.
-- **4C-i (reciprocity).** Inbound references from [[Arrays]] #3, [[Tries]] #7, [[Prefix Sums & Difference Arrays]] #2 and ↗ bit-level counts, [[Sliding Window]] #13, [[Dynamic Programming]] D9, [[Graphs]] #8, [[Backtracking]] #6, [[Segment Trees]] #2 all now have ↗ rows. Confirmed against those files' tables before adding — the Heap/Prim false-positive rule.
+- **4C-i (reciprocity).** Inbound references from [[Arrays]] #3, [[Tries]] #7, [[Prefix Sums & Difference Arrays]] #2 and ↗ bit-level counts, [[Sliding Window]] #13, [[Dynamic Programming]] D9, [[Graphs]] #8, [[Backtracking]] #6, [[Segment Trees]] #2 all now have ↗ rows. Confirmed against those files' tables before adding — the Heap/Prim false-positive rule. #21 additionally points at [[Math & Number Theory]] #25 and [[Dynamic Programming]] #73; #22 at [[Tries]] #7 as the XOR form that *cannot* filter a list.
 - **4C-ii (orphans).** Single Number I/II/III, Range AND, Gray code, Counting Bits, Total Hamming, power-set-via-bits, and submask enumeration were absent from the basis as *developed* ideas (several were named in passing). Native here, as expected when the topic itself was the gap. LC 995 was the only well-known problem that was in no file and also missing from the first draft — 4B caught it rather than 4C-ii, which is the recall-dependence 4C-ii still has.
+
+**Gap pass after 4B.** A later completeness check named two in-scope absences plus two toolkit identities that were hiding as "a sentence in #1." All four are now native: K7 (#19 isolate MSB, #20 `% 2ᵏ`), K3 (#21 count set bits `1…n`), K4 (#22 greedy from the MSB over a candidate set). XOR linear basis stays out with SOS.
 
 **What I am uncertain about**
 
-- **The Strings boundary.** #17 is a rolling encoding. When a Strings (KMP / Z / rolling hash) file appears, this should probably become a ↗, keeping only "the alphabet packed into an int" as the bit-specific half.
+- **The Strings boundary is closed.** #17 stays native here for the packing; the polynomial rolling hash is [[Strings]] #5. Dual-native on "a window as a number."
 - **Whether #8 belongs in [[Dynamic Programming]] instead.** It is a DP recurrence. Kept because the *state* is "the bits of `i`" and the jump is a bit operation; a reader drilling bits will meet Counting Bits long before they meet DP recurrences. Flagged.
-- **SOS DP.** Excluded on scope. #14 is the fragment interviews actually want. If a quant / HFT loop starts asking SOS, this file's tail needs an entry, not a row in exclusions.
-- **Recall is thinnest on signed-shift behaviour across languages.** #16 is drawn from Java and C++. Python has no width and no arithmetic shift, which is its own gotcha (unbounded ints, `n & −n` still works because of the language's definition of `−`). Worth a sentence if this file is ever used from Python exclusively.
+- **SOS DP / XOR linear basis.** Excluded on scope; both now named in the table. #14 is the fragment interviews actually want.
+- **Recall is thinnest on signed-shift behaviour you will not hit.** #16 is C++. Python has no width and no arithmetic shift, which is its own gotcha (unbounded ints, `n & −n` still works because of the language's definition of `−`).
 - **LC 1521 / "OR closest to target"** may deserve to be native next to #11 rather than an exclusion of it. The extra idea is a two-pointer or stack of the ≤32 distinct prefix ORs plus a closest-value query. Borderline; currently treated as #11 plus a search.
 
-**Completeness confidence: ~88%.** K1–K5 I am confident about: the axes (independence, algebra, how you iterate, multiplicity) are the right ones, and 4B only had to add granularity of the operation. The uncertainty is the porous boundary with Math (which had been absorbing this topic), with DP (bitmask and Counting Bits), and with the unwritten Strings file. K6 is the family most likely to be re-cut.
+**Completeness confidence: ~92%.** K1–K5 plus K7 I am confident about. 4B added granularity; the gap pass added the dual of lowbit, the `% 2ᵏ` mask, the `O(log n)` range-popcount, and MSB-greedy over a set. Remaining uncertainty is whether #8 is secretly DP, and LC 1521.
 
 ## Related Notes
 
@@ -236,3 +257,7 @@ Descriptions that resolved cleanly, worth recording as the ones this file is for
 - [[Backtracking]]
 - [[Segment Trees]]
 - [[Sorting & Custom Comparators]]
+- [[Greedy]]
+- [[Strings]]
+- [[Hashing]]
+- [[Matrix]]
