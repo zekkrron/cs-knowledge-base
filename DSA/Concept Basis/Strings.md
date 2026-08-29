@@ -36,10 +36,10 @@ S2  Rolling hash                   2 ideas
 S3  Linear palindromes             1 idea
 S4  Suffix structures              3 ideas   ← #10 tail
 S5  Automaton as state             1 idea    ← tail
-                                   + 10 cross-listed ↗
+                                   + 11 cross-listed ↗
 ```
 
-**11 native entries, plus 10 cross-listed (↗).** See [[README]] on cross-listing.
+**11 native entries, plus 11 cross-listed (↗).** See [[README]] on cross-listing.
 
 > [!info] **Numbers are stable IDs assigned in order of addition, not reading order.**
 
@@ -121,6 +121,7 @@ Developed more fully in the named topic, but you will meet them while studying s
 | ↗ | Reverse Words in a String | LC **151** | Reverse all, then reverse each word. [[Two Pointers]] #13. |
 | ↗ | Greatest Common Divisor of Strings | LC **1071** | Euclid on strings: repeated structure, not characters. [[Math & Number Theory]] #5. |
 | ↗ | Group Anagrams · permutation-in-string | LC **49** · **567** | Canonical keys and windowed frequency. [[Hashing]] #3 · [[Arrays]] #8 and [[Sliding Window]] #2 — no substring *structure*. |
+| ↗ | Distinct Subsequences II | LC **940** | Append a character, double, subtract `last[c]`. Not a string *algorithm*. [[Dynamic Programming]] #76. Distinct from embeddings of `t` in `s` (LC **115**), which is #19 there. |
 
 ---
 

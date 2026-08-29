@@ -22,7 +22,7 @@ The no-redundancy rule still applies **within** a topic. Two problems in the sam
 | ---------------------------------------- | ------ | --- | --------------------------------------------------------- |
 | [[Stack and Queue]]                      | 25     | 4   | Draft · 4B passed · **4C found 2** · FreqStack added          |
 | [[Graphs]]                               | 37     | 7   | Draft · 4B passed · Clone Graph promoted · UF dual-native G5 |
-| [[Dynamic Programming]]                  | 75     | 3   | Draft · 4B passed · gap cluster + palindrome table added  |
+| [[Dynamic Programming]]                  | 78     | 3   | Draft · 4B passed · snapshot pass #76–#78                     |
 | [[Heap]]                                 | 25     | 7   | Draft · 4B passed · **4C found 4** · 1642 split + multiset ↗  |
 | [[Binary Search]]                        | 21     | 4   | Draft · 4B passed · **4C found 2** · stale flag fixed     |
 | [[Segment Trees]]                        | 13     | 4   | Draft · 4B passed · mostly tail scope                     |
@@ -40,7 +40,7 @@ The no-redundancy rule still applies **within** a topic. Two problems in the sam
 | [[Linked List]]                          | 16     | 12  | Draft · 4B found 1 · **4C found 4** · see step 4C below   |
 | [[Greedy]]                               | 22     | 16  | Draft · 4B filled 2 empty cells · Intervals hedge closed |
 | [[Bit Manipulation]]                     | 22     | 10  | Draft · 4B found 1 · gap pass + K7 toolkit                |
-| [[Strings]]                              | 11     | 10  | Draft · 4B/4C run at write · KMP / Z / hash / Manacher / SA |
+| [[Strings]]                              | 11     | 11  | Draft · 4B/4C run at write · KMP / Z / hash / Manacher / SA |
 | [[Intervals]]                            | 13     | 12  | Draft · 4B filled 1 empty cell · typed-event sweep is I2, not the whole file |
 | [[Matrix]]                               | 9      | 11  | Draft · 4B/4C at write · Arrays dual-native #5/#6            |
 | [[Union-Find]]                           | 9      | 7   | Draft · 4B/4C at write · Graphs G5 stays native · #9 rollback tail |
