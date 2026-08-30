@@ -22,7 +22,8 @@ belongs** — the destinations are fully specified below.
   `01 - Problem Statement.md`, `02 - <Topic>.md`, etc. Split on natural topic boundaries —
   no fixed file count. Holds narrative, instructor's framing, full problem walkthrough,
   the user's questions.
-- **Accumulators** — everything else. Grown across the entire course.
+- **Concept notes** — everything else (`Patterns/`, `Principles/`, `Foundations/`, ...).
+  One canonical note per concept, explained once and linked to from everywhere else.
 
 ### DSA
 - **Topics** — `DSA/Topics/<Topic Name>/`. One folder per topic.
@@ -52,15 +53,20 @@ belongs** — the destinations are fully specified below.
 
 Unmatched content stays in the relevant module file. That residue is correct.
 
-## Merge Rules — critical
+## Write-Once, Link-Everywhere — critical
 
-Accumulators already hold knowledge from earlier modules. **Search the vault for an
-existing note before creating one.** Merge into it; never overwrite. Keep contradictions
-side by side under a `[!question]` callout. Append to `## Sources`, never replace.
+Each concept (a pattern, a principle, an OOP mechanism) is explained **once** in its own
+canonical note. Everywhere else just **links** to it with `[[wikilinks]]` — never
+re-explain, re-summarise, or merge distilled copies across modules.
+
+**Search the vault for an existing concept note before creating one.** If it exists, link
+to it. Only create a new canonical note when the concept first appears. Only edit a concept
+note when the concept *itself* needs correcting or extending — not to fold in every module
+that uses it.
 
 ## Always
 
-- Cross-link both directions: module file → accumulator, and accumulator `## Sources` → specific module file (e.g. `[[03 - Simple Rule Engine/02 - Naive Solution]]`)
+- Cross-link both directions: module file → concept note via `## Extracted To`, and concept note `## Sources` → specific module file (e.g. `[[02 - Simple Rule Engine/02 - Naive Solution]]`)
 - Update the `README.md` index of every folder touched
 - Report what was created, updated, and skipped
 

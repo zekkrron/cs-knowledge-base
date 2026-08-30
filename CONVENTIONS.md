@@ -93,10 +93,12 @@ Complexity: ...
 
 ## Two Layers
 
-- **Record** (`Course/`) — the course as taught. Written once. Owns: outline, instructor's framing, full problem walkthrough, Akash's questions. Never revisited after extraction.
-- **Accumulators** (everything else) — distilled knowledge that grows across the entire course and beyond.
+- **Record** (`Course/`) — the course as taught. Written once. Owns: outline, instructor's framing, full problem walkthrough, Akash's questions.
+- **Concept notes** (everything else — `Patterns/`, `Principles/`, `Foundations/`, etc.) — one canonical note per concept.
 
-**Anti-duplication:** if the same paragraph would go in both, it belongs in the accumulator. The module note links to it instead.
+**Write-once, link-everywhere:** a concept (a pattern, a principle, an OOP mechanism) is explained **once** in its own canonical note. Every other place that touches it just **links** to that note with `[[wikilinks]]` — it does NOT re-explain, re-summarise, or merge distilled copies of it. This keeps a single source of truth without the burden of re-distilling knowledge across modules.
+
+Do not try to "accumulate" a concept by pulling paragraphs from many modules into one merged writeup. Just create the canonical note the first time the concept appears, and link to it thereafter.
 
 **Naming:** Each module is a **folder** `NN - <Original OneNote Page Title>/`. NN = module position. One OneNote page = one module = one folder. Inside the folder, files are numbered `01 - <Topic>.md`, `02 - <Topic>.md`, etc. Split whenever a section grows large enough to deserve its own file — there is no fixed count. The first file is always `01 - Problem Statement.md` when the module starts with a problem.
 
@@ -124,13 +126,13 @@ The user says "convert module 12." The agent does everything below. Never ask th
 
 Anything that matches nothing stays in the module note. That residue is correct.
 
-**Step 4** — For each hit: search first. Merge into the existing note if it exists. Create only if it does not.
+**Step 4** — For each hit: search first. If a canonical concept note already exists, **link to it** — do not rewrite or merge new distilled content into it. Create the canonical note only if it does not exist yet.
 
-**Step 5** — Cross-link both directions. Module note lists what it fed. Each accumulator appends the module under `## Sources`.
+**Step 5** — Cross-link both directions. Module note lists what it links to under `## Extracted To`. Each concept note lists the modules that reference it under `## Sources`.
 
 **Step 6** — Update `README.md` of every folder touched. Report what was created, updated, skipped.
 
-**Merge rule:** accumulators are never overwritten. Append and refine only. Contradictions stay side by side under `[!question]`.
+**Link, don't merge:** the canonical concept note is the single source of truth. Other notes link to it rather than duplicating or re-distilling its content. Only edit a concept note when the concept *itself* needs correcting or extending — not to fold in every module that happens to use it.
 
 **Code:** link the course repo (`github.com/singhsanket143/Design-Patterns`). Inline only the 5–20 line teaching excerpt. Never transcribe boilerplate off screen photographs.
 
@@ -139,6 +141,8 @@ Anything that matches nothing stays in the module note. That residue is correct.
 ## Note Templates
 
 ### Pattern note
+
+Two-part progressive structure: **Part 1** gets you *using* the pattern; **Part 2** gives the *architectural judgment*. The two vault-specific tails (Pattern-Specific Applications, Field Notes) and the wiring (Principles Served, Sources) sit after Part 2.
 
 ```
 ---
@@ -149,23 +153,52 @@ created: YYYY-MM-DD
 
 > [!abstract] One sentence: the problem it exists to solve.
 
-## Motivation
-The naive approach and the specific problems it caused. This is what justifies the pattern.
+**External references:** links (e.g. refactoring.guru concept + language example)
 
-## Recognition Signal
+## Part 1 — Core Framework
+
+### Main Purpose
+What it does + which principle(s) it promotes.
+
+### Recognition Signal
 > [!tip] The cue that says "use this pattern here" — in Akash's own words.
+(= "signs you should apply this")
 
-## Confused With
+### How to Implement
+The ordered steps.
+
+### Key Code
+Teaching excerpt only. When the pattern has runtime/environment nuance, split into
+the two cases: Plain Java (no singletons) vs Spring Boot (singleton beans). Link repo
+for full implementation.
+
+### Beyond the Basics
+The one core insight that unlocks the pattern (e.g. runtime polymorphism eliminating
+the switch).
+
+### Anti-Patterns & When NOT to Use
+Common misuses + the case where the pattern is overkill.
+
+## Part 2 — Architecture Deep Dive
+
+### Pattern Synergy
+Which patterns it pairs with and why (e.g. Strategy + Factory, "conservation of complexity").
+
+### Confused With
 Table comparing this pattern to the one it is most often mistaken for.
 
-## Structure
-classDiagram Mermaid block.
+### Real-World Context
+Concrete library/framework usages worth recognising.
 
-## Key Code
-Teaching excerpt only. Link repo for full implementation.
+### Advanced Nuances
+Senior-level judgment: boundary decisions, concurrency/thread-safety, trade-offs.
 
-## Trade-offs
-| Pro | Con |
+## Pattern-Specific Applications
+The vault's own worked cases (e.g. chess cross-combination). Optional.
+
+## Field Notes
+Orphan-but-important pointers that don't fit a clean section — kept as standalone
+`[!note]` callouts.
 
 ## Principles Served
 [[wikilinks]] to Principles/ notes.
