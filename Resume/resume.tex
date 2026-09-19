@@ -1,0 +1,163 @@
+%-------------------------
+% Resume in Latex
+% Based on Kushagra Bhardwaj template
+%------------------------
+
+\documentclass[letterpaper,11pt]{article}
+
+\usepackage{latexsym}
+\usepackage[empty]{fullpage}
+\usepackage{titlesec}
+\usepackage{marvosym}
+\usepackage[usenames,dvipsnames]{color}
+\usepackage{verbatim}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+\usepackage{fancyhdr}
+\usepackage[english]{babel}
+\usepackage{newunicodechar}
+\newunicodechar{₹}{\textbf{Rs.}}
+\usepackage{tabularx}
+\usepackage{multicol}
+\setlength{\multicolsep}{-3.0pt}
+\setlength{\columnsep}{-1pt}
+\input{glyphtounicode}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyfoot{}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0pt}
+
+% Adjust margins
+\addtolength{\oddsidemargin}{-0.6in}
+\addtolength{\evensidemargin}{-0.5in}
+\addtolength{\textwidth}{1.19in}
+\addtolength{\topmargin}{-.7in}
+\addtolength{\textheight}{1.4in}
+
+\urlstyle{same}
+
+\raggedbottom
+\raggedright
+\setlength{\tabcolsep}{0in}
+
+% Sections formatting
+\titleformat{\section}{
+  \vspace{-4pt}\scshape\raggedright\large\bfseries
+}{}{0em}{}[\color{black}\titlerule \vspace{-5pt}]
+
+\pdfgentounicode=1
+
+%-------------------------
+% Custom commands
+\newcommand{\resumeItem}[1]{\item\small{{#1 \vspace{-2pt}}}}
+
+\newcommand{\resumeSubheading}[4]{
+  \vspace{-2pt}\item
+  \begin{tabular*}{1.0\textwidth}[t]{l@{\extracolsep{\fill}}r}
+    \textbf{#1} & \textbf{\small #2} \\
+    \textit{\small#3} & \textit{\small #4} \\
+  \end{tabular*}\vspace{-7pt}
+}
+
+\renewcommand\labelitemi{$\vcenter{\hbox{\tiny$\bullet$}}$}
+\renewcommand\labelitemii{$\vcenter{\hbox{\tiny$\bullet$}}$}
+
+\newcommand{\resumeSubHeadingListStart}{\begin{itemize}[leftmargin=0.0in, label={}]}
+\newcommand{\resumeSubHeadingListEnd}{\end{itemize}}
+\newcommand{\resumeItemListStart}{\begin{itemize}}
+\newcommand{\resumeItemListEnd}{\end{itemize}\vspace{-5pt}}
+
+%-------------------------------------------
+\begin{document}
+
+%----------HEADING----------
+\vspace{-20pt}
+\begin{center}
+  {\Huge \scshape Akash Singh} \\ \vspace{1pt}
+  \small +91 9818528644 ~$|$~
+  \href{mailto:akash.singh13503@gmail.com}{akash.singh13503@gmail.com} ~$|$~
+  \href{https://www.linkedin.com/in/akashswe/}{LinkedIn} ~$|$~
+  \href{https://github.com/zekkrron}{GitHub} ~$|$~
+  \href{https://leetcode.com/u/zekkrron/}{Leetcode}
+  \vspace{-8pt}
+\end{center}
+
+\vspace{-8pt}
+
+%-----------EDUCATION-----------
+\section{Education}
+\resumeSubHeadingListStart
+  \resumeSubheading
+    {Netaji Subhas University of Technology, Delhi}{Dec 2021 -- Jun 2025}
+    {B.Tech, Instrumentation and Control Engineering}{CGPA: 8.22}
+\resumeSubHeadingListEnd
+
+\vspace{-9pt}
+
+%-----------EXPERIENCE-----------
+\section{Experience}
+\resumeSubHeadingListStart
+
+  \resumeSubheading
+    {Delhivery}{October 2025 -- Present}
+    {Software Development Engineer 1}{Gurugram, India}
+    \vspace{-7pt}
+    \resumeItemListStart
+      % resume:mcp-servers
+      \resumeItem{\textbf{AI Ecosystem \& MCP Architecture:} Delivered MCP servers within a microservices architecture (Python, FastMCP), coding \textbf{100+ tools} to bridge internal systems with the AI ecosystem.}
+      % resume:dev-productivity
+      \resumeItem{\textbf{Developer Productivity:} Implemented a token-optimized MCP server tailored for Client IDE knowledge bases, slashing Delhivery One API client integration effort from \textbf{3 weeks to 5 days}.}
+      % resume:catalog-gateway
+      \resumeItem{\textbf{Agentic Platform and MCP Gateway:} Shipped Catalog Service API registry, expanding ecosystem to \textbf{600+ tools} across \textbf{11+ business domains}. Architected MCP Gateway (LangChain) dynamically translating OpenAPI specs into executable tools for UI and chat, handling \textbf{72,000+ daily requests}.}
+      % resume:multi-agent
+      \resumeItem{\textbf{Multi-Agent Orchestration:} Spearheaded a hierarchical AI Agent framework (LangGraph) leveraging event-driven multi-step orchestration and child agents to automate 20+ business workflows.}
+      % resume:orion
+      \resumeItem{\textbf{Orion \& Freight Automation:} Automated freight procurement via an Indent Creation Agent, processing \textbf{1,000+ daily indents} and driving down costs from \textbf{₹28 to ₹4} per indent. Integrated a Subagent for enrichment to resolve missing data, ensuring clean records for physical truck assignments.}
+      % resume:ask-ai
+      \resumeItem{\textbf{Enterprise Search Optimization:} Re-architected the platform's hybrid tool-search engine utilizing character-count routing, kNN retrieval, and \textbf{Cross-Encoder} reranking with adaptive tail-distribution thresholding, reducing search noise by \textbf{$\sim$70\%} with zero relevant-result dropout across all query categories.}
+      % resume:workflows
+      \resumeItem{\textbf{Workflow Automation Platform:} Built a drag-and-drop workflow automation tool on \textbf{LangGraph} that compiles visual DAGs into deterministic multi-step pipelines with durable, resumable execution. Migrated all \textbf{20+ business workflows} onto it, serving \textbf{124,000+ requests/day}, and cut Orion indent cost to \textbf{₹1.5 per indent}.}
+    \resumeItemListEnd
+
+  \resumeSubheading
+    {ClearTax}{January 2025 -- July 2025}
+    {Software Engineering Intern}{Bengaluru, India}
+    \vspace{-7pt}
+    \resumeItemListStart
+      % resume:cleartax-harvester
+      \resumeItem{\textbf{Data Retrieval Microservice:} Built Data-Harvester (Java, Spring Boot), a generic \& configurable data retrieval microservice for the \textbf{Global-Einvoicing} team.}
+      % resume:cleartax-recon
+      % resume:cleartax-singapore
+      \resumeItem{\textbf{Feature Delivery \& Expansion:} Shipped the \textbf{Transactional Reconciliation} feature in Malaysia, reducing data inconsistency by \textbf{57\%}. Facilitated e-invoicing expansion to Singapore by crafting essential system templates and configurations.}
+      % resume:cleartax-oncall
+      \resumeItem{\textbf{Incident Management:} Led a 6-week on-call rotation for Malaysia \& Global, cutting average incident resolution time by \textbf{38\%}.}
+      % resume:cleartax-testing
+      \resumeItem{\textbf{Automated Testing:} Boosted Malaysia e-invoicing test coverage from 30\% to \textbf{90\%} using AI Coding Agents and JUnit5.}
+    \resumeItemListEnd
+
+\resumeSubHeadingListEnd
+
+\vspace{-12pt}
+
+%-----------TECHNICAL SKILLS-----------
+\section{Technical Skills}
+\begin{itemize}[leftmargin=0.15in, label={}]
+  \small{\item{
+    \textbf{Languages}{: Python, Java, C++} \\
+    \textbf{GenAI \& LLMs}{: LangGraph, LangChain, FastMCP, AI Agents, MCP Servers, Cross-Encoder} \\
+    \textbf{Backend \& Distributed Systems}{: Spring Boot, FastAPI, REST API Design, Microservices, Kafka, RabbitMQ} \\
+    \textbf{Cloud, DevOps \& Databases}{: AWS, Kubernetes, Docker, Linux, PostgreSQL, MongoDB, Redis, MySQL} \\
+  }}
+\end{itemize}
+
+\vspace{-12pt}
+
+%-----------ACHIEVEMENTS-----------
+\section{Achievements}
+\resumeSubHeadingListStart
+  \resumeItem{Secured global rank \textbf{1999}/36,727 in Leetcode Biweekly Contest 138 (August 2024).}
+\resumeSubHeadingListEnd
+
+\end{document}
