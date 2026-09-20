@@ -114,7 +114,8 @@ carry an optional `llm_gateway_virtual_key` used for routing/attribution.
 
 ## 7. Related docs (in-repo)
 
-- `mcp-gateway/docs/v2-orchestration-flow.md` — v2 agent pipeline flow.
+- `11-v2-agent-orchestration.md` (this vault) / `mcp-gateway/docs/v2-orchestration-flow.md` — v2 agent pipeline.
+- `12-observability-langfuse.md` (this vault) — Langfuse tracing + cost metrics.
 - `mcp-gateway/docs/mongodb-indexes-agent-v2.md` — required Mongo indexes for v2 agents.
 - `mcp-gateway/docs/hook-sandbox-security.md` — sandboxing for user-supplied hook code.
 - `mcp-gateway/docs/staging-config.md` — full env var reference.

@@ -4,7 +4,7 @@ created: 2026-09-19
 ---
 # Singapore Expansion
 
-> [!abstract] `resume:cleartax-singapore`. Same PDF sentence as recon. This snapshot has **Malaysia folders, not Singapore**. You defend the *machinery*, or you name the other branch. Deep file: [[03-einvoicing-expansion-templates]].
+> [!abstract] `resume:cleartax-singapore`. Same PDF sentence as recon. This snapshot has **Malaysia folders, not Singapore**. You defend the *machinery*, or you name the other branch. **Harvester/recon pointers do not include report generation** — if SG work was BFF JSON + `Mode`, stay there. Deep file: [[03-einvoicing-expansion-templates]].
 
 ## Resume line
 
@@ -25,27 +25,33 @@ What *is* here — the MY blueprint you would copy:
 
 Templates present: sales, sales B2C, sales conso, purchase, purchase conso, transactional recon.
 
-**Reports** — `read-data-source/.../mode/EINVOICE_MY/{REPORT}/` — 14 types (lite/detailed, B2C, conso, email summary, sales/purchase recon, transactional recon). Each: Avro `output-schema.json`, `report-config.json`, schema maps.
+**Report JSON (exists in the tree — not the harvester/recon claim)** — `read-data-source/.../mode/EINVOICE_MY/{REPORT}/` — 14 types. Avro + `report-config.json`. Only walk this on the SG bullet if **you actually added those folders**. Runtime (SQS/worker/S3) is still not yours. [[01 - Data Harvester]].
 
-**Excel "system templates"** — S3 URLs in `application.yml` under `reports.templates.*` (e.g. email delivery xlsx). New country = new key + env var.
+**Excel "system templates"** — S3 URLs in `application.yml` under `reports.templates.*`. Same rule: config key ≠ owning generation.
 
 **DB:** `ModeAwareMongoConfiguration`, per-mode `@Qualifier`, Worker imports `TenantMongoConfig*`. New country = new config class + new `MODE_INIT_CONDITIONAL_*`.
 
 ## One-minute pitch
 
-Singapore was not "rewrite Harvester." It was drop `Mode.EINVOICE_SG`, a `SG/` JSON tree, report folders under `EINVOICE_SG`, annotated strategies, tenant Mongo config. Factories auto-pick. If they ask to see `EinvoiceSg*.json` and I only have MY in this tree, I say that — I will not pretend the files are in the repo I studied from.
+Singapore was not "rewrite Harvester." It was drop `Mode.EINVOICE_SG`, a `SG/` **BFF** JSON tree, `@DataReadService` + tenant Mongo config. Factories auto-pick. Report folders / `@DataSourceGenerator` only if you actually added them — and even then that is **config**, not "I owned export." If they ask to see `EinvoiceSg*.json` and I only have MY in this tree, I say that — I will not pretend the files are in the repo I studied from.
 
 ## Add-SG checklist (the interview whiteboard)
 
-1. Enums: `Mode`, `TemplateType`, `ReportType`.
-2. `resources/SG/{TEMPLATE}/` field/option/node JSON.
-3. `mode/EINVOICE_SG/{REPORT}/` schema + headers.
-4. `@DataReadService` + `@DataSourceGenerator` classes, SG `@ConditionalOnExpression`.
-5. `TenantMongoConfig*` + Worker import.
-6. Excel keys if needed.
-7. Repos only if new collections.
+**You walk (BFF — matches harvester pointer):**
 
-Core / writers / `TemplateFactory` stay closed. That is the OCP story — link [[01 - Data Harvester]], do not re-explain Strategy.
+1. Enums: `Mode`, `TemplateType`.
+2. `resources/SG/{TEMPLATE}/` field/option/node JSON.
+3. `@DataReadService` class, SG `@ConditionalOnExpression`.
+4. `TenantMongoConfig*` if new collections / mode DB.
+5. Repos only if new collections.
+
+**Only if you actually did this (not harvester/recon, not "I built reports"):**
+
+6. `ReportType` + `mode/EINVOICE_SG/{REPORT}/` schema + headers.
+7. `@DataSourceGenerator` + Worker import of the mode Mongo config.
+8. Excel keys under `reports.templates`.
+
+`TemplateFactory` stays closed. That is the OCP story — link [[01 - Data Harvester]], do not re-explain Strategy. Do not walk writers / SQS.
 
 ## Ugly questions
 

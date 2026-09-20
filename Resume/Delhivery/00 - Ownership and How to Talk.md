@@ -33,17 +33,24 @@ flowchart LR
 
 > [!tip] The sentence that saves the round: **Catalog is the system of record. Gateway is the runtime. LangGraph `interrupt()` does not live in Catalog — grep it, it is only in the gateway.**
 
-## Calendar (lock this, then fit every later bullet)
+> [!warning] Playground `v2/chat` and `/run` stay **sync**. Production is `POST /trigger` → Kafka `acks=all` → **202** (else **503**). **No GET** — runs are traces on Langfuse, not a table. S3+Catalog is pause only. Depth: [[02 - Catalog and Gateway]].
 
-Join **21 Oct 2025**. First team: almost no work through **Dec**. Agentic team from **Jan 2026**. Interview **28 Sep 2026**.
+## Calendar (locked — say this, do not improvise)
 
-| Window | Story |
+Join **21 Oct 2025**. First team: almost no work through **Dec**. Agentic from **Jan 2026**. Interview **28 Sep 2026**.
+
+| Window | What you say you shipped |
 |---|---|
 | 21 Oct 2025 – Dec 2025 | Other team. Low bandwidth. One sentence, no trash-talk. |
-| Jan – ~Mar 2026 | **Main work = static MCP servers** (pointer 1). ~3 months is the *project window*, not "time to type 100 functions." **Pointer 2 = `INTEGRATION_MCP`**, same window or immediately after — docs KB for the IDE, not another wrapper farm. |
-| Apr – Sep 2026 | Everything else on the PDF: Catalog, Gateway, agents, Orion, Ask AI, canvas/pause. ~6 months. Those bullets **overlap**. None of them get their own "another 3 months I built it alone." |
+| **Jan – Mar 2026** | **Standalone MCP servers only.** Pointer 1 (domain FastMCP). Pointer 2 (`INTEGRATION_MCP`) lives here too — still an MCP microservice, not Catalog. |
+| **Apr – mid-May 2026** (~1.5 mo) | **Catalog + Gateway** (registry + OpenAPI → tool execute). Pointer 3. Agents are *not* in this window. |
+| **Mid-May – end Jun 2026** (~1.5 mo) | **Agents** (LangGraph, children, Orion indent). Pointers 4–5. |
+| **Jul 2026** (1 mo) | **Workflows — first cut.** Canvas compile/run. Not "pause/resume + scheduler finished and perfect." |
+| **Aug – Sep 2026** | Fixes: harden workflows (pause/resume), Ask AI, whatever else. No new "I built X from scratch for a quarter." |
 
-If a later pointer needs more than this leftover, shrink ownership, not the calendar.
+> [!warning] Gateway in April–mid-May means the **tool path** (resolve spec, flatten, HTTP out). LangGraph **agent** runtime is the next 1.5 months. Canvas is July. If they collapse all three into "I architected the Gateway," you ate the calendar.
+
+Ask AI has **no dedicated window** — it sits in Aug–Sep / "fixes" unless you later give it dates.
 
 ## Ownership — fill before the interview
 
@@ -71,7 +78,8 @@ Docs describe the **codebase**, not your PRs. Until this table is honest, do not
 | 100+ tools | README tally **133–136** on ~7 static servers | "Hand-built FastMCP tools; I can walk Express 73 + FMS 40 + …" |
 | 11+ domains | **14** `VALID_DOMAINS` in the enricher | List a few: Express, Freight, Fulfillment, Fleet, … |
 | 600+ tools | Stated as catalog size, no query in the notes | "Registry of OpenAPI operations. I will not invent how we counted unless I re-run the list query." |
-| 72k / 124k RPS-day | **Repeated from the resume**, no dashboard recipe | Same. Peak vs average, which endpoint, which env — only if you have it. |
+| 72k /day | Temple PDF, Catalog+Gateway bullet. **Defend as production `POST .../v2/trigger`** (agent workers). Playground `v2/chat` is humans iterating — not this counter. ~50 RPM. | Do not move the number off the PDF. Do not say Catalog serves it. Do not say Orion 1k indents. 124k is workflows. |
+| 124k /day | Workflows bullet. | If 72k is agent `/trigger`, 124k cannot be the same counter. Split or drop one. Don't mix playground chat into 72k. |
 | 20+ workflows | Stated, then "migrated onto the canvas" | Name 2–3 you touched (Orion indent is one). |
 | 1,000+ indents/day | Stated | Orion team volume — source? |
 | ₹28 → ₹4 → ₹1.5 | `cost_handling.py` exists; **the rupees are not in code** | LLM/token cost accounting is real. The 28/4/1.5 are a **business number**. How computed? |
@@ -86,6 +94,8 @@ Docs describe the **codebase**, not your PRs. Until this table is honest, do not
 - [[01 - MCP Servers]]
 - [[02 - Catalog and Gateway]]
 - [[03 - Agents and Orion]]
-- [[04 - Workflows and Pause Resume]]
+- [[04 - Workflows]]
+- [[05 - Pause Resume]]
 - [[05 - Ask AI Search]]
 - [[06 - Supporting Modules]]
+- [[07 - Langfuse]]

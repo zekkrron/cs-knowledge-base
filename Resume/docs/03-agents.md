@@ -92,7 +92,8 @@ The gateway builds and runs agents with LangGraph. Relevant modules
 | `observability/langfuse_client.py` | LLM tracing. |
 
 ### 2.1 v2 orchestration flow
-The canonical description lives in `mcp-gateway/docs/v2-orchestration-flow.md`, and required
+The canonical description in this vault is `11-v2-agent-orchestration.md` (from
+`mcp-gateway/docs/v2-orchestration-flow.md` + `v2/` on branch `loop-node`). Required
 Mongo indexes in `mcp-gateway/docs/mongodb-indexes-agent-v2.md`. The v2 engine is a LangGraph
 graph with:
 - **Hooks** — pre/post extension points (user-supplied hook code is sandboxed; see

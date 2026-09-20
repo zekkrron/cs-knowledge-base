@@ -4,7 +4,7 @@ created: 2026-09-19
 ---
 # ClearTax — Resume Defence
 
-> [!abstract] Intern, Global E-Invoicing, Data-Harvester. Start at [[00 - ClearTax Ownership]]. Raw writeups in `docs/`.
+> [!abstract] Intern, Global E-Invoicing, Data-Harvester **BFF**. Report generation is not the harvester/recon pointers. Start at [[00 - ClearTax Ownership]]. Raw writeups in `docs/`.
 
 | File | Resume ids | Deep docs |
 |---|---|---|

@@ -12,7 +12,7 @@ Led a 6-week on-call rotation for Malaysia & Global, −38% average incident res
 
 ## Truth
 
-On-call is not a module. The writeup is a **runbook for Data-Harvester failure surfaces**. Use it to sound like you have seen the nights. Do not claim you rewrote New Relic.
+On-call is not a module. The writeup is a **runbook for Data-Harvester failure surfaces** — including the **export** plane. Seeing a ticket ≠ you owned report generation as a feature ([[01 - Data Harvester]]). Use it to sound like you have seen the nights. Do not claim you rewrote New Relic.
 
 | Surface | Symptom |
 |---|---|

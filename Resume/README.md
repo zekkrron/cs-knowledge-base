@@ -18,15 +18,19 @@ created: 2026-09-19
 
 **Sync rule:** `Resume/resume.tex` is the source of truth ↔ the `resume:*` note.
 
+**After interviews:** apply [[After Interviews - Resume Fixes]] to `resume.tex`. Do not apply it before Temple.
+
 ## Delhivery — study order
 
 1. [[00 - Ownership and How to Talk]] — plane split + **fill the ownership table and number sources**
 2. [[01 - MCP Servers]] — `mcp-servers`, `dev-productivity`
 3. [[02 - Catalog and Gateway]] — `catalog-gateway`
 4. [[03 - Agents and Orion]] — `multi-agent`, `orion`
-5. [[04 - Workflows and Pause Resume]] — `workflows` (likely the deepest hole)
-6. [[05 - Ask AI Search]] — `ask-ai` (TAZS name, routing wording)
-7. [[06 - Supporting Modules]] — RBAC, transformers, SOP (follow-ups)
+5. [[04 - Workflows]] — canvas compile / run
+6. [[05 - Pause Resume]] — interrupt / S3 / scheduler (deepest hole)
+7. [[05 - Ask AI Search]] — `ask-ai` (TAZS name, `RERANKER_TYPE` vs character-count)
+8. [[06 - Supporting Modules]] — RBAC, transformers, SOP (follow-ups)
+9. [[07 - Langfuse]] — how to talk traces (you did not build Langfuse)
 
 ## ClearTax — study order
 
@@ -47,7 +51,7 @@ created: 2026-09-19
 | `multi-agent` | [[03 - Agents and Orion]] |
 | `orion` | [[03 - Agents and Orion]] |
 | `ask-ai` | [[05 - Ask AI Search]] |
-| `workflows` | [[04 - Workflows and Pause Resume]] |
+| `workflows` | [[04 - Workflows]] · [[05 - Pause Resume]] |
 | `cleartax-harvester` | [[01 - Data Harvester]] |
 | `cleartax-recon` | [[02 - Transactional Reconciliation]] |
 | `cleartax-singapore` | [[03 - Singapore Expansion]] |
@@ -68,6 +72,8 @@ created: 2026-09-19
 | [[08-supporting-modules]] | RBAC, transformers |
 | [[09-ask-ai-search]] | Hybrid search |
 | [[10-client-integration-mcp]] | INTEGRATION_MCP / Client IDE KB |
+| [[11-v2-agent-orchestration]] | v2 graph nodes, routing, child depth, LLM loop |
+| [[12-observability-langfuse]] | Langfuse traces + cost metrics |
 
 ## ClearTax docs index
 

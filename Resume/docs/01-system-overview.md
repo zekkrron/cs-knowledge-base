@@ -134,3 +134,6 @@ See `04-workflows.md` and `05-pause-resume.md` for the exhaustive treatment.
 - `07-mcp-servers.md` — The FastMCP server collection: servers, domains, auth model, tool count.
 - `08-supporting-modules.md` — RBAC/OPA, guardrail registry, data transformers, SOP subsystem,
   versioning, cache invalidation, observability.
+- `11-v2-agent-orchestration.md` — v2 `StateGraph` nodes, rule vs prompt routing, child
+  recursion, LLM loop, bulk, cost budgets.
+- `12-observability-langfuse.md` — Langfuse SDK + callback handler, thinking tokens, cost SoR.
