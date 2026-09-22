@@ -191,7 +191,7 @@ RG's meta-lesson: a pattern isn't just a code shape — **naming** it (Adapter v
 
 ### Real-World Context — Hexagonal Architecture (Ports & Adapters)
 
-Adapters are the backbone of Hexagonal Architecture. The application **core defines a "Port"** (a technology-agnostic interface). Each external technology gets an **"Adapter"** that satisfies that port. The core depends only on ports (respecting [[01 - SOLID Principles/05 - Dependency Inversion Principle]]); you "plug in" a technology by injecting its adapter.
+Adapters are the backbone of Hexagonal Architecture. The application **core defines a "Port"** (a technology-agnostic interface). Each external technology gets an **"Adapter"** that satisfies that port. The core depends only on ports (respecting [[05 - Dependency Inversion Principle]]); you "plug in" a technology by injecting its adapter.
 
 ```java
 // PORT — defined by the core, knows nothing about any specific technology
@@ -234,8 +234,8 @@ Java/C# lack multiple class inheritance, so **Object Adapters are the standard**
 
 ## Principles Served
 
-- [[01 - SOLID Principles/05 - Dependency Inversion Principle]] — the client/core depends on the target interface (or port), never the concrete adaptee/vendor.
-- [[01 - SOLID Principles/02 - Open-Close Principle]] — add support for a new vendor/technology by adding a new adapter, without touching client code.
+- [[05 - Dependency Inversion Principle]] — the client/core depends on the target interface (or port), never the concrete adaptee/vendor.
+- [[02 - Open-Close Principle]] — add support for a new vendor/technology by adding a new adapter, without touching client code.
 
 ## Sources
 

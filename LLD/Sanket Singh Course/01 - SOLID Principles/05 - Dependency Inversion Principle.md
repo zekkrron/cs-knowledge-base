@@ -165,7 +165,7 @@ classDiagram
 
 ## Related Notes
 
-- [[01 - SOLID Principles/01 - Single Responsibility Principle]]
-- [[01 - SOLID Principles/02 - Open-Close Principle]]
-- [[01 - SOLID Principles/03 - Liskov Substitution Principle]]
-- [[01 - SOLID Principles/04 - Interface Segregation Principle]]
+- [[01 - Single Responsibility Principle]]
+- [[02 - Open-Close Principle]]
+- [[03 - Liskov Substitution Principle]]
+- [[04 - Interface Segregation Principle]]

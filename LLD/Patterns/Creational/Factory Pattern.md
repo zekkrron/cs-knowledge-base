@@ -25,7 +25,7 @@ Define a place/method for creating an object, but delegate the decision of *whic
 > [!tip] The cue
 > - Business logic is littered with `new` inside big if/else or switch statements.
 > - The exact class to instantiate depends on dynamic context, user input, or config.
-> - You expect to add new object types later and want [[01 - SOLID Principles/02 - Open-Close Principle]] — adding a type shouldn't force edits to business logic.
+> - You expect to add new object types later and want [[02 - Open-Close Principle]] — adding a type shouldn't force edits to business logic.
 
 ### How to Implement
 
@@ -221,7 +221,7 @@ class WindowsDialog extends Dialog {
 }
 ```
 
-They plugged a brand-new button type into your framework by subclassing — your `Dialog` code never changed. That "extend without modifying" property is exactly [[01 - SOLID Principles/02 - Open-Close Principle]], and it's the whole reason frameworks use inheritance-based Factory Method instead of a switch.
+They plugged a brand-new button type into your framework by subclassing — your `Dialog` code never changed. That "extend without modifying" property is exactly [[02 - Open-Close Principle]], and it's the whole reason frameworks use inheritance-based Factory Method instead of a switch.
 
 **Decision cue for you:** if *you* control every place a new type gets added → Simple Factory (switch). If *strangers* need to add new types without editing your code → GoF Factory Method (inheritance).
 
@@ -232,8 +232,8 @@ They plugged a brand-new button type into your framework by subclassing — your
 
 ## Principles Served
 
-- [[01 - SOLID Principles/02 - Open-Close Principle]] — new product types via the factory, ideally without touching client code.
-- [[01 - SOLID Principles/05 - Dependency Inversion Principle]] — clients depend on the product interface, not concrete classes.
+- [[02 - Open-Close Principle]] — new product types via the factory, ideally without touching client code.
+- [[05 - Dependency Inversion Principle]] — clients depend on the product interface, not concrete classes.
 
 ## Sources
 

@@ -167,4 +167,4 @@ Now `NotificationSender` is **closed for modification** — it never changes. To
 
 ## Related Notes
 
-- [[01 - SOLID Principles/01 - Single Responsibility Principle]]
+- [[01 - Single Responsibility Principle]]

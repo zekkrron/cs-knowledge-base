@@ -547,4 +547,4 @@ If the round is **GenAI-heavy** (any company): they live on rows 2–8 and 12. I
 - [[After Interviews - Resume Fixes]]
 - [[02-tool-registry]]
 - [[06-mcp-gateway]]
-- [[HLD/CrashCourse/13 - Question Bank]]
+- [[13 - Question Bank]]

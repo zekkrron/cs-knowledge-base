@@ -31,4 +31,4 @@ Skip brain-teasers ("what animal are you"). They waste prep and almost never sho
 ## Related Notes
 
 - [[Resume/README]] — `resume.tex` + Delhivery `docs/`; STAR facts go there first
-- [[HLD/CrashCourse/README]] — if they turn behavioural into "how would you scale that"
+- [[HLD/Topics/README]] — if they turn behavioural into "how would you scale that"

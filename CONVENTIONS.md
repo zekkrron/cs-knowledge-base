@@ -268,6 +268,19 @@ Tags: `lld/patterns/behavioural`, `lld/principles`, `source/lld-course`, `status
 
 **Diagrams:** Mermaid first. `classDiagram` for LLD, `stateDiagram-v2` for state machines, `flowchart TD` default. Node labels 2–4 words. Excalidraw only when structure genuinely cannot be text.
 
+**Prose — complete notes, not revision sheets:**
+- Every sentence is a **bullet**. Nested bullets are the hierarchy. Long bullets are fine.
+- **Never** a heading followed by a paragraph. Never shrink a note to 20% and call it “structured.”
+- Tables, callouts, and diagrams sit *on top of* that outline — they do not replace it.
+- These are notes you can learn from the first time, not a cheat-sheet for someone who already knows the topic.
+
+**Nested bullet markers (so the eye can see depth):**
+- Level 1 (odd): `-` — the normal dot
+- Level 2 (even): `*`
+- Level 3 (odd): `-` again
+- Level 4 (even): `*` again
+- Do not nest `-` under `-`. The child must change marker.
+
 **Inline:** `==highlight==` sparingly · **bold** for terms · `code` for identifiers and complexity · link concepts inline with `[[Name]]` · end with `## Related Notes`.
 
 ---

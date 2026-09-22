@@ -52,4 +52,4 @@ created: 2026-09-18
 
 - [[HR]]
 - Resume project files (when they exist)
-- [[HLD/CrashCourse/README]]
+- [[HLD/Topics/README]]

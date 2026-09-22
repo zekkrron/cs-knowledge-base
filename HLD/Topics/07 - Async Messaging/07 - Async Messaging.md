@@ -86,8 +86,11 @@ One event, many channels: `OrderPlaced` → search index, email, analytics, push
 
 Prefer the log + groups.
 
+Depth: [[Kafka/README]].
+
 ## Related Notes
 
 - [[08 - Reliability]]
 - [[11 - Services and Observability]]
 - [[12 - Mini Designs]] — notifications, news feed
+- [[HLD/Topics/07 - Async Messaging/README]]

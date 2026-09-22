@@ -14,7 +14,7 @@ created: 2026-08-04
 
 ### Main Purpose
 
-Add behaviors to an object dynamically at runtime by wrapping it. A flexible alternative to subclassing that adheres to [[01 - SOLID Principles/02 - Open-Close Principle]] — extend behavior without modifying the original class.
+Add behaviors to an object dynamically at runtime by wrapping it. A flexible alternative to subclassing that adheres to [[02 - Open-Close Principle]] — extend behavior without modifying the original class.
 
 ### Recognition Signal
 
@@ -191,8 +191,8 @@ Structurally identical, different intent. The RG distinction: **a Proxy usually 
 
 ## Principles Served
 
-- [[01 - SOLID Principles/02 - Open-Close Principle]] — add behavior by adding a decorator class, never modifying the component.
-- [[01 - SOLID Principles/01 - Single Responsibility Principle]] — each decorator owns exactly one added concern (encryption, compression, logging).
+- [[02 - Open-Close Principle]] — add behavior by adding a decorator class, never modifying the component.
+- [[01 - Single Responsibility Principle]] — each decorator owns exactly one added concern (encryption, compression, logging).
 
 ## Sources
 

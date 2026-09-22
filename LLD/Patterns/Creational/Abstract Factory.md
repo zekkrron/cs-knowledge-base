@@ -149,7 +149,7 @@ The biggest payoff: **swap an entire product family by changing one line.** To m
 > 1. **Write a new concrete factory** (`AzureFactory implements CloudProviderFactory`) plus its product classes.
 > 2. **Add one branch to the startup selection** (the config/env → factory mapping from *Who Creates the Concrete Factory?*) so `CLOUD_PROVIDER=azure` picks it.
 >
-> The client (`InfrastructureProvisioner`) and every existing factory stay **untouched**. This is [[01 - SOLID Principles/02 - Open-Close Principle]] applied at the *family* level: open to new families (add a class), closed to modification (existing code unchanged). Contrast the scaling trap below — this only holds for adding *families*, not new *product kinds*.
+> The client (`InfrastructureProvisioner`) and every existing factory stay **untouched**. This is [[02 - Open-Close Principle]] applied at the *family* level: open to new families (add a class), closed to modification (existing code unchanged). Contrast the scaling trap below — this only holds for adding *families*, not new *product kinds*.
 
 ### Anti-Patterns & When NOT to Use
 
@@ -261,12 +261,12 @@ The client just calls `factory.createCircle()` and gets a correctly-wired Bridge
 
 ### Advanced Nuances — the ISP conflict
 
-Abstract Factory bundles multiple creation methods into one interface, which can clash with [[01 - SOLID Principles/04 - Interface Segregation Principle]]: a client that only needs `createCompute()` is still forced to depend on the whole `CloudProviderFactory`. If the factory grows monolithic, the fix (common in microservices) is to **break it into smaller, domain-specific factories** so clients depend only on what they use.
+Abstract Factory bundles multiple creation methods into one interface, which can clash with [[04 - Interface Segregation Principle]]: a client that only needs `createCompute()` is still forced to depend on the whole `CloudProviderFactory`. If the factory grows monolithic, the fix (common in microservices) is to **break it into smaller, domain-specific factories** so clients depend only on what they use.
 
 ## Principles Served
 
-- [[01 - SOLID Principles/02 - Open-Close Principle]] — add a new *family* by adding a concrete factory, no client edits. (But NOT open to new product *kinds* — see the scaling trap.)
-- [[01 - SOLID Principles/05 - Dependency Inversion Principle]] — the client depends on the abstract factory + product interfaces, never concrete classes.
+- [[02 - Open-Close Principle]] — add a new *family* by adding a concrete factory, no client edits. (But NOT open to new product *kinds* — see the scaling trap.)
+- [[05 - Dependency Inversion Principle]] — the client depends on the abstract factory + product interfaces, never concrete classes.
 
 ## Sources
 

@@ -44,5 +44,5 @@ Unlike the fat interface case, the subclass contains all base class functions, b
 
 ## Related Notes
 
-- [[01 - SOLID Principles/01 - Single Responsibility Principle]]
-- [[01 - SOLID Principles/02 - Open-Close Principle]]
+- [[01 - Single Responsibility Principle]]
+- [[02 - Open-Close Principle]]

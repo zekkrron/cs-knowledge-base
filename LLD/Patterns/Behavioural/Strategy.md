@@ -14,7 +14,7 @@ created: 2026-08-04
 
 ### Main Purpose
 
-Define a family of algorithms, encapsulate each into its own class, and make them interchangeable so the algorithm can vary independently of the Context (the client code) that uses it. Promotes [[01 - SOLID Principles/02 - Open-Close Principle]] and [[01 - SOLID Principles/05 - Dependency Inversion Principle]].
+Define a family of algorithms, encapsulate each into its own class, and make them interchangeable so the algorithm can vary independently of the Context (the client code) that uses it. Promotes [[02 - Open-Close Principle]] and [[05 - Dependency Inversion Principle]].
 
 ### Recognition Signal
 
@@ -105,11 +105,11 @@ class CheckoutService {
 
 ### Beyond the Basics
 
-Since the strategy object is **upcasted**, we call the general (interface) function and runtime polymorphism runs the correct strategy — so we can **switch strategy whenever we want**. This is compile-time-safe dynamic dispatch, not runtime type-switching: the caller never writes `if (type == X)` or a `switch` on the strategy type. Strategy is precisely how you **eliminate that if-else/switch ladder** — the language itself does the dispatch (the same "magic switch" idea from [[01 - SOLID Principles/02 - Open-Close Principle]]), so adding a new strategy never means editing a branching block. The Context stays completely blind to which algorithm runs.
+Since the strategy object is **upcasted**, we call the general (interface) function and runtime polymorphism runs the correct strategy — so we can **switch strategy whenever we want**. This is compile-time-safe dynamic dispatch, not runtime type-switching: the caller never writes `if (type == X)` or a `switch` on the strategy type. Strategy is precisely how you **eliminate that if-else/switch ladder** — the language itself does the dispatch (the same "magic switch" idea from [[02 - Open-Close Principle]]), so adding a new strategy never means editing a branching block. The Context stays completely blind to which algorithm runs.
 
 ### Anti-Patterns & When NOT to Use
 
-- **Fat interface.** A `Strategy` interface with many methods where a concrete strategy leaves most blank or throws `UnsupportedOperationException`. A strategy should be a single cohesive algorithm. Same problem attacked by [[01 - SOLID Principles/04 - Interface Segregation Principle]] — keep strategy interfaces narrow.
+- **Fat interface.** A `Strategy` interface with many methods where a concrete strategy leaves most blank or throws `UnsupportedOperationException`. A strategy should be a single cohesive algorithm. Same problem attacked by [[04 - Interface Segregation Principle]] — keep strategy interfaces narrow.
 - **Static strategy (overkill).** If an algorithm never actually changes at runtime — you hardcode `new RegularPricing()` and never swap it — the pattern adds an interface, a class, and indirection for zero flexibility gained. Just use a plain method.
 
 ## Part 2 — Architecture Deep Dive
@@ -153,7 +153,7 @@ Strategy and State look almost identical in UML — both use composition to dele
 
 ### Chess Cross-Combination
 
-Strategy solves the cross-combination problem in chess (see [[01 - SOLID Principles/04 - Interface Segregation Principle]]).
+Strategy solves the cross-combination problem in chess (see [[04 - Interface Segregation Principle]]).
 
 Each core movement type becomes an interface — L, straight, diagonal, etc. become the movement types. These get coded once and reused. Since the actual movement of a piece is a **combination** of these, we mix strategies and use them, instead of rewriting the movement code every time someone needs, say, a knight-style move. This solves the cross-combination problem completely.
 
@@ -164,10 +164,10 @@ Each core movement type becomes an interface — L, straight, diagonal, etc. bec
 
 ## Principles Served
 
-- [[01 - SOLID Principles/02 - Open-Close Principle]] — add a new strategy by adding a class, not editing existing code.
-- [[01 - SOLID Principles/05 - Dependency Inversion Principle]] — the caller depends on the strategy interface, not concrete algorithms.
+- [[02 - Open-Close Principle]] — add a new strategy by adding a class, not editing existing code.
+- [[05 - Dependency Inversion Principle]] — the caller depends on the strategy interface, not concrete algorithms.
 
 ## Sources
 
-- [[01 - SOLID Principles/05 - Dependency Inversion Principle]] (motivating example — refund algorithm duplication)
-- [[01 - SOLID Principles/04 - Interface Segregation Principle]] (chess cross-combination problem)
+- [[05 - Dependency Inversion Principle]] (motivating example — refund algorithm duplication)
+- [[04 - Interface Segregation Principle]] (chess cross-combination problem)

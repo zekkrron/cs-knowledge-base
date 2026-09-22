@@ -478,7 +478,7 @@ Knowing the Fluent Interface has functionally replaced the GoF Director shows ar
 
 ## Principles Served
 
-- [[01 - SOLID Principles/01 - Single Responsibility Principle]] — construction logic lives in the builder, separate from the product's own responsibilities.
+- [[01 - Single Responsibility Principle]] — construction logic lives in the builder, separate from the product's own responsibilities.
 
 ## Sources
 

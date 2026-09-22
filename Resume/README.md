@@ -89,6 +89,6 @@ created: 2026-09-19
 ## Related Notes
 
 - [[HR]]
-- [[HLD/CrashCourse/README]]
+- [[HLD/Topics/README]]
 - [[ClearTax/README]]
 - [[Delhivery/README]]

@@ -139,6 +139,8 @@ Ranking: start chronological. Rank is a later worker.
 
 **Hard part:** **bytes never go through the app.** Presigned S3, metadata in Postgres, CDN on download. Multipart for large. Hash for dedup. Optional: chunk + sync (delta) — say "phase 2."
 
+Full walk: [[04 - Multipart Upload]].
+
 Conflict (two devices edit): last-write-wins or store versions. Don't design CRDTs unless they ask.
 
 ---
@@ -180,6 +182,8 @@ Freshen with a pipeline (Kafka counts → periodic rebuild). Typo tolerance is e
 
 This is the same skeleton as limited-stock checkout.
 
+Full walk: [[06 - Seat Booking]].
+
 ---
 
 ## 12. Payments backend (the slice, not Stripe)
@@ -200,6 +204,8 @@ created → payment_pending → paid
 - Refunds are a second state machine, not `DELETE`.
 
 Strong consistency on the money tables. Everything else can lag.
+
+Full walk: [[07 - Wallet and Ledger]].
 
 ---
 

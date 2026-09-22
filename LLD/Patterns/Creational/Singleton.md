@@ -204,11 +204,11 @@ public class AppController {
 ## Field Notes
 
 > [!note] Singleton can quietly violate DIP
-> Global `getInstance()` access means classes depend on a concrete Singleton they never declared — the opposite of [[01 - SOLID Principles/05 - Dependency Inversion Principle]] (depend on injected abstractions). This is *why* the DI Singleton is preferred: it keeps the single-instance benefit while restoring explicit, mockable dependencies.
+> Global `getInstance()` access means classes depend on a concrete Singleton they never declared — the opposite of [[05 - Dependency Inversion Principle]] (depend on injected abstractions). This is *why* the DI Singleton is preferred: it keeps the single-instance benefit while restoring explicit, mockable dependencies.
 
 ## Principles Served
 
-- Mostly a **cautionary** pattern re: SOLID — the manual/global form tends to *violate* DIP and hurt testability. The DI-managed form keeps the single-instance benefit while respecting [[01 - SOLID Principles/05 - Dependency Inversion Principle]].
+- Mostly a **cautionary** pattern re: SOLID — the manual/global form tends to *violate* DIP and hurt testability. The DI-managed form keeps the single-instance benefit while respecting [[05 - Dependency Inversion Principle]].
 
 ## Sources
 

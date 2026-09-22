@@ -241,7 +241,7 @@ Why the deep copy matters here: if `baseHeaders` were shallow-copied, two concur
 
 ## Principles Served
 
-- [[01 - SOLID Principles/05 - Dependency Inversion Principle]] — clients copy through the `Copyable` abstraction, not concrete constructors.
+- [[05 - Dependency Inversion Principle]] — clients copy through the `Copyable` abstraction, not concrete constructors.
 
 ## Sources
 
