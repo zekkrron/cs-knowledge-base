@@ -12,7 +12,7 @@ created: 2026-09-19
 | [[01 - MCP Servers]] | `mcp-servers`, `dev-productivity` | [[07-mcp-servers]], [[10-client-integration-mcp]] |
 | [[02 - Catalog and Gateway]] | `catalog-gateway` | [[02-tool-registry]], [[06-mcp-gateway]] |
 | [[03 - Agents and Orion]] | `multi-agent`, `orion` | [[03-agents]], [[11-v2-agent-orchestration]], [[12-observability-langfuse]] |
-| [[04 - Workflows]] | `workflows` (canvas / run) | [[04-workflows]] |
+| [[04 - Workflows]] | `workflows` (canvas / run) | [[04-workflows]], [[13-code-node-lambda-sandbox]], [[14-node-timeout-retry-errors]] |
 | [[05 - Pause Resume]] | `workflows` (durable wait) | [[05-pause-resume]] |
 | [[05 - Ask AI Search]] | `ask-ai` | [[09-ask-ai-search]] |
 | [[06 - Supporting Modules]] | follow-ups | [[08-supporting-modules]] |

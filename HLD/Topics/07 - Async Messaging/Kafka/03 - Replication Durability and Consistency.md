@@ -19,7 +19,7 @@ created: 2026-09-22
 
 - All copies of a partition
 - Size = `replication.factor`
-  - usually ==3==
+    + usually ==3==
 - One **leader**, rest **followers**
 
 ### ISR
@@ -28,8 +28,8 @@ created: 2026-09-22
 - “Caught up” = within `replica.lag.time.max.ms`
 - A slow follower **drops out** of the ISR
 - New leader on crash: controller should pick from the **ISR**
-  - not a replica that is 10 minutes behind
-  - promoting a lagging replica would **lose** those 10 minutes of writes the old leader had
+    + not a replica that is 10 minutes behind
+    + promoting a lagging replica would **lose** those 10 minutes of writes the old leader had
 
 | Term | Meaning |
 |---|---|
@@ -44,7 +44,7 @@ created: 2026-09-22
 
 - Floor on ISR size for a produce with `acks=all` to succeed
 - Leader waits until **at least this many** ISR members have the record
-  - including itself, typically
+    + including itself, typically
 
 ### What happens when ISR shrinks below the floor
 
@@ -60,15 +60,15 @@ created: 2026-09-22
 
 ### Combo they want
 
-| Setting | Value | Why |
-|---|---|---|
-| Replication factor | 3 | Two followers exist |
-| `min.insync.replicas` | 2 | Write must land on **at least two** disks |
-| Producer `acks` | `all` | Wait for the **current ISR**, which cannot be smaller than 2 |
+| Setting               | Value | Why                                                          |
+| --------------------- | ----- | ------------------------------------------------------------ |
+| Replication factor    | 3     | Two followers exist                                          |
+| `min.insync.replicas` | 2     | Write must land on **at least two** disks                    |
+| Producer `acks`       | `all` | Wait for the **current ISR**, which cannot be smaller than 2 |
 
 - Two brokers dead → producer gets `NotEnoughReplicas`
-  - you chose **consistency** over **availability**
-  - that is the point, not a failure
+    + you chose **consistency** over **availability**
+    + that is the point, not a failure
 
 ---
 
@@ -96,10 +96,10 @@ flowchart LR
 ### Why consumers wait for HW
 
 - Message only on the leader, HW not moved, leader dies
-  - that message is **gone**
-  - if a consumer had already seen it, they saw a ghost
+    + that message is **gone**
+    + if a consumer had already seen it, they saw a ghost
 - Under load, HW sits a few offsets **behind** LEO
-  - that gap is “replicated but not yet acknowledged by all ISR”
+    + that gap is “replicated but not yet acknowledged by all ISR”
 
 > [!tip] If they draw a log
 > - LEO = the tip

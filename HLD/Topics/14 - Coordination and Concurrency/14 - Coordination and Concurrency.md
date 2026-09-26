@@ -45,7 +45,7 @@ Already sketched in [[05 - Databases]]. The missing pieces that actually get fol
 
 **Hot row** — everyone updates the same counter. The lock *is* the bottleneck. Fix: shard the counter, or Redis INCR, or append events and sum.
 
-MVCC, WAL, vacuum, SSI proofs: **out**. "Postgres uses MVCC so readers don't block writers" is the one sentence if they poke.
+MVCC / WAL / isolation depth: [[05 - Databases/README]]. This page is the **app** recipe. "Postgres uses MVCC so readers don't block writers" is still the one sentence if they only poke.
 
 ## Optimistic vs pessimistic (one table)
 

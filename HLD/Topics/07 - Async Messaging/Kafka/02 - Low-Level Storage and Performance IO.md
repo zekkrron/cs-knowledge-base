@@ -19,8 +19,8 @@ created: 2026-09-22
 
 - A partition on disk = a **log** of **segment files**
 - You only write at the **end**
-  - no `UPDATE` in the middle
-  - no rewrite of page 12
+    + no `UPDATE` in the middle
+    + no rewrite of page 12
 - Produce is cheap because it is **sequential I/O**
 - Replay is cheap because an offset is just a **bookmark**
 
@@ -29,8 +29,8 @@ created: 2026-09-22
 - Active segment = the one currently being appended to
 - Old segments get **closed** when size or time hits a limit
 - Retention / compaction run on **closed** segments
-  - not on the live tail
-  - so the writer is never fighting the cleaner on the same file
+    + not on the live tail
+    + so the writer is never fighting the cleaner on the same file
 
 > [!tip] Notebook
 > - Producers add pages
@@ -63,7 +63,7 @@ created: 2026-09-22
 ### Sparse, not a B-tree of every record
 
 - **Sparse** = a checkpoint every few KB / every N messages
-  - not one entry per record
+    + not one entry per record
 - Kafka jumps to the **nearest checkpoint**, then scans a little
 - Indexes stay **tiny**; logs stay **huge**
 - This is why “find offset X” is not a full-file scan
@@ -88,10 +88,10 @@ flowchart LR
 - Writes / reads **files**
 - Lets **Linux page cache** hold recent bytes in RAM
 - Heap stays **small**
-  - GC does not eat the throughput
+    + GC does not eat the throughput
 - If you restart the broker, page cache can still be **warm**
-  - the OS didn’t need that RAM yet
-  - first fetches after restart can still be cache hits
+    + the OS didn’t need that RAM yet
+    + first fetches after restart can still be cache hits
 
 > [!warning] RAM is for the page cache
 > - A tiny box that **pages out** kills this
@@ -107,8 +107,8 @@ flowchart LR
 - Kernel reads file → **user-space buffer**
 - User-space copies → **kernel socket buffer**
 - Two copies
-  - CPU
-  - GC pressure (those user buffers live on the heap)
+    + CPU
+    + GC pressure (those user buffers live on the heap)
 
 ### Kafka fetch (`sendfile`)
 
@@ -145,17 +145,17 @@ flowchart LR
 - Older updates for that key go away
 - The log becomes a **changelog** — current state, not full history
 - Used for
-  - compacted “table” topics
-  - `__consumer_offsets` (you care about the **last** commit per group-partition, not every commit ever)
+    + compacted “table” topics
+    + `__consumer_offsets` (you care about the **last** commit per group-partition, not every commit ever)
 
 ### What compaction is **not**
 
 - “Exactly one record forever, instantly”
-  - it is **background**, on **old** segments
-  - the tail can still have two updates for the same key until compact runs
+    + it is **background**, on **old** segments
+    + the tail can still have two updates for the same key until compact runs
 - A substitute for audit
-  - if you need **every event**, use retention
-  - compaction will throw the history away on purpose
+    + if you need **every event**, use retention
+    + compaction will throw the history away on purpose
 
 ### Tombstones
 

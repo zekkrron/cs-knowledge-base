@@ -55,12 +55,12 @@ created: 2026-09-22
 
 - Rabbit often wins a **single small job**
 - Kafka wins **throughput**
-  - batch
-  - sequential disk
-  - zero-copy
-  - [[02 - Low-Level Storage and Performance IO]]
+    + batch
+    + sequential disk
+    + zero-copy
+    + [[02 - Low-Level Storage and Performance IO]]
 - Huge payloads: **S3 + id** in either case
-  - neither broker wants a 50 MB message
+    + neither broker wants a 50 MB message
 
 > [!warning] Don’t say “Kafka is always better”
 > - A payment job with retry / NACK is a **queue**
@@ -74,16 +74,16 @@ created: 2026-09-22
 
 - **No brokers on your on-call** (almost)
 - Standard
-  - at-least-once
-  - **no** order
+    + at-least-once
+    + **no** order
 - FIFO
-  - order + dedupe
-  - **throughput cap** — say this, don’t hide it
+    + order + dedupe
+    + **throughput cap** — say this, don’t hide it
 
 ### What SQS cannot do
 
 - Replay of “last 2 days for a new analytics group”
-  - unless you kept a copy yourself
+    + unless you kept a copy yourself
 - Several **consumer groups** on one log
 - CDC / Streams / compacted changelog
 

@@ -258,7 +258,7 @@ visual DAGs into deterministic multi-step pipelines" means concretely.
 ## 6. Node types (Gateway runtime) — `mcp-gateway/workflow/nodes/`
 
 Each node subclasses `BaseNode` (`nodes/base.py`, `NodeTypeEnum`) and implements
-`run(state, node_config)`. `BaseNode.run()` centralizes timeout/retry/error-strategy.
+`run(state, node_config)`. `BaseNode.run()` centralizes timeout/retry/error-strategy. Exact fields, UI bugs, unused `execution_config`: `14-node-timeout-retry-errors.md`.
 
 | Node | File | Behavior |
 |---|---|---|
@@ -266,7 +266,7 @@ Each node subclasses `BaseNode` (`nodes/base.py`, `NodeTypeEnum`) and implements
 | Tool | `nodes/http_action/` + `tool_node.py` | Resolves the tool by `tool_resource_id`, maps `input_mapping` value_selectors from state, executes the backend HTTP call, writes the response into its channel. Reads auth from `system.client_headers` then `system.auth_token`. |
 | LLM | `llm_node.py` | Renders `prompt_template` (Jinja over state), calls the model via the model factory, supports `structured_output`. |
 | If-Else | `if_else_node.py` (+ `condition_eval.py`) | Evaluates `cases` conditions and writes `__branch` into its channel; the conditional router reads it. |
-| Code | `code_node.py` | Runs user code (via `code_resolver`) with declared `variables`, produces `outputs`. |
+| Code | `code_node.py` | `code_resolver` → `data-transformer-executor` Lambda (not in-process). See `13-code-node-lambda-sandbox.md`. |
 | Agent | `agent_node.py` | Invokes a child agent by `agent_slug` (+ optional `agent_version`) with a `content_mapping` (Jinja). This is the workflow-side child-agent hook. |
 | Guardrail | (parsed as `GuardrailNode`) | Runs a guardrail check on an input variable. |
 | Output | `output_node.py` | Assembles the workflow's declared output variables into `final_output`. |

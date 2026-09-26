@@ -4,17 +4,37 @@ created: 2026-09-19
 ---
 # ClearTax Ownership and How to Talk
 
-> [!abstract] Intern on Global E-Invoicing. The service (Data-Harvester) has **two planes**. Your **harvester** and **recon** pointers are the **BFF / data-retrieval** plane only. Async report generation (SQS → file → S3) is **not** those pointers. Four resume lines. The 57% / 38% / 30→90% numbers are **not** in the repo. Singapore files are **not** in the snapshot you have. Fill the ownership table.
+> [!abstract]
+> - Intern on Global E-Invoicing
+> - Data-Harvester has **two planes**
+> - Harvester + recon pointers = **BFF / data-retrieval** only
+> - Async report generation (SQS → file → S3) is **not** those pointers
+> - Four resume lines
+> - 57% / 38% / 30→90% are **not** in the repo
+> - Singapore files are **not** in this snapshot
+> - Fill the ownership table
 
-Source writeups: `Resume/ClearTax/docs/` — start at [[00-architecture-overview]]. The deep files still describe **both** planes. Defence notes decide what you **say**.
+- Source writeups: `Resume/ClearTax/docs/` — start at [[00-architecture-overview]]
+- Deep files still describe **both** planes
+- Defence notes decide what you **say**
+
+---
 
 ## What the service is (30 seconds)
 
-ClearTax Malaysia (and later other countries) needed one backend that could **show** invoices in a dashboard. The same repo also **exports** huge dumps — that export is a sibling, not your harvester/recon claim.
-
-- **BFF (your pointers)** — `POST /{mode}/public/documents/v1/{templateType}/viewSummary|viewList|viewDetailed`. `TemplateFactory` picks an `IDataReadSource`. This is `resume:cleartax-harvester` and the recon **UI**.
-- **Reports (not those pointers)** — accept a job, SQS, worker, `HarvesterCoreImpl`, strategy → Avro → CSV/Parquet/Excel → S3. You may **recognize** it on-call. You do **not** walk it as "I built Data-Harvester."
-- **Stack:** Java 17, Spring Boot 2.7, WebFlux / Reactor, Mongo (reactive). SQS/S3/Avro/Temporal sit on the export plane.
+- ClearTax Malaysia (and later other countries) needed one backend that could **show** invoices in a dashboard
+- Same repo also **exports** huge dumps — that export is a sibling, not your harvester / recon claim
+- **BFF (your pointers)**
+    + `POST /{mode}/public/documents/v1/{templateType}/viewSummary|viewList|viewDetailed`
+    + `TemplateFactory` picks an `IDataReadSource`
+    + This is `resume:cleartax-harvester` and the recon **UI**
+- **Reports (not those pointers)**
+    + Accept a job, SQS, worker, `HarvesterCoreImpl`, strategy → Avro → CSV / Parquet / Excel → S3
+    + You may **recognize** it on-call
+    + You do **not** walk it as "I built Data-Harvester"
+- **Stack**
+    + Java 17, Spring Boot 2.7, WebFlux / Reactor, Mongo (reactive)
+    + SQS / S3 / Avro / Temporal sit on the export plane
 
 ```mermaid
 flowchart LR
@@ -31,9 +51,12 @@ flowchart LR
 
 > [!warning] If they ask "walk the report job" on the harvester bullet: **"I didn't own report generation. I can show you the BFF factory."** Same park on recon CSV.
 
+---
+
 ## Ownership — fill before the interview
 
-Docs describe `clear-data-harvester`. They do not say which PRs were yours.
+- Docs describe `clear-data-harvester`
+- They do not say which PRs were yours
 
 | Area | I designed | I implemented | I on-called / operated | I only used |
 |---|---|---|---|---|
@@ -45,9 +68,13 @@ Docs describe `clear-data-harvester`. They do not say which PRs were yours.
 | On-call Malaysia + Global | | | | |
 | JaCoCo + MY tests 30→90 | | | | |
 
-Intern + "led on-call" will get a look. If the table is empty, weaken the verb.
+- Intern + "led on-call" will get a look
+- If the table is empty, weaken the verb
+- On-call **may** include "job stuck / no report generators found"
+    + Operations on a plane you didn't claim as a feature
+    + Don't let a night ticket become "I owned export"
 
-On-call **may** include "job stuck / no report generators found." That is operations on a plane you didn't claim as a feature. Don't let a night ticket become "I owned export."
+---
 
 ## Number hygiene
 
@@ -60,6 +87,8 @@ On-call **may** include "job stuck / no report generators found." That is operat
 | Coverage 30% → 90% | JaCoCo aggregate is real. **Tests in the snapshot are mostly commented / `@Disabled`** | Which modules, which JaCoCo HTML, excludes (models/DTOs). If 90% is not on a report you can open, do not defend 90. |
 
 > [!danger] Same rule as Delhivery: if the right column is empty, walk the design. Do not derive 57 / 38 / 90 on a whiteboard.
+
+---
 
 ## Related Notes
 

@@ -16,7 +16,7 @@ Read **aloud**. Silent reading does not survive a whiteboard.
 | Day | Read | Then do |
 |---|---|---|
 | 1 | [[01 - How the Round Works]] · [[02 - Fundamentals]] · [[03 - Networking and APIs]] | Draw a request: browser → DNS → TLS → LB → service → DB. Speak it. |
-| 2 | [[04 - Load Balancing CDN and Gateway]] · [[05 - Databases]] | Pick SQL vs NoSQL for: users, sessions, chat messages, analytics events. |
+| 2 | [[04 - Load Balancing CDN and Gateway]] · [[05 - Databases]] | Pick SQL vs NoSQL for: users, sessions, chat messages, analytics events. Depth: [[05 - Databases/README]]. |
 | 3 | [[06 - Caching]] · [[07 - Async Messaging]] | Add cache + queue. Name invalidation and idempotency. Kafka depth: [[Kafka/README]]. |
 | 4 | [[08 - Reliability]] · [[14 - Coordination and Concurrency]] · [[09 - Storage Search and Geo]] · [[10 - Distributed Building Blocks]] | 429, `SET NX EX`, `SKIP LOCKED`, fencing, snowflake. |
 | 5 | [[11 - Services and Observability]] + first half of [[12 - Mini Designs]] | URL shortener + rate limiter, 20 min each. |
@@ -31,7 +31,7 @@ Read **aloud**. Silent reading does not survive a whiteboard.
 | [[02 - Fundamentals]] | Latency, CAP, estimates |
 | [[03 - Networking and APIs]] | DNS, HTTP, REST/gRPC, auth |
 | [[04 - Load Balancing CDN and Gateway]] | L4/L7, CDN, gateway |
-| [[05 - Databases]] | SQL/NoSQL, indexes, shard |
+| [[05 - Databases]] | SQL/NoSQL HLD slice. Depth: [[05 - Databases/README]] |
 | [[06 - Caching]] | Redis patterns |
 | [[07 - Async Messaging]] | Queue vs stream; **[[Kafka/README]]** |
 | [[08 - Reliability]] | Timeouts, rate limit |

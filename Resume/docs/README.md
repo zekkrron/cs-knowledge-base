@@ -21,3 +21,5 @@ Workflow Automation Platform, Pause/Resume architecture, and the Ask AI hybrid t
 - `10-client-integration-mcp.md` — INTEGRATION_MCP: Client IDE knowledge base (3 weeks → 5 days), branch `mcp-client-graviton`
 - `11-v2-agent-orchestration.md` — v2 LangGraph nodes, rule vs prompt routing, child depth, LLM loop, cost
 - `12-observability-langfuse.md` — Langfuse traces, thinking tokens, budget via metrics API
+- `13-code-node-lambda-sandbox.md` — Code node → `data-transformer-executor` Lambda; four sandbox layers
+- `14-node-timeout-retry-errors.md` — `BaseNode.run` timeout / retry / error strategy; known gaps

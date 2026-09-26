@@ -10,6 +10,7 @@ created: 2026-09-22
 > - Order is **per partition only** — global order = one partition = no scale
 > - Default you design for: **at-least-once + dedupe on `event_id`**
 > - Batching is how you stop murdering the NIC
+> - More partitions do **not** always mean more throughput — [[08 - Interview Questions]]
 
 ---
 
@@ -30,8 +31,8 @@ created: 2026-09-22
 - Order is **per partition only**
 - Global order = one partition = **no horizontal scale**
 - Correct move: partition by a **business key**
-  - that entity is ordered
-  - the topic is still parallel across dozens of partitions
+    + that entity is ordered
+    + the topic is still parallel across dozens of partitions
 
 > [!warning] Adding partitions later
 > - `hash % n` **changes** when `n` changes
@@ -41,11 +42,91 @@ created: 2026-09-22
 
 ### How many partitions?
 
-- `peak rate / rate-per-partition`
+- First cut: `peak rate / rate-per-partition`
 - **Useful consumers in a group ≤ partition count**
-  - instance 11 with 10 partitions sits idle
+    + instance 11 with 10 partitions sits idle
+- Pick a count that **divides** the consumer counts you will actually run
+    + 12 partitions works for 2 / 3 / 4 / 6 instances
+    + 10 partitions + 3 consumers → 4 / 3 / 3 — one box does more work
 - Don’t open with 1000
-  - more partitions = more files, more replication, more rebalance surface
+    + more partitions = more files, more replication, more rebalance surface
+    + and the producer gets slower before the cluster does — see below
+
+---
+
+## More partitions ≠ always more throughput
+
+> [!tip] The one-liner they want
+> - Throughput is `min(producer, broker, consumer)`
+> - Parallelism in a group is `min(partitions, consumers)`
+> - Adding partitions only helps while those are the limiter **and** keys are even
+> - After that it plateaus, then it **hurts**
+
+### Why people think “always”
+
+- A partition is one **ordered** log with one **leader**
+- More partitions → more leaders you can write in parallel → more consumers that can poll in parallel
+- That is true **until** something else is the bottleneck
+
+### What actually caps you
+
+| Cap | What happens when you add partitions anyway |
+|---|---|
+| Consumers in the group `< n` | Each instance owns **more** partitions — more files, more fetch loops, more memory. Parallelism did **not** go up. |
+| Consumers in the group `> n` | Extra instances sit **idle**. You needed partitions, not another pod. [[05 - Consumer Mechanics and Scalability]] |
+| One **hot key** | That key still lands on **one** partition. `n = 1000` does not split `user_id=celebrity`. |
+| Producer batching | Same QPS spread thinner → **smaller batches**, more requests, more RAM (`batch.size × n`) |
+| Broker / controller | More open segment files, more replication, heavier metadata, **longer rebalances** |
+
+### Producer-side cost of a huge `n`
+
+- The producer keeps a **buffer per partition**
+    + RAM ≈ `batch.size × partition count` (plus compression buffers)
+    + 1000 partitions × 16 KB is already tens of MB **before** you talk payload
+- Same produce rate, more partitions
+    + each partition fills slower
+    + `linger.ms` expires before `batch.size`
+    + worse compression (compression is **per batch**)
+    + more `ProduceRequest`s on the wire
+- More leaders to discover and talk to
+    + metadata refreshes get fatter
+    + `acks=all` is waiting on **more** ISR sets
+- This is why “just set it to 1000” makes **produce p99 worse** before it makes consume faster
+
+### Hot partitions (key skew)
+
+- `murmur2(key) % n` is even over **keys**, not over **traffic**
+- Celebrity / bursty key
+    + one partition is 80% of QPS
+    + one consumer in the group is drowning
+    + the other 99 partitions / consumers look “fine”
+- More partitions **do not fix this**
+    + that key still hashes to exactly one partition
+    + splitting the key (e.g. `user_id + shard`) **breaks per-key order**
+- Fixes you actually say
+    + pick a key with real cardinality (`order_id`, not `country=IN`)
+    + isolate the hot entity on its **own topic** if it is a known whale
+    + accept that one key is one lane — that is the order contract
+- Sticky / no-key partitioner
+    + spreads load
+    + **no** per-entity order
+    + still can hot-spot if one producer process is the firehose
+
+> [!warning] Adding partitions later still doesn’t fix a hot key
+> - `hash % n` **changes** for *everyone*
+> - The celebrity still maps to **one** (possibly new) partition
+> - Old history stays behind
+> - You paid the rebalance + hash-break tax and the whale is still a whale
+
+### What you pick in the interview
+
+- Start from **expected peak / per-partition rate** and **planned consumer count**
+- Prefer a number that divides cleanly (12, 24, 48 — not 10 if you’ll run 3 instances)
+- Leave **headroom**, don’t leave 900 empty partitions “for later”
+- If they push “we’ll add partitions at 10×”
+    + say the hash break
+    + say the producer buffer cost
+    + say a hot key still won’t split
 
 ---
 
@@ -64,8 +145,8 @@ created: 2026-09-22
 - Not “RF=3 acknowledged”
 - Not “three disks have it”
 - It is “whoever is **currently in the ISR** acknowledged”
-  - if ISR is `{leader}` and `min.insync.replicas=1`, you have one disk
-  - depth: [[03 - Replication Durability and Consistency]]
+    + if ISR is `{leader}` and `min.insync.replicas=1`, you have one disk
+    + depth: [[03 - Replication Durability and Consistency]]
 
 ---
 
@@ -120,21 +201,21 @@ created: 2026-09-22
 ### What transactions are
 
 - Atomic write to **several partitions / topics**
-  - all visible, or none
+    + all visible, or none
 - Broker-side:
-  - **transactional coordinator** on a broker
-  - internal topic `__transaction_state`
+    + **transactional coordinator** on a broker
+    + internal topic `__transaction_state`
 - This is **2PC among Kafka partitions**
-  - **not** 2PC with your Postgres
+    + **not** 2PC with your Postgres
 
 ### Where they actually live
 
 - Home: **Kafka Streams** read-process-write
-  - consume → process → produce
-  - commit offsets in the **same** transaction
+    + consume → process → produce
+    + commit offsets in the **same** transaction
 - Not home: API request that writes Postgres **and** Kafka
-  - that is **outbox**
-  - [[06 - Ecosystem Resilience and Design Patterns]]
+    + that is **outbox**
+    + [[06 - Ecosystem Resilience and Design Patterns]]
 
 ### Consumers that must skip aborted txns
 
@@ -159,8 +240,8 @@ created: 2026-09-22
 - `linger.ms=0` → snappy UX, more tiny requests
 - `5–20 ms` → normal for pipelines
 - Don’t linger **500 ms** on a user-facing “I clicked pay” event
-  - and that produce usually **shouldn’t** be on the HTTP path anyway
-  - HTTP path writes the DB; a poller / CDC publishes — [[06 - Ecosystem Resilience and Design Patterns]]
+    + and that produce usually **shouldn’t** be on the HTTP path anyway
+    + HTTP path writes the DB; a poller / CDC publishes — [[06 - Ecosystem Resilience and Design Patterns]]
 
 ---
 
@@ -168,5 +249,6 @@ created: 2026-09-22
 
 - [[Kafka/README]]
 - [[03 - Replication Durability and Consistency]]
+- [[05 - Consumer Mechanics and Scalability]] — `n` vs `c`, idle consumers
 - [[06 - Ecosystem Resilience and Design Patterns]]
 - [[08 - Interview Questions]]

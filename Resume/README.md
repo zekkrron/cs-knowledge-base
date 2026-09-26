@@ -74,6 +74,8 @@ created: 2026-09-19
 | [[10-client-integration-mcp]] | INTEGRATION_MCP / Client IDE KB |
 | [[11-v2-agent-orchestration]] | v2 graph nodes, routing, child depth, LLM loop |
 | [[12-observability-langfuse]] | Langfuse traces + cost metrics |
+| [[13-code-node-lambda-sandbox]] | Code node Lambda sandbox |
+| [[14-node-timeout-retry-errors]] | Node timeout, retry, error strategy |
 
 ## ClearTax docs index
 

@@ -22,15 +22,13 @@ The in-scope slice of locking/coordination is [[14 - Coordination and Concurrenc
 
 ## Database internals
 
-- MVCC internals, WAL, checkpoints, crash recovery
-- Vacuum / bloat
-- Serializable Snapshot Isolation proofs
-- Full write-skew / isolation-anomaly catalogue (one example is in #14)
-- Two-phase locking algorithms, deadlock-detection graphs
+Taught now under [[05 - Databases/README]]. Still **out** of the 7-day crash skim (use the one-liner, then go back to the board):
+
+- Vacuum / bloat beyond “dead tuples sit until vacuum”
+- Serializable Snapshot Isolation **proofs** (write skew is in [[04 - Isolation and Anomalies]])
 - Postgres advisory locks as a design
-- PgBouncer / connection-pooler architecture
 - Online DDL, expand-contract migrations, backfills
-- PITR, backup/restore, replica-lag runbooks
+- PITR / backup runbooks
 - XA / 3PC
 
 ## Distributed-data machinery

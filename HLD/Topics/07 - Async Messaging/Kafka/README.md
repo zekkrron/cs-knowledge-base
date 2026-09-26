@@ -15,8 +15,8 @@ created: 2026-09-22
 | [[01 - Core Architecture and Cluster Consensus]] | What is a broker? Who elects the leader? KRaft vs ZK? |
 | [[02 - Low-Level Storage and Performance IO]] | Why is it fast if it’s Java? Page cache? Compaction? |
 | [[03 - Replication Durability and Consistency]] | ISR, HW vs LEO, can `acks=all` still lose data? |
-| [[04 - Producer Mechanics and Delivery Guarantees]] | Keys, acks, exactly-once, batching |
-| [[05 - Consumer Mechanics and Scalability]] | Groups, rebalance, lag, heartbeats |
+| [[04 - Producer Mechanics and Delivery Guarantees]] | Keys, acks, exactly-once, batching, **more partitions ≠ more throughput** |
+| [[05 - Consumer Mechanics and Scalability]] | Groups, `n` vs `c`, idle consumers, hot partitions, rebalance |
 | [[06 - Ecosystem Resilience and Design Patterns]] | Streams, Connect, outbox, DLQ |
 | [[07 - Event-Driven Architecture and System Trade-offs]] | Kafka vs Rabbit vs SQS |
 | [[08 - Interview Questions]] | Say it out loud — full senior answers |

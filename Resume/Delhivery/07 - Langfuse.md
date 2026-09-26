@@ -61,7 +61,7 @@ No `GET /jobs`. [[02 - Catalog and Gateway]].
 
 ```mermaid
 flowchart TD
-  Req["/v2/chat or /run or /trigger worker"] --> Tid[mint trace_id]
+  Req["/v2/chat or /run or execute worker"] --> Tid[mint trace_id]
   Tid --> Cb[OptimizedLangfuseCallbackHandler]
   Cb --> G[ainvoke callbacks]
   G --> N[node / LLM / tool spans]
@@ -134,18 +134,18 @@ We don't have a job table. Every agent/workflow invoke opens a Langfuse trace; t
 
 ## HLD grill (follow-up)
 
-| # | They ask | In this note? | One-line |
-|---|---|---|---|
-| 1 | Why no GET /jobs? | Overview | Langfuse is the run SoR. |
-| 2 | Draw attach | Flow 1 | Mint id → callback → nested spans. |
-| 3 | Worker vs chat | 02 + here | Same handler. Worker has no socket; body lives on the trace. |
-| 4 | Resume stitch | Flow 2 | Reuse `trace_id`. |
-| 5 | Langfuse down | Ugly | Agent still runs. Budget may not. |
-| 6 | Cost SPOF | Flow 4 | Metrics API down → don't invent 429. |
-| 7 | Volume 72k traces/day | New | That's the product. Don't invent a sampling story you didn't ship. |
-| 8 | Why not Mongo traces? | Overview | You'd be writing Langfuse. |
-| 9 | PII store | Ugly | Project ACL. Redact before if you did. |
-| 10 | NR vs this | Ugly | Process vs model. |
+| #   | They ask              | In this note? | One-line                                                           |
+| --- | --------------------- | ------------- | ------------------------------------------------------------------ |
+| 1   | Why no GET /jobs?     | Overview      | Langfuse is the run SoR.                                           |
+| 2   | Draw attach           | Flow 1        | Mint id → callback → nested spans.                                 |
+| 3   | Worker vs chat        | 02 + here     | Same handler. Worker has no socket; body lives on the trace.       |
+| 4   | Resume stitch         | Flow 2        | Reuse `trace_id`.                                                  |
+| 5   | Langfuse down         | Ugly          | Agent still runs. Budget may not.                                  |
+| 6   | Cost SPOF             | Flow 4        | Metrics API down → don't invent 429.                               |
+| 7   | Volume 72k traces/day | New           | That's the product. Don't invent a sampling story you didn't ship. |
+| 8   | Why not Mongo traces? | Overview      | You'd be writing Langfuse.                                         |
+| 9   | PII store             | Ugly          | Project ACL. Redact before if you did.                             |
+| 10  | NR vs this            | Ugly          | Process vs model.                                                  |
 
 ## Agentic grill (follow-up)
 

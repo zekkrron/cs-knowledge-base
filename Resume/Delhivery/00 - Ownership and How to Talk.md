@@ -13,7 +13,7 @@ Source docs: [[01-system-overview]] and the rest of `Resume/docs/`.
 Delhivery's internal APIs (Express, FMS, WMS, HR, …) need to be callable by LLMs, IDEs, a chat UI, and a drag-and-drop workflow builder. We did **not** wrap each API by hand forever.
 
 - **Catalog** stores definitions (OpenAPI tools, agents, workflow DAGs, versions). FastAPI. Mongo + some Postgres. **Never executes a business API.**
-- **Gateway** resolves those definitions and **runs** them: FastMCP tools in memory, LangGraph agents, LangGraph workflows, HTTP out to backends. Starlette + FastMCP + LangGraph.
+- **Gateway** resolves those definitions and **runs** them: FastMCP tools in memory, LangGraph agents, LangGraph workflows, HTTP out to backends. FastAPI + FastMCP + LangGraph.
 - **Static `*_MCP` servers** are the older hand-written FastMCP microservices (the "100+ tools" seed).
 - **Event Scheduler** (Postgres + Kafka) wakes paused workflows.
 - **Ask AI** is a separate FastAPI + worker on the `ask-ai` branch that searches the registry.
@@ -33,7 +33,7 @@ flowchart LR
 
 > [!tip] The sentence that saves the round: **Catalog is the system of record. Gateway is the runtime. LangGraph `interrupt()` does not live in Catalog — grep it, it is only in the gateway.**
 
-> [!warning] Playground `v2/chat` and `/run` stay **sync**. Production is `POST /trigger` → Kafka `acks=all` → **202** (else **503**). **No GET** — runs are traces on Langfuse, not a table. S3+Catalog is pause only. Depth: [[02 - Catalog and Gateway]].
+> [!warning] Playground `v2/chat` and `/run` stay **sync**. Production is `POST /trigger` → Kafka `acks=all` → **202** (else **503**). Kafka intake writes a Postgres `gateway_runs` row (`pending`); workers claim it. **DELETE** the row when the graph succeeds or finally fails. **No GET** — history is Langfuse. S3+Catalog is pause only (`paused` row until resume ends). Depth: [[02 - Catalog and Gateway]].
 
 ## Calendar (locked — say this, do not improvise)
 

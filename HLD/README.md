@@ -13,7 +13,7 @@ High Level Design notes.
 | [[02 - Fundamentals]] | CAP, nines, estimates |
 | [[03 - Networking and APIs]] | HTTP, realtime, auth |
 | [[04 - Load Balancing CDN and Gateway]] | LB, CDN, gateway |
-| [[05 - Databases]] | SQL/NoSQL, indexes, shard |
+| [[05 - Databases]] | SQL/NoSQL HLD slice. Depth: [[05 - Databases/README]] |
 | [[06 - Caching]] | Redis patterns |
 | [[07 - Async Messaging]] | Kafka, idempotency |
 | [[08 - Reliability]] | Timeouts, rate limit |

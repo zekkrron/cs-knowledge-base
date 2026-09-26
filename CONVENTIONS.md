@@ -275,11 +275,10 @@ Tags: `lld/patterns/behavioural`, `lld/principles`, `source/lld-course`, `status
 - These are notes you can learn from the first time, not a cheat-sheet for someone who already knows the topic.
 
 **Nested bullet markers (so the eye can see depth):**
-- Level 1 (odd): `-` — the normal dot
-- Level 2 (even): `*`
-- Level 3 (odd): `-` again
-- Level 4 (even): `*` again
-- Do not nest `-` under `-`. The child must change marker.
+- Level 1: `-` at the left
+- Level 2: four spaces, then `+` (deeper indent — Obsidian still draws a disc, but the nest sits further right)
+- Level 3: eight spaces, then `-`
+- There is no other CommonMark bullet that renders further right. Extra spaces are the only lever.
 
 **Inline:** `==highlight==` sparingly · **bold** for terms · `code` for identifiers and complexity · link concepts inline with `[[Name]]` · end with `## Related Notes`.
 

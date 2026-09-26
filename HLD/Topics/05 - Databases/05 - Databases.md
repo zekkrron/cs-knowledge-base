@@ -4,7 +4,7 @@ created: 2026-09-18
 ---
 # Databases
 
-> [!abstract] Default to **Postgres**. Switch when the **access pattern** says so — not because "NoSQL scales." Know indexes, replication, and when sharding is actually justified. Consistency is per table, not per company.
+> [!abstract] Default to **Postgres**. Switch when the **access pattern** says so — not because "NoSQL scales." Know indexes, replication, and when sharding is actually justified. Consistency is per table, not per company. Depth (WAL, B+, MVCC, CBO, shards): [[README]].
 
 ## The pick (say this, then shut up)
 
@@ -59,7 +59,7 @@ Isolation, from "see garbage" to "expensive":
 
 **Phantom:** range sees a new row on second read. Serializable or careful locking.
 
-You do not need to recite MVCC internals. You need: "checkout uses a transaction + optimistic version on the stock row."
+HLD sentence: "checkout uses a transaction + optimistic version on the stock row." Internals (MVCC, anomalies, WAL): [[03 - Concurrency Control]] · [[04 - Isolation and Anomalies]] · [[01 - Storage Engine and Disk IO]].
 
 ## Replication
 
@@ -120,6 +120,7 @@ One sentence: "Write-heavy firehose → LSM. Point-read transactional → B-tree
 
 ## Related Notes
 
+- [[README]] — storage, indexes, isolation, optimizer, shard, interview Qs
 - [[02 - Fundamentals]]
 - [[06 - Caching]]
 - [[10 - Distributed Building Blocks]]

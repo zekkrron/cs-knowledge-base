@@ -97,7 +97,7 @@ flowchart LR
   Tx --> LLM[bound tools / agent loop]
 ```
 
-Register: code + `code_security` scan → version. Bind: `tool_response_transformers`. Run: sandboxed executor, not `eval` in the Gateway process (don't claim eval). Cache of compiled transformer on the Gateway (`transformer_cache`).
+Register: code + `code_security` scan → version. Bind: `tool_response_transformers`. Run: sandboxed executor, not `eval` in the Gateway process (don't claim eval). Cache of compiled transformer on the Gateway (`transformer_cache`). Workflow **Code node** hits this same Lambda — [[04 - Workflows]] · [[13-code-node-lambda-sandbox]].
 
 This is how a 200-key tracking payload does not eat the context window.
 
@@ -146,7 +146,7 @@ No Temple number on this file. Don't borrow 72k / 124k / 70%. Token savings from
 
 **Why Postgres and Mongo for SOP?** Draft/prefix routing in PG; compiled `graphs` in Mongo with the rest of the JSON contracts. Don't invent `isActive`.
 
-**Catalog read Redis?** Never. Write-through for Gateway only. Same speech as 02.
+**Catalog read Redis?** Never. Hybrid write-through + cache-aside for Gateway only. Same speech as 02.
 
 **Did you write Langfuse?** No. [[07 - Langfuse]].
 

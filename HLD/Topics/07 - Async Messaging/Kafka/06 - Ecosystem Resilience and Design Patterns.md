@@ -32,14 +32,14 @@ created: 2026-09-22
 
 - State is **replayable** from the changelog if the instance dies
 - You still want the **same** instance to own the same partitions after a rolling restart
-  - [[05 - Consumer Mechanics and Scalability]] — `group.instance.id`
+    + [[05 - Consumer Mechanics and Scalability]] — `group.instance.id`
 
 ### EOS in Streams
 
 - Streams can wrap the loop in a **transaction**
-  - read-process-write + offset commit in one txn
+    + read-process-write + offset commit in one txn
 - Still **not** your Postgres
-  - DB + Kafka is still outbox (below)
+    + DB + Kafka is still outbox (below)
 
 > [!tip] HLD default
 > - “Send email on order” → a **consumer group** is enough
@@ -52,10 +52,10 @@ created: 2026-09-22
 ### Connect
 
 - **Framework** for source / sink
-  - DB → Kafka
-  - Kafka → ES / S3
+    + DB → Kafka
+    + Kafka → ES / S3
 - You run **connectors**, not a hand-rolled poller for every table
-  - unless the connector is worse than 50 lines
+    + unless the connector is worse than 50 lines
 
 ### Debezium
 
@@ -63,7 +63,7 @@ created: 2026-09-22
 - Tails Postgres **WAL**
 - Emits row-change events
 - That’s how an **outbox table** (or the table itself) becomes a topic
-  - **without** the API calling `producer.send`
+    + **without** the API calling `producer.send`
 
 ### What Connect is not
 
@@ -80,8 +80,8 @@ created: 2026-09-22
 - Producers and consumers don’t share a repo
 - A record on the wire is **bytes**
 - **Avro / Protobuf / JSON Schema** + a **registry**
-  - writer embeds a **schema id**
-  - reader fetches the schema
+    + writer embeds a **schema id**
+    + reader fetches the schema
 
 ### Compatibility
 
@@ -115,7 +115,7 @@ flowchart LR
 - Retry with **backoff**
 - A **retry topic** (or delayed retry) keeps the **main** partition moving
 - Don’t `sleep(60)` on the hot partition
-  - that blocks every record behind this one
+    + that blocks every record behind this one
 
 ### Poison pill (bad JSON, forever-fail, deserialization crash)
 
@@ -146,9 +146,9 @@ flowchart LR
 
 - `INSERT order` then `kafka.send` in the **same API request**
 - One can succeed, the other fail
-  - crash between them
-  - network partition
-  - broker down after the DB commit
+    + crash between them
+    + network partition
+    + broker down after the DB commit
 - That is **not** a transaction
 
 ### The pattern
@@ -175,7 +175,7 @@ sequenceDiagram
 
 - If the API also `kafka.send` **after** commit, you can still crash in between
 - Tailing the WAL means: if the row committed, the event **will** be published
-  - eventually
+    + eventually
 
 ### What you tell them about consistency
 
@@ -183,8 +183,8 @@ sequenceDiagram
 - The row is committed; the topic lags milliseconds
 - Users do **not** need the email in the same 50 ms as `201 Created`
 - No 2PC with the broker
-  - Kafka transactions are **inside** Kafka, not with Postgres
-  - [[04 - Producer Mechanics and Delivery Guarantees]]
+    + Kafka transactions are **inside** Kafka, not with Postgres
+    + [[04 - Producer Mechanics and Delivery Guarantees]]
 
 ### The other side: inbox
 
