@@ -1,81 +1,69 @@
 ---
-tags: [hld/crash-course, status/draft]
+tags: [hld/topics, status/draft]
 created: 2026-09-18
+updated: 2026-09-29
 ---
 # Out of Scope
 
-> [!abstract] Things the crash course **knows exist** and is **not teaching this week**. Not "unimportant." Wrong altitude for SDE-1 HLD in seven days. If a follow-up names one, say the one-liner from here and move on.
-
-The in-scope slice of locking/coordination is [[14 - Coordination and Concurrency]]. Full designs of Netflix/YouTube are [[Netflix HLD]] as stretch, still not this week's job.
-
----
-
-## Consensus and clocks
-
-- Raft / Paxos **proofs**, log replication details, membership changes
-- ZooKeeper / etcd **lock internals** (zxid, ephemeral-node protocol)
-- Redlock **paper** and the distributed-lock controversy beyond "I won't use it for money"
-- Fencing-token **implementation** (we name the idea in #14; we do not build one)
-- Split-brain / STONITH
-- TrueTime, Hybrid Logical Clocks, NTP / leap-second handling
-- Vector-clock **merge rules** (the name is in [[10 - Distributed Building Blocks]])
-
-## Database internals
-
-Taught now under [[05 - Databases/README]]. Still **out** of the 7-day crash skim (use the one-liner, then go back to the board):
-
-- Vacuum / bloat beyond “dead tuples sit until vacuum”
-- Serializable Snapshot Isolation **proofs** (write skew is in [[04 - Isolation and Anomalies]])
-- Postgres advisory locks as a design
-- Online DDL, expand-contract migrations, backfills
-- PITR / backup runbooks
-- XA / 3PC
-
-## Distributed-data machinery
-
-- CRDTs
-- Gossip protocol
-- Hinted handoff, read repair, anti-entropy as a design
-- Merkle trees beyond the name
-- Chain replication, Rendezvous hashing
-- Quorum vs consensus as a theory lecture
-- Phi accrual failure detectors
-- Dynamo paper end-to-end
-
-## Messaging internals
-
-- Kafka exactly-once **transactions**, idempotent producer internals
-- Log compaction as a system
-- Schema registry
-- Flink / Spark windowing
-- Poison-message frameworks beyond DLQ
-
-## Infra / platform
-
-- Kubernetes internals (pods, controllers, operators)
-- Service mesh (Istio / mTLS as architecture)
-- Multi-region **active-active**, conflict resolution across regions
-- Blue-green / canary as a full rollout design
-- Capacity-planning spreadsheets, queueing theory / Little's law
-- Hedged requests, tail-latency engineering
-- Chaos engineering
-
-## Product / adjacent rounds
-
-- Designing Netflix / YouTube **end-to-end** (stretch: [[Netflix HLD]])
-- ML recommenders, ranking models
-- Full OAuth/OIDC spec, CSRF/CORS as HLD
-- PCI / storing PANs, KMS / envelope encryption as a design
-- GDPR deletion pipelines
-- LLD / machine coding (that is [[LLD/Interview Approach]], a different week)
+> [!abstract] What this is
+> A backlog, not a scope rule. These topics exist and matter; they just have no note in this folder yet. When one gets written, move it to its home folder and delete it here.
+>
+> If an interviewer names one before then, say the one-line idea and return to the diagram.
 
 ---
 
-> [!tip] If an interviewer goes here anyway: name the idea in one sentence ("that's Raft — majority picks a leader so we don't have two primaries"), then return to the diagram. Do not open a lecture.
+## Still Without a Note
+
+These are either proof-level theory or internals of a specific tool. Each has a one-liner you can say if it comes up.
+
+| Topic | One-liner if asked | Would live in |
+|---|---|---|
+| Raft / Paxos proofs, membership changes | "Majorities overlap, so a new leader always has every committed entry. Membership changes go through the log too." | [[17 - Consistency Time and Consensus]] |
+| ZooKeeper / etcd lock internals (zxid, ephemeral nodes) | "An ephemeral node vanishes when the session dies, so the lock releases itself." | [[14 - Coordination and Concurrency]] |
+| The Redlock debate | "Multi-Redis majority lock. Without fencing tokens it's unsafe under pauses, so I won't use it for money." | [[14 - Coordination and Concurrency]] |
+| Serializable Snapshot Isolation proofs | "Postgres tracks read/write dependencies and aborts one transaction if they form a cycle." | [[05 - Databases]] |
+| Postgres advisory locks as a design | "An app-defined lock inside Postgres, useful when you already hold a DB connection." | [[14 - Coordination and Concurrency]] |
+| XA / 3PC | "Distributed commit protocols that block or are fragile. Across services I use sagas." | [[10 - Distributed Building Blocks]] |
+| Chain replication | "Writes go head to tail, reads come from the tail, so reads are consistent." | [[17 - Consistency Time and Consensus]] |
+| Dynamo paper end to end | "Consistent hashing, sloppy quorums, hinted handoff, vector clocks, Merkle anti-entropy — each piece is in 10 and 17." | [[10 - Distributed Building Blocks]] |
+| Poison-message frameworks beyond a DLQ | "Retry with backoff, then park in a DLQ with the error, and alert on DLQ depth." | [[07 - Async Messaging]] |
+| Kubernetes internals (controllers, scheduler, operators) | "Controllers loop until actual state matches desired state." | [[19 - Deployment and Infrastructure]] |
+| ML recommenders and ranking models | "Candidate generation, then ranking, served from precomputed features." | A future ML note |
+| Netflix / YouTube end to end | Stretch reading: [[Netflix HLD]] | [[HLD/Problems/README]] |
+
+LLD and machine-coding rounds are a different round entirely: [[LLD/README]].
+
+---
+
+## Moved Into a Home Note
+
+Everything below used to be on this page and now has a proper section. The table exists so an old habit of looking here still lands somewhere.
+
+| Topic | Now covered in |
+|---|---|
+| Consistency models, CAP and PACELC in depth | [[17 - Consistency Time and Consensus]] |
+| Lamport, vector and hybrid logical clocks, TrueTime | [[17 - Consistency Time and Consensus]] |
+| Raft at concept level, quorum vs consensus | [[17 - Consistency Time and Consensus]] |
+| Split-brain, fencing tokens, STONITH | [[17 - Consistency Time and Consensus]] |
+| Multi-region active-active and conflict resolution | [[17 - Consistency Time and Consensus]] · [[08 - Reliability]] |
+| CRDTs, gossip, phi accrual failure detection | [[10 - Distributed Building Blocks]] |
+| Hinted handoff, read repair, Merkle anti-entropy, rendezvous hashing | [[10 - Distributed Building Blocks]] |
+| Vacuum and bloat | [[01 - Storage Engine and Disk IO]] |
+| Online DDL, expand–contract, backfills, PITR and backups | [[12 - Schema Changes and Backups]] · [[19 - Deployment and Infrastructure]] |
+| Kafka exactly-once transactions, idempotent producer | [[04 - Producer Mechanics and Delivery Guarantees]] |
+| Log compaction | [[02 - Low-Level Storage and Performance IO]] |
+| Schema registry and schema evolution | [[06 - Ecosystem Resilience and Design Patterns]] |
+| RabbitMQ and SQS | [[RabbitMQ and SQS]] |
+| Flink / Spark windowing, stream processing | [[20 - Data Processing and Analytics]] |
+| Service mesh and mTLS | [[04 - Load Balancing CDN and Gateway]] · [[11 - Services and Observability]] |
+| Blue-green and canary rollouts, capacity planning | [[19 - Deployment and Infrastructure]] |
+| Queueing and Little's Law | [[02 - Fundamentals]] · [[16 - Estimation and Decision Cheat Sheet]] |
+| Hedged requests, tail latency, chaos engineering | [[08 - Reliability]] · [[02 - Fundamentals]] |
+| OAuth2 / OIDC, CSRF / CORS | [[18 - Security]] |
+| PCI, KMS and envelope encryption, GDPR deletion | [[18 - Security]] |
 
 ## Related Notes
 
 - [[README]]
-- [[14 - Coordination and Concurrency]]
+- [[17 - Consistency Time and Consensus]]
 - [[10 - Distributed Building Blocks]]
-- [[Netflix HLD]]

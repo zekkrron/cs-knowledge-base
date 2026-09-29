@@ -257,6 +257,55 @@ created: YYYY-MM-DD
 Cross-links from accumulators back to a module should point to the specific file:
 `[[03 - Simple Rule Engine/01 - Problem Statement]]`.
 
+### HLD topic note
+
+Gold standard: [[HLD/Topics/06 - Caching/06 - Caching]] and [[Netflix HLD]]. Written to **teach on
+a cold read**, not to cram: full sentences, one idea per section, `---` between major sections.
+Terse crib material goes in the *Interview Lines* section at the end, not in the body.
+
+```
+---
+tags: [hld/topics, status/draft]
+created: YYYY-MM-DD
+updated: YYYY-MM-DD
+---
+# <Topic>
+
+> [!abstract] What this is
+> Two or three sentences: what the topic is, and the single decision it helps you make.
+
+---
+
+## Why It Exists
+The problem that forces this topic into a design. Plain prose.
+
+---
+
+## <Concept sections, in the order you'd explain them>
+Each section: a short paragraph first, then a table / list / Mermaid only if it adds something.
+Mechanisms get a diagram. Choices get a comparison table with a "pick when" column.
+
+---
+
+## Failure Modes
+| Failure | What happens | Mitigation |
+
+---
+
+## Interview Lines
+> [!tip] Say it like this
+> The 3–6 sentences worth memorising, each one standalone.
+
+## Related Notes
+```
+
+Rules:
+- Every section opens with prose. No section is only bullets.
+- Tables need a column that tells you **when** to pick each option.
+- Callouts: `[!tip]` insight · `[!warning]` gotcha · `[!danger]` failure · `[!example]` numbers · `[!info]` context. At most one per section.
+- Don't write "SDE-1 slice." Depth is organised by section, not by level.
+- Keep every fact from the old note unless it's wrong. Rewriting is for shape, not deletion.
+
 ---
 
 ## Formatting

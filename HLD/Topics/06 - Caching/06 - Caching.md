@@ -1,96 +1,182 @@
 ---
-tags: [hld/crash-course, status/draft]
+tags: [hld/topics, status/draft]
 created: 2026-09-18
+updated: 2026-09-29
 ---
 # Caching
 
-> [!abstract] Cache is **not** "put Redis." It is: **what key, what TTL, who invalidates, what happens when Redis is on fire.** Default pattern: cache-aside. Default store: Redis. Default eviction: LRU + TTL.
+> [!abstract] What this is
+> A cache is a fast copy of data that already lives somewhere slower. Adding one is never just "put Redis in front." It's four decisions: **what key**, **what TTL**, **who invalidates it**, and **what happens when the cache is down**.
+>
+> Defaults when nothing forces otherwise: cache-aside pattern, Redis as the store, LRU eviction plus a TTL.
 
-## When to say the word
+---
 
-Read-heavy, same rows over and over, 20–50 ms DB vs ~1 ms Redis, DB CPU dying. **Do not cache data that changes every request.**
+## Why It Exists
 
-## Where
+A database read costs 20–50 ms. A Redis read costs about 1 ms. When the same rows are read over and over, that gap is the difference between a DB that coasts and a DB whose CPU is pinned.
 
-| Layer | What |
-|---|---|
-| Browser / client | Cache-Control. You don't own it fully. |
-| CDN | Static + some public GET. [[04 - Load Balancing CDN and Gateway]] |
-| Gateway | Rare. |
-| **Redis (sidecar / cluster)** | Application data. This is the interview cache. |
-| In-process (Caffeine) | Tiny, config, feature flags. Dies with the box. |
+So a cache earns its place when three things are true: the workload is **read-heavy**, the **same data is read repeatedly**, and that data **doesn't change on every request**. If the value changes every time someone looks at it, caching only adds a second place for it to be wrong.
 
-## Read/write patterns
+---
 
-**Cache-aside (lazy, default):**
+## Where a Cache Can Live
 
-1. Read cache. Hit → return.
-2. Miss → DB → fill cache with TTL → return.
-3. On write → **delete** the key (or update it). Deleting is safer than write-time update (less stale-shape bugs).
+There are several layers between the user and the database, and each can cache. They are different boxes and shouldn't be mixed up on a diagram.
 
-**Write-through:** write cache and DB together. Cache always warm, writes slower.
+| Layer | What it holds | Pick when |
+|---|---|---|
+| Browser / client | Responses governed by `Cache-Control` headers | Static or slow-changing public content. You don't fully control it. |
+| CDN | Static files and some public `GET` responses | Content is the same for every user. See [[04 - Load Balancing CDN and Gateway]]. |
+| API gateway | Occasional response caching | Rarely worth it. |
+| **Redis** | Application data | The default "cache" in an interview. |
+| In-process (e.g. Caffeine) | Tiny hot data: config, feature flags | Data is small and can be lost when the process restarts. |
 
-**Write-behind (write-back):** write cache, flush DB async. Fast writes, **you can lose data** if cache dies. Almost never the SDE-1 pick for source of truth.
+> [!warning] Private data doesn't belong on the CDN or in the browser cache. You can delete a Redis key instantly; you can't reliably recall something already sitting in a CDN edge or a user's browser.
 
-**Refresh-ahead:** refresh before TTL dies for very hot keys.
+---
+
+## Read and Write Patterns
+
+The pattern decides who fills the cache and what happens on a write.
+
+### Cache-aside (the default)
+
+The application talks to the cache and the database separately. The cache only ever holds data someone actually asked for.
+
+1. Read the cache. On a **hit**, return it.
+2. On a **miss**, read the database, store the result in the cache with a TTL, then return it.
+3. On a **write**, update the database and then **delete** the cache key.
+
+Deleting is safer than writing the new value into the cache. If two writes race, a computed value can land in the cache in the wrong order; a delete just forces the next reader to fetch the truth.
 
 ```mermaid
 flowchart LR
     C[Client] --> A[App]
-    A -->|1 GET| R[Redis]
+    A -->|1. GET| R[(Redis)]
     R -->|miss| A
-    A -->|2 query| DB
-    A -->|3 SET TTL| R
+    A -->|2. query| DB[(Database)]
+    A -->|3. SET with TTL| R
     A --> C
 ```
 
-## TTL vs explicit invalidation
+### The other patterns
 
-- **TTL only** — simple, briefly stale. Fine for profiles, product pages.
-- **Invalidate on write** — needed when stale is wrong (permissions, prices). Still keep a TTL as a safety net.
-- **You cannot invalidate the CDN/browser as easily** as Redis. That's why private data doesn't live on the CDN.
+| Pattern | How it works | Cost | Pick when |
+|---|---|---|---|
+| **Cache-aside** | App fills on miss, deletes on write | First read after a write is slow | Default for almost everything |
+| **Write-through** | Every write goes to cache and DB together | Slower writes | You own the write path and want the cache always warm |
+| **Write-behind** | Write to cache, flush to DB later | **Data loss** if the cache dies before flushing | Almost never, when the DB is the source of truth |
+| **Refresh-ahead** | Refresh a key before its TTL expires | Extra background work | A few very hot keys that must never miss |
 
-Cache invalidation is the hard problem. Say so. Then pick TTL+delete-on-write.
+---
+
+## Keeping the Cache Correct
+
+Cache invalidation is genuinely the hard part, and it's fine to say so. There are two tools, and most designs use both.
+
+- **TTL only.** Every key expires after a fixed time. Simple, and briefly stale by design. Fine for profiles and product pages.
+- **Invalidate on write.** Delete the key whenever the underlying data changes. Required when stale data is actually *wrong*, such as permissions or prices.
+
+The standard answer combines them: **delete on write, and keep a TTL as a safety net** in case an invalidation is ever missed.
+
+---
 
 ## Eviction
 
-When memory is full:
+TTL removes keys when they get old. Eviction removes keys when memory is **full**. They're separate mechanisms and both run at once.
 
-- **LRU** — default. Say this.
-- **LFU** — hot forever stays; good for "always popular."
-- **FIFO** — rarely better.
-- **TTL expiry** is not eviction policy; both exist.
+| Policy | Keeps | Pick when |
+|---|---|---|
+| **LRU** (least recently used) | Whatever was touched recently | Default. Say this. |
+| **LFU** (least frequently used) | Whatever is popular over time | Some keys are "always hot" |
+| **FIFO** | Newest entries | Rarely better than LRU |
 
-Redis: `maxmemory-policy allkeys-lru` is the line.
+In Redis this is one line of config: `maxmemory-policy allkeys-lru`.
 
-## Things that take you down
+---
 
-**Stampede / thundering herd:** hot key expires, 10k requests miss, all hit DB. Fixes: lock so one refreshes (Redis `SETNX`), slightly random TTLs, serve stale while one fills.
+## How Redis Itself Works
 
-**Hot key:** one key is half the QPS (celebrity). Fixes: local in-process cache, replicate the key, split the key.
+Treating Redis as a magic box is fine until someone asks "what happens if Redis restarts?" These three mechanisms answer that.
 
-**Hot shard** on Redis cluster: same as DB hotspot.
+### Persistence
 
-**Redis down:** every request hits DB → cascading failure. Fixes: **circuit breaker** (fail small, maybe serve stale in-process), don't wait 5s per Redis timeout. Timeouts belong in [[08 - Reliability]].
+Redis lives in memory, but it can write to disk so a restart doesn't start empty.
 
-**Cache stampede on deploy:** flush-all is a self-DDoS. Warm or TTL-out.
+| Mode | How it works | Loses on crash | Pick when |
+|---|---|---|---|
+| **None** | Memory only | Everything | Pure cache that can be rebuilt from the DB |
+| **RDB** (snapshot) | Periodically dumps the whole dataset to a file | Everything since the last snapshot (minutes) | Fast restarts, some loss is acceptable |
+| **AOF** (append-only file) | Logs every write; replays the log on restart | About one second, with `fsync` every second | Redis holds data you'd rather not lose, e.g. counters |
+| **RDB + AOF** | Both | About one second | Faster restart than AOF alone, with AOF's durability |
+
+> [!warning] Even with AOF, Redis is not a replacement for a database of record. If losing the data costs money, the source of truth belongs in the DB and Redis holds a copy.
+
+### Replication
+
+A Redis primary streams its writes to one or more replicas. Replicas serve reads and can take over if the primary dies. **Redis Sentinel** watches the primary and promotes a replica automatically.
+
+Replication is **asynchronous**. A write acknowledged by the primary can be lost if the primary dies before the replica receives it.
+
+### Redis Cluster (sharding)
+
+One Redis box eventually runs out of memory. Redis Cluster splits data across several primaries using **16,384 hash slots**. Each key maps to a slot with `CRC16(key) mod 16384`, and each primary owns a range of slots. Adding a node moves slots, not every key.
+
+Two consequences come up often:
+
+- **Multi-key commands** (`MGET`, transactions, Lua scripts) only work if all the keys are in the same slot. **Hash tags** force that: `{user:42}:cart` and `{user:42}:profile` hash only the part in braces, so they land together.
+- **A hot key stays on one shard.** Sharding spreads *many* keys; it does nothing for one key that gets half the traffic. See Failure Modes below.
+
+---
 
 ## Redis vs Memcached
 
 | | Redis | Memcached |
 |---|---|---|
-| Structures | strings, hashes, lists, sets, **sorted sets**, bitmaps, streams | blob |
-| Persistence | optional AOF/RDB | none |
-| Use | cache **and** counters, leaderboards, locks, pub/sub | simple cache |
+| Data types | Strings, hashes, lists, sets, **sorted sets**, bitmaps, streams | Opaque blobs |
+| Persistence | Optional (RDB / AOF) | None |
+| Replication | Built in | None |
+| Pick when | Cache **plus** counters, leaderboards, locks, pub/sub | You need only a simple, multi-threaded blob cache |
 
-> [!tip] Interview Redis is not just GET/SET. Leaderboard = sorted set. Feed IDs = list or sorted set. Rate limit = INCR + TTL. Lock = SET NX EX.
+Redis is rarely just `GET`/`SET`. Its data types map directly onto common features:
 
-## What to store (say the structure)
+| Feature | Redis structure |
+|---|---|
+| Leaderboard | Sorted set |
+| Feed of post IDs | List or sorted set |
+| Rate limit | `INCR` plus a TTL |
+| Lock | `SET key token NX EX 30` (details in [[14 - Coordination and Concurrency]]) |
 
-Don't say "I'll cache the events." Say "sorted set of event_id by popularity, payload in a hash, TTL 5 min."
+> [!tip] Name the structure, not just the tool. "I'll cache the events" is vague. "A sorted set of `event_id` by popularity, each payload in a hash, TTL five minutes" shows you've actually designed it.
+
+---
+
+## Failure Modes
+
+| Failure | What happens | Mitigation |
+|---|---|---|
+| **Stampede** (thundering herd) | A hot key expires; thousands of requests miss at once and all hit the DB | Let only one request refresh (a lock via `SETNX`), add random jitter to TTLs, serve the stale value while one request refills |
+| **Hot key** | One key takes a huge share of traffic (a celebrity's profile) and saturates one node | Add an in-process cache in front, replicate the key, or split it into several keys |
+| **Hot shard** | One Redis Cluster node takes disproportionate load | Same as a DB hotspot: rebalance slots or change the key design |
+| **Redis down** | Every request falls through to the DB, which then falls over too | Short timeouts, a **circuit breaker**, optionally serve stale in-process data. See [[08 - Reliability]] |
+| **Flush on deploy** | Clearing the whole cache sends every request to the DB at once | Never flush-all in production. Warm the cache, or let keys expire naturally |
+| **Primary failover** | Recent writes that hadn't replicated are lost | Accept it for a cache; for anything important, the DB is the source of truth |
+
+---
+
+## Interview Lines
+
+> [!tip] Say it like this
+> - "Cache-aside with Redis. On a write I delete the key after commit, and every key has a TTL as a safety net."
+> - "Deleting beats updating the cache on write, because two concurrent writes can't leave a wrong value behind."
+> - "TTL handles staleness; LRU handles memory pressure. They're different mechanisms."
+> - "If Redis goes down I fail fast with a short timeout and a circuit breaker, so the database doesn't get flattened."
+> - "Redis isn't my source of truth for money. It's a copy I can rebuild."
 
 ## Related Notes
 
 - [[04 - Load Balancing CDN and Gateway]]
 - [[05 - Databases]]
 - [[08 - Reliability]]
+- [[14 - Coordination and Concurrency]]

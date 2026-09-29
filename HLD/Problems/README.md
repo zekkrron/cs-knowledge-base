@@ -6,6 +6,8 @@ created: 2026-09-22
 
 > [!abstract] Interview-shaped walks. Same script every time: **requirements → numbers → APIs/schema → boxes → one deep dive → break it**. [[01 - How the Round Works]].
 
+> [!tip] Short on time? **[[00 - Speed Run]]** is all twelve in one page (20 min, read aloud), and **[[16 - Estimation and Decision Cheat Sheet]]** is the arithmetic plus the thresholds that pick the tech. Full deep dives: [[02 - Task Scheduler]], [[03 - Wearable Device]], [[04 - Multipart Upload]].
+
 ## Duplicates
 
 Your list had **no exact duplicates**. Similar ≠ same:
@@ -26,10 +28,11 @@ All **12** stay.
 
 | # | Problem | Deep dive on the board |
 |---|---|---|
+| 0 | [[00 - Speed Run]] | **All twelve, one page. Start here on the day** |
 | 1 | [[01 - Splitwise]] | Splits + pair balances in one txn |
-| 2 | [[02 - Task Scheduler]] | `next_run_at` + `SKIP LOCKED` |
-| 3 | [[03 - Wearable Device]] | Batch ingest, seq, TSDB vs OLTP |
-| 4 | [[04 - Multipart Upload]] | Presign, ETag ack, CompleteMPU |
+| 2 | [[02 - Task Scheduler]] | `next_run_at` + `SKIP LOCKED` · **full depth** |
+| 3 | [[03 - Wearable Device]] | Batch ingest, seq, TSDB vs OLTP · **full depth** |
+| 4 | [[04 - Multipart Upload]] | Presign, ETag ack, CompleteMPU · **full depth** |
 | 5 | [[05 - Jira]] | Issue + legal transition + ES |
 | 6 | [[06 - Seat Booking]] | `free→held→sold`, no lock across PSP |
 | 7 | [[07 - Wallet and Ledger]] | Ledger + webhook idempotency |
@@ -51,6 +54,8 @@ All **12** stay.
 ## Related Notes
 
 - [[HLD]]
+- [[00 - Speed Run]]
+- [[16 - Estimation and Decision Cheat Sheet]]
 - [[Topics/README]]
 - [[05 - Databases]]
 - [[14 - Coordination and Concurrency]]

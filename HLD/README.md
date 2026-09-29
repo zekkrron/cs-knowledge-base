@@ -2,6 +2,8 @@
 
 High Level Design notes.
 
+> [!tip] **Interview tomorrow, few hours?** Read [[16 - Estimation and Decision Cheat Sheet]] then [[00 - Speed Run]] out loud. Deep dives: [[02 - Task Scheduler]], [[03 - Wearable Device]], [[04 - Multipart Upload]].
+
 ## Topics (building blocks)
 
 [[Topics/README|HLD Topics]] — one folder per topic. Kafka lives under [[07 - Async Messaging]].
@@ -24,6 +26,7 @@ High Level Design notes.
 | [[13 - Question Bank]] | Grill + prompts |
 | [[14 - Coordination and Concurrency]] | Locks, leases, fencing, SKIP LOCKED |
 | [[15 - Out of Scope]] | Named, not taught this week |
+| [[16 - Estimation and Decision Cheat Sheet]] | **Maths + the thresholds that pick the tech** |
 
 ## Problems (interview walks)
 
@@ -31,6 +34,7 @@ High Level Design notes.
 
 | # | Note |
 |---|---|
+| 0 | [[00 - Speed Run]] — **all twelve, one page** |
 | 1 | [[01 - Splitwise]] |
 | 2 | [[02 - Task Scheduler]] |
 | 3 | [[03 - Wearable Device]] |

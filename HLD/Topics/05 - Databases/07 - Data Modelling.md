@@ -1,102 +1,115 @@
 ---
 tags: [hld/topics/databases, status/draft]
 created: 2026-09-23
+updated: 2026-09-29
 ---
 # Data Modelling
 
-> [!abstract]
-> - Start **normalised**. Update once. Join on read
-> - Denormalise a **measured** hot read, and name the pain (rename user → fanout or stale)
-> - NoSQL: design the **primary key for the #1 query**. A second access path is a second table or index
-> - This is the HLD modelling conversation. Engine internals: [[01 - Storage Engine and Disk IO]] · [[02 - Indexing]]
+> [!abstract] What this is
+> Data modelling decides what tables (or collections) exist and what their keys are. Start **normalised**: update once, join on read. Denormalise only a **measured** hot read, and name the pain it brings. In NoSQL, design the **primary key for the #1 query**; a second access path means a second table or index.
+>
+> This is the HLD modelling conversation. Engine internals are in [[01 - Storage Engine and Disk IO]] and [[02 - Indexing]].
 
 ---
 
-## Start normalised
+## Why It Exists
 
-- Users, orders, order_lines, products — each fact **once**
-- Update a user’s name in **one** row
-- Reads **join**
-- This is the default on Postgres
-    + FKs, transactions, ad-hoc query
-    + “I’ll denormalise later when a query hurts”
+The data model fixes which queries are cheap and which are expensive for the life of the system. Indexes and caches can patch a bad model for a while, but the shape of the tables and keys decides whether a query is one lookup or a scan across everything.
 
-- Broad slogans (“SQL for relationships, NoSQL for scale”) are a yellow flag
-- Justify with **this query** and **this consistency**
+Broad slogans like "SQL for relationships, NoSQL for scale" are a yellow flag in an interview. Justify the model with **this query** and **this consistency** requirement.
 
 ---
 
-## Denormalise a hot read
+## Start Normalised
+
+In a normalised model each fact is stored **once**. Users, orders, order_lines and products each get their own table. Updating a user's name touches **one** row, and reads **join** the tables back together.
+
+This is the default on Postgres, because it gives you foreign keys, transactions and ad-hoc queries for free. The honest position is "I'll denormalise later when a query hurts."
+
+---
+
+## Denormalise a Hot Read
+
+Denormalising means copying data so a read doesn't need a join. It makes one read faster and every related write more complicated.
 
 ### When
 
-- You have **measured** a join on the hot path
-    + feed card needs `username` 10k times a second
-    + you are not guessing in week one
+Only when you have **measured** a join on the hot path, for example a feed card that needs `username` 10k times a second. You aren't guessing in week one.
 
 ### How
 
-- Copy `username` onto `comments`
-- Feed becomes one table (or one query without the user join)
+Copy `username` onto `comments`. The feed then reads one table, or one query without the user join.
 
-### Pain you must name
+### The pain you must name
 
-- User renames
-    + **fanout UPDATE** all comments (slow, correct)
-    + or **accept stale** names until they edit
-- Two writers can drift — this is now a cache-shaped problem
-    + same family as [[06 - Caching]] invalidation
+Now the name lives in two places. When a user renames, you have two options:
 
-> [!warning] Don’t denormalise “because NoSQL”
-> - You paid write amplification and drift
-> - If the read was fine with a join + index, you bought nothing
+| Option | Behaviour | Pick when |
+|---|---|---|
+| **Fanout UPDATE** | Rewrite the name on all of their comments | Correctness matters; slow but correct |
+| **Accept stale** | Old comments keep the old name until edited | The copy is cosmetic |
+
+Two writers can also drift apart, which makes this a cache-shaped problem. It's the same family as invalidation in [[06 - Caching]].
+
+> [!warning] Don't denormalise "because NoSQL"
+> You paid write amplification and drift. If the read was fine with a join and an index, you bought nothing.
 
 ---
 
-## NoSQL: the key *is* the design
+## NoSQL: The Key Is the Design
 
-- Pick the **#1 query** first
-- The partition / primary key must answer it **without a scan**
+In Cassandra or DynamoDB there's no optimizer to rescue a bad query. Pick the **#1 query** first, then choose a partition and primary key that answers it **without a scan**.
 
 | Query | Key that works | What now fails |
 |---|---|---|
 | All posts by this user | `PK = user_id`, clustering `created_at` | All posts with hashtag `#x` |
-| All messages in this chat | `PK = chat_id` | “All chats I am in” — that’s another table |
-| Session by token | `PK = token` | “All sessions for user” — secondary or second table |
+| All messages in this chat | `PK = chat_id` | "All chats I am in" (that's another table) |
+| Session by token | `PK = token` | "All sessions for user" (secondary index or second table) |
 
-- Second access path
-    + **another table** (or GSI) whose key **is** that path
-    + not “we’ll scan the first table”
-- This is why Cassandra / Dynamo interviews are **key-design** interviews
+A second access path is **another table** (or a GSI) whose key **is** that path. It is not "we'll scan the first table." This is why Cassandra and Dynamo interviews are really **key-design** interviews.
 
 ---
 
-## Types (so you don’t say “NoSQL”)
+## Store Types
 
-| Type | Looks like | Use | Example |
+Saying "NoSQL" names nothing. Name the type and what it's for.
+
+| Type | Looks like | Pick when | Example |
 |---|---|---|---|
-| Key-value | `GET k → blob` | sessions, flags | Redis, DynamoDB KV |
-| Document | JSON documents | evolving object, one-document aggregate | MongoDB |
-| Wide-column | row key + columns | write-heavy, huge tables | Cassandra |
-| Graph | nodes / edges | “friends of friends” **is** the product | Neo4j — rarely first pick |
+| Key-value | `GET k → blob` | Sessions, flags | Redis, DynamoDB KV |
+| Document | JSON documents | Evolving object; one-document aggregate | MongoDB |
+| Wide-column | Row key + columns | Write-heavy, huge tables | Cassandra |
+| Graph | Nodes and edges | "Friends of friends" **is** the product | Neo4j (rarely the first pick) |
 
-- Redis as **cache**: [[06 - Caching]]
-- Redis as **primary**: only data you can lose or rebuild (sessions, leaderboards)
+Redis as a **cache** is covered in [[06 - Caching]]. Redis as a **primary** store is only for data you can lose or rebuild, such as sessions and leaderboards.
 
-- Document vs relational
-    + if you always load the **whole aggregate** (one order + lines as one JSON) and never query “all lines of SKU X,” a document is honest
-    + the moment you need the cross-aggregate query, you are back to a table or a second collection
+### Document vs relational
+
+If you always load the **whole aggregate** (one order plus its lines as one JSON document) and never ask "all lines of SKU X," a document store is an honest fit. The moment you need that cross-aggregate query, you're back to a table or a second collection.
+
+---
+
+## Failure Modes
+
+Many "the DB is slow" complaints are really modelling mistakes.
+
+| Failure | What happens | Mitigation |
+|---|---|---|
+| N+1 | One query per row from the app | Join or `IN`. See [[05 - Query Execution and Optimization]] |
+| Missing composite on `(user_id, created_at)` | "Latest posts for user" scans or sorts | Add the composite. See [[02 - Indexing]] |
+| Shard key = `created_at` day | Today's shard is on fire | Key with cardinality. See [[09 - Sharding]] |
+| UUID PK on a clustered InnoDB table | Random page splits on every insert | Sequential ids. See [[02 - Indexing]] |
+| Denormalised copy drifts | Stale or conflicting values | Fanout update in the same transaction, or accept staleness explicitly |
 
 ---
 
-## Modelling mistakes that show up as “DB is slow”
+## Interview Lines
 
-- N+1 — [[05 - Query Execution and Optimization]]
-- Missing composite on `(user_id, created_at)` — [[02 - Indexing]]
-- Shard key = `created_at` day — today’s shard is on fire — [[09 - Sharding]]
-- UUID PK on a clustered InnoDB table — random splits — [[02 - Indexing]]
-
----
+> [!tip] Say it like this
+> - "I start normalised and denormalise one measured hot read, then say how I keep the copy in sync."
+> - "In Cassandra the partition key is the design. I pick it from the #1 query."
+> - "A second access path is a second table keyed by that path, not a scan."
+> - "A document store fits if I always load the whole aggregate. Cross-aggregate queries push me back to tables."
 
 ## Related Notes
 

@@ -1,14 +1,28 @@
 ---
-tags: [hld/crash-course, status/draft]
+tags: [hld/topics, status/draft]
 created: 2026-09-18
+updated: 2026-09-29
 ---
 # Coordination and Concurrency
 
-> [!abstract] "Don't let two people take the same seat / run the same job / increment the same stock." That is this page. A **distributed lock is the last tool**, not the first. Prefer a DB constraint or a row state. The crash course originally hid this in six lines in [[08 - Reliability]] — that was compression, not "locks don't matter."
+> [!abstract] What this is
+> "Don't let two people take the same seat, run the same job, or decrement the same stock." That's this note: locking, leasing, "only one winner," and database concurrency.
+>
+> The key decision: a **distributed lock is the last tool**, not the first. Prefer a DB constraint or a row state.
 
-This is the family you meant: locking, leasing, "only one winner," DB concurrency. **Not** geo-radius ([[09 - Storage Search and Geo]]). Nearby users is a query. Mutual exclusion is this note.
+---
 
-## The decision tree (say this in the interview)
+## Why It Exists
+
+Any time two requests can act on the same thing at once, something has to decide who wins. Two users click the last seat. Two cron boxes both think it's time for the nightly bill run. Two browser tabs read `qty=5` and both write `4`. Without a rule, you double-sell, double-run or lose updates.
+
+This note is about mutual exclusion, not geography. Geo-radius and "nearby users" are queries and live in [[09 - Storage Search and Geo]].
+
+---
+
+## The Decision Tree
+
+Most concurrency problems are solved by the database you already have. Walk down this tree and stop at the first option that fits; say it out loud in the interview.
 
 ```mermaid
 flowchart TD
@@ -21,44 +35,52 @@ flowchart TD
     L -->|forced| D[Redis SET NX EX + fencing]
 ```
 
-1. **Unique constraint** — two inserts of the same `seat_id` on a booking table, one fails. This *is* a lock. Use it.
-2. **Optimistic version** — `UPDATE … WHERE id=? AND version=3`. Lost update dies. Default for stock/profile.
-3. **Pessimistic row lock** — `SELECT FOR UPDATE` in a transaction. Hold it **milliseconds**, not while the user stares at a payment page.
-4. **DB state + TTL** — `status='held', hold_until=now()+10m`. A sweeper releases. Booking, ride offer, OTP.
-5. **Redis lock** — only if the critical section is not in one database (cron across boxes, stampede, "exactly one worker").
+1. **Unique constraint.** Two inserts of the same `seat_id` into a booking table: one fails. This *is* a lock. Use it.
+2. **Optimistic version.** `UPDATE … WHERE id=? AND version=3`. The lost update dies. Default for stock and profiles.
+3. **Pessimistic row lock.** `SELECT FOR UPDATE` in a transaction. Hold it for **milliseconds**, not while the user stares at a payment page.
+4. **DB state + TTL.** `status='held', hold_until=now()+10m`. A sweeper releases expired holds. Booking, ride offers, OTPs.
+5. **Redis lock.** Only when the critical section isn't inside one database: a cron across boxes, a cache stampede, "exactly one worker."
 
-> [!warning] "I'll take a Redis lock for 10 minutes while they pay" is how you strand inventory when the process dies and you forget expiry — or how you **double-sell** when expiry fires and the old holder still writes. See fencing below.
+> [!warning] "I'll take a Redis lock for 10 minutes while they pay" is how you strand inventory when the process dies and you forgot expiry, or how you **double-sell** when expiry fires and the old holder still writes. See fencing below.
 
-## Database concurrency (the SDE-1 slice)
+---
 
-Already sketched in [[05 - Databases]]. The missing pieces that actually get follow-ups:
+## Database Concurrency
 
-**Lost update** — two tabs read qty=5, both write 4. Fix: `qty = qty - 1 WHERE qty > 0`, or `version` CAS, or `FOR UPDATE`.
+The basics are in [[05 - Databases]]. These are the pieces that actually get follow-up questions, each with its app-level fix. MVCC, WAL and isolation depth are in [[05 - Databases/README]]; this section is the recipe. If they only poke, "Postgres uses MVCC so readers don't block writers" is still the one sentence.
 
-**`SELECT FOR UPDATE`** — pessimistic. Nobody else can take that row until you COMMIT. **Deadlock** if txn A locks seat 1 then 2, txn B 2 then 1. Fix: lock in a **sorted id order**. Keep the txn tiny.
+**Lost update.** Two tabs read `qty=5`, both write `4`. Fix it with an atomic update `qty = qty - 1 WHERE qty > 0`, a `version` compare-and-set, or `FOR UPDATE`.
 
-**`SKIP LOCKED`** — the job-queue trick. Workers `SELECT … FOR UPDATE SKIP LOCKED LIMIT 1`. Locked rows are skipped, not waited on. This is how you run many pollers on one `jobs` table without Redis. Name it if they ask "how do workers not steal the same job."
+**`SELECT FOR UPDATE`.** Pessimistic: nobody else can take that row until you `COMMIT`. It can **deadlock** if transaction A locks seat 1 then seat 2 while B locks 2 then 1. Fix: always lock in **sorted ID order**, and keep the transaction tiny.
 
-**Write skew** (one example, then stop): snapshot isolation lets two doctors both see "on call count = 1" and both go off duty. Each update is valid; the invariant "≥1 on call" dies. **Serializable** or an explicit constraint/lock on the invariant. You will not be examined on SSI internals.
+**`SKIP LOCKED`.** The job-queue trick. Workers run `SELECT … FOR UPDATE SKIP LOCKED LIMIT 1`, so locked rows are skipped instead of waited on. This is how many pollers share one `jobs` table without Redis. Name it when asked "how do workers not steal the same job."
 
-**Advisory locks** (Postgres `pg_advisory_lock`) — app-level locks inside the DB. Rare in HLD. Prefer a row you can see.
+**Write skew.** One example is enough. Under snapshot isolation, two doctors both see "on-call count = 1" and both go off duty. Each update is valid on its own, but the invariant "at least one on call" dies. Fix: **Serializable** isolation, or an explicit constraint or lock on the invariant. SSI internals won't be examined.
 
-**Hot row** — everyone updates the same counter. The lock *is* the bottleneck. Fix: shard the counter, or Redis INCR, or append events and sum.
+**Advisory locks.** Postgres `pg_advisory_lock` gives app-level locks inside the DB. Rare in HLD; prefer a row you can see.
 
-MVCC / WAL / isolation depth: [[05 - Databases/README]]. This page is the **app** recipe. "Postgres uses MVCC so readers don't block writers" is still the one sentence if they only poke.
+**Hot row.** Everyone updates the same counter, so the row lock *is* the bottleneck. Fix: shard the counter, use Redis `INCR`, or append events and sum them.
 
-## Optimistic vs pessimistic (one table)
+---
+
+## Optimistic vs Pessimistic
+
+Both stop lost updates. The difference is whether you assume a conflict and wait up front, or assume none and retry if you were wrong.
 
 | | Optimistic (version / CAS) | Pessimistic (`FOR UPDATE`) |
 |---|---|---|
-| Conflict | rare | likely (same seat) |
-| Hold time | none until write | duration of txn |
-| Failure | retry the txn | wait / deadlock |
-| Interview default | profile, likes | booking the last seat |
+| Conflict | Rare | Likely (same seat) |
+| Hold time | None until the write | Duration of the transaction |
+| On failure | Retry the transaction | Wait, or deadlock |
+| Pick when | Profiles, likes: low contention | Booking the last seat: high contention |
 
-CAS is the same idea in Redis: `WATCH` / Lua "read tokens, write if still N."
+CAS is the same idea in Redis: `WATCH`, or a Lua script that says "read tokens, write only if still N."
 
-## Distributed lock — the actual recipe
+---
+
+## Distributed Lock: The Recipe
+
+When the critical section really does span machines and no single DB row can guard it, a Redis lock is the practical tool. It's three parts, and each one prevents a specific bug.
 
 ```
 SET lock:job:nightly <token> NX EX 30
@@ -66,68 +88,136 @@ SET lock:job:nightly <token> NX EX 30
 # release only if value still == token  (Lua: if get==token then del)
 ```
 
-- **NX** — only one winner.
-- **EX** — if you die, the lock dies. No expiry = forever.
-- **Token** — random UUID. Never `DEL lock` blindly or you delete the *next* holder's lock.
+- **`NX`**: only one winner.
+- **`EX`**: if you die, the lock dies. No expiry means locked forever.
+- **Token**: a random UUID. Never `DEL lock` blindly, or you delete the *next* holder's lock.
 
-**Where it belongs:** leader for a cron, cache stampede (one refill), "only one indexer on this shard."
+| Use | Lock? | Why |
+|---|---|---|
+| Leader for a cron | Yes | No DB row naturally guards it |
+| Cache stampede (one refill) | Yes | Short, and losing it is harmless |
+| "Only one indexer on this shard" | Yes | Cross-machine work |
+| Checkout / seat booking | **No** | Use the seat row: constraint, version or hold state |
 
-**Where it does not:** checkout. Use the seat row.
+### What they will poke
 
-### Failure modes they will poke
+Every lock recipe gets the same follow-ups. These are the answers.
 
-| Failure | What you say |
-|---|---|
-| Process dies | TTL saves you. Sweeper / `hold_until` if it's inventory. |
-| Work longer than TTL | Lock expires, **two holders**. Renew (heartbeat) *or* shorter work *or* fencing. |
-| Clock skew | Redis TTL is on the **server**. Don't use app clocks for expiry. |
-| Two Redis nodes (split) | Two lock services → two winners. Don't run "two independent Redis" as the lock. |
-| Deadlock | Lock keys in sorted order. Same as DB. |
+| Failure | What happens | Mitigation |
+|---|---|---|
+| Process dies | Lock would be held forever | TTL frees it. Sweeper / `hold_until` if it's inventory |
+| Work longer than TTL | Lock expires, **two holders** | Renew with a heartbeat, *or* shorter work, *or* fencing |
+| Clock skew | Holders disagree on expiry | Redis TTL runs on the **server**. Don't use app clocks for expiry |
+| Two Redis nodes (split) | Two lock services → two winners | Don't run "two independent Redis" as the lock |
+| Deadlock | Two holders wait on each other | Lock keys in sorted order, same as the DB |
 
-**Fencing token** (the one extra idea worth adding): every time you acquire, you get a **monotonic number** (ZK zxid, `INCR fence`). Storage **rejects writes with an older fence**. So even if a dead holder's lock expires and it still thinks it is leader, its writes bounce. Redis `SET NX EX` **alone has no fencing**. That is why people say Redlock is slippery and ZooKeeper/etcd locks are "real" for correctness.
+### Fencing tokens
 
-> [!tip] SDE-1 line: "Redis lock with TTL for the cron. For money, I would not trust it — I'd put a version/fence on the row so a late holder cannot commit."
+This is the one extra idea worth adding. Each time you acquire the lock you also get a **monotonic number** (a ZooKeeper zxid, or `INCR fence`). The storage layer **rejects writes carrying an older fence**. So even if a paused holder's lock expired and it still thinks it's the leader, its writes bounce.
 
-**Redlock:** name-drop as "multi-Redis majority lock, controversial, I won't use it for payments." Do not implement it.
+Redis `SET NX EX` **alone has no fencing**. That's why people call Redlock slippery and treat ZooKeeper/etcd locks as the ones that are correct.
 
-**ZooKeeper / etcd / Consul:** ephemeral node + watch = lock + liveness. "Someone else's Raft." Use when the lock *is* the product (leader election for a primary), not for a seat.
+> [!tip] "Redis lock with a TTL for the cron. For money I wouldn't trust it; I'd put a version or fence on the row so a late holder can't commit."
 
-## Lease ≠ lock
+**Redlock** is a multi-Redis majority lock. Name-drop it as "controversial, I won't use it for payments." Don't implement it.
 
-A **lease** is a lock that is *expected* to be renewed. "You may be the leader for 10s; heartbeat or lose it." Kubernetes, Kafka partition leader, "this worker owns shard 7."
+**ZooKeeper / etcd / Consul** give an ephemeral node plus a watch, which is a lock with built-in liveness. It's "someone else's Raft." Use them when the lock *is* the product (leader election for a primary), not for a seat. How consensus makes these correct is in [[17 - Consistency Time and Consensus]].
 
-Same TTL idea. The extra word is **renew**. If you cannot renew, you **stop writing**.
+---
 
-## Semaphore (limit N, not 1)
+## Lease vs Lock
 
-Lock = 1. Semaphore = "at most 20 thumbnail workers." Redis: increment a counter with cap, or a list of tokens. Gateway concurrency limit is this, not a rate limit (rate is per time; concurrency is in-flight).
+A **lease** is a lock that is *expected* to be renewed: "You may be the leader for 10 s; heartbeat or lose it." Kubernetes leader election, the Kafka partition leader, and "this worker owns shard 7" all work this way.
 
-## Single-flight / request coalescing
+It's the same TTL idea. The extra word is **renew**, and the extra rule is: if you can't renew, you **stop writing**.
 
-100 requests miss the same cache key → **one** goes to DB, others wait. Stampede fix in [[06 - Caching]]. Same family as a lock, lifetime of one fetch.
+| Tool | Lifetime | Pick when |
+|---|---|---|
+| **Lock** | One critical section, then release | Short, one-off work (a cron run, a cache refill) |
+| **Lease** | Ongoing ownership, renewed by heartbeat | A role held for a long time (leader, shard owner) |
 
-## Leader election (cron / scheduler)
+---
 
-"Nightly bill-run must run once." Options, cheapest first:
+## Semaphore
 
-1. Cloud scheduler hits **one** HTTP endpoint (they elect for you).
-2. `jobs` table + `SKIP LOCKED`.
-3. Redis lock around the job.
-4. ZooKeeper/etcd if you already have a cluster.
+A lock allows one holder; a semaphore allows **at most N**. "At most 20 thumbnail workers" is a semaphore. In Redis, increment a counter with a cap, or hand out a list of tokens.
 
-Not Raft-on-the-whiteboard.
+A gateway concurrency limit is a semaphore, not a rate limit. A rate limit counts requests per unit of time; a concurrency limit counts requests in flight right now.
 
-## Inbox (pair with outbox)
+| Control | Limits | Pick when |
+|---|---|---|
+| **Lock** | 1 holder | Exactly one actor |
+| **Semaphore** | N concurrent holders | Protect a resource with fixed capacity |
+| **Rate limit** | Requests per time window | Abuse control, fair use |
 
-[[07 - Async Messaging]] has **outbox** (DB commit + publish). The twin:
+---
 
-**Inbox:** consumer writes `event_id` to an `inbox` table in the **same txn** as the side effect. Duplicate Kafka delivery → unique violation → skip. That is idempotency you can point at.
+## Single-Flight (Request Coalescing)
 
-## What this page is not
+When 100 requests miss the same cache key at once, single-flight lets **one** go to the DB while the others wait for its result. It's the stampede fix in [[06 - Caching]]. It's in the same family as a lock, but its lifetime is exactly one fetch.
 
-Geo radius, user search radius, geohash neighbours — [[09 - Storage Search and Geo]].
+---
 
-Consensus internals, Redlock paper, TrueTime, CRDTs, write-skew catalogue, 2PL proofs — [[15 - Out of Scope]].
+## Leader Election for Cron and Schedulers
+
+"The nightly bill run must run once" is a leader-election problem, but it rarely needs real consensus. The options below go cheapest first; pick the first one that fits. Not Raft on the whiteboard.
+
+| Option | How | Pick when |
+|---|---|---|
+| 1. Cloud scheduler | It hits **one** HTTP endpoint; the provider elects for you | Available on your platform. Cheapest |
+| 2. `jobs` table + `SKIP LOCKED` | Workers claim rows | You already have a DB and many jobs |
+| 3. Redis lock around the job | `SET NX EX` + token | Single job, Redis already present |
+| 4. ZooKeeper / etcd | Ephemeral node, lease | You already run the cluster |
+
+---
+
+## Inbox (Pair with Outbox)
+
+[[07 - Async Messaging]] covers the **outbox**: commit to the DB and publish in one step. The inbox is its twin on the consumer side.
+
+The consumer writes the `event_id` into an `inbox` table **in the same transaction** as the side effect. If Kafka delivers the event twice, the second insert hits a unique violation and the consumer skips it. That's idempotency you can point at.
+
+```mermaid
+flowchart LR
+    K[Kafka event] --> C[Consumer]
+    C -->|same txn| I[(inbox: event_id UNIQUE)]
+    C -->|same txn| S[(Side effect)]
+    I -->|duplicate| X[Skip]
+```
+
+---
+
+## What This Note Doesn't Cover
+
+Geo-radius, user search radius and geohash neighbours are in [[09 - Storage Search and Geo]]. Consensus internals, clocks and TrueTime are in [[17 - Consistency Time and Consensus]]. CRDTs are in [[10 - Distributed Building Blocks]]. The Redlock paper, the write-skew catalogue and 2PL proofs are in [[15 - Out of Scope]].
+
+---
+
+## Failure Modes
+
+| Failure | What happens | Mitigation |
+|---|---|---|
+| **Lost update** | Two writers overwrite each other | Atomic `UPDATE … WHERE`, version CAS, or `FOR UPDATE` |
+| **Deadlock** | Two transactions each wait for the other's row | Lock in sorted ID order; keep transactions tiny |
+| **Long-held row lock** | A lock held during payment blocks everyone | Use a hold state with `hold_until`, not a lock |
+| **Write skew** | Each update valid, invariant broken | Serializable, or a constraint/lock on the invariant |
+| **Hot row** | One counter row serialises all writers | Shard the counter, Redis `INCR`, or append and sum |
+| **Stranded lock** | Holder dies with no expiry | Always `EX`; sweeper for DB holds |
+| **Two holders** | Work outlives the TTL, or a paused holder resumes | Renew the lease; fencing tokens checked by storage |
+| **Wrong-holder release** | Blind `DEL` removes someone else's lock | Token + compare-and-delete in Lua |
+| **Duplicate event** | Consumer applies the side effect twice | Inbox table with unique `event_id` |
+
+---
+
+## Interview Lines
+
+> [!tip] Say it like this
+> - "A distributed lock is my last tool. First a unique constraint, then a version column, then a hold state with a TTL."
+> - "Seats are guarded by the seat row, not by Redis. `hold_until` plus a sweeper releases abandoned holds."
+> - "Workers claim jobs with `FOR UPDATE SKIP LOCKED`, so nobody steals the same job and I don't need Redis."
+> - "Redis lock is `SET NX EX` with a random token, and release is compare-and-delete."
+> - "For money I add a fencing token on the row, so a late lock holder can't commit."
+> - "Consumers dedupe with an inbox table in the same transaction as the side effect."
 
 ## Related Notes
 
@@ -137,3 +227,4 @@ Consensus internals, Redlock paper, TrueTime, CRDTs, write-skew catalogue, 2PL p
 - [[08 - Reliability]]
 - [[10 - Distributed Building Blocks]]
 - [[12 - Mini Designs]] — booking, ride offer TTL
+- [[17 - Consistency Time and Consensus]]
