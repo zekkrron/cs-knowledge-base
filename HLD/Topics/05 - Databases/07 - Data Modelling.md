@@ -77,8 +77,8 @@ Saying "NoSQL" names nothing. Name the type and what it's for.
 | Type | Looks like | Pick when | Example |
 |---|---|---|---|
 | Key-value | `GET k → blob` | Sessions, flags | Redis, DynamoDB KV |
-| Document | JSON documents | Evolving object; one-document aggregate | MongoDB |
-| Wide-column | Row key + columns | Write-heavy, huge tables | Cassandra |
+| Document | JSON documents | Evolving object; one-document aggregate | MongoDB. Mechanics: [[23 - MongoDB]] |
+| Wide-column | Row key + columns | Write-heavy, huge tables | Cassandra. Mechanics: [[24 - Cassandra and DynamoDB]] |
 | Graph | Nodes and edges | "Friends of friends" **is** the product | Neo4j (rarely the first pick) |
 
 Redis as a **cache** is covered in [[06 - Caching]]. Redis as a **primary** store is only for data you can lose or rebuild, such as sessions and leaderboards.

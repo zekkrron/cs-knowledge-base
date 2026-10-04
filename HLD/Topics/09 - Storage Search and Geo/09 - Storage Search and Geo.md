@@ -76,7 +76,7 @@ Durability is handled by the provider through replication and erasure coding. In
 
 `WHERE title LIKE '%pizza%'` scans the whole table and cannot rank results. Search needs a different data structure: the **inverted index**, which maps each word to the list of documents containing it. It's the index at the back of a book, flipped around from "document → words" to "word → documents."
 
-**Elasticsearch / OpenSearch** is the box on the diagram. Postgres `tsvector` with a GIN index is fine for *small* search; say when you'd outgrow it (large corpus, relevance tuning, facets, high query volume).
+**Elasticsearch / OpenSearch** is the box on the diagram. Postgres `tsvector` with a GIN index is fine for *small* search; say when you'd outgrow it (large corpus, relevance tuning, facets, high query volume). The engine's cluster topology, mappings and Query DSL are their own note: [[22 - Elasticsearch]].
 
 **Autocomplete** is a different problem: a prefix trie or the ES completion suggester, plus a **top-K per prefix** computed offline. See [[12 - Mini Designs]].
 

@@ -20,6 +20,8 @@ Two transactions touching the same data at the same time can interleave in ways 
 
 2PL splits a transaction's life into two phases. In the **growing phase** it acquires locks and never releases any. In the **shrinking phase** it releases locks and never acquires any. Once it has dropped any lock, it can't take another. That rule is what makes a schedule **conflict-serializable**, which is the textbook guarantee.
 
+A **conflict-serializable** schedule is a timeline of concurrent operations that is guaranteed to produce the same final result as running the transactions one at a time, fully isolated from each other. Concretely, every pair of conflicting operations (two operations on the same item, at least one a write) appears in an order consistent with *some* serial order of the transactions.
+
 What engines actually run is **strict 2PL**: **exclusive** locks are held until **commit or abort**. This stops another transaction from reading your dirty write just before you roll back. The growing/shrinking idea still holds; the shrink simply happens all at once at the end.
 
 ```mermaid
@@ -28,6 +30,28 @@ flowchart LR
     G --> C[Commit or abort]
     C --> S[Release all X locks]
 ```
+
+### 2PL variations
+
+**1. Basic 2PL.**
+
+- **The rule:** a transaction acquires locks dynamically as needed and may release each one as soon as the operation using it finishes. The only restriction is that once it drops its first lock (entering the shrinking phase), it can never acquire a new one.
+- **The flaw (cascading rollbacks):** if transaction A modifies a row and drops the lock early, transaction B can immediately lock and read that modified data. If A then hits an error and rolls back, the data B read never officially existed. The database must abort B (and any other transaction that depended on A's write) to prevent corruption.
+
+**2. Strict 2PL.**
+
+- **The rule:** locks are still acquired dynamically, but every **exclusive** (write) lock is held until the transaction finishes via commit or abort. **Shared** (read) locks can still be dropped early once the shrinking phase begins.
+- **The flaw (deadlocks):** because locks are acquired incrementally, statement by statement, transactions frequently block and wait. A locks row 1 and waits for row 2 while B locks row 2 and waits for row 1. Both wait indefinitely until the database's **deadlock detector** steps in and aborts one of them. (Basic 2PL can deadlock the same way; strict 2PL fixes cascading rollbacks, not deadlocks.)
+
+**3. Strong strict 2PL (rigorous 2PL).**
+
+- **The rule:** the transaction holds **all** locks, shared and exclusive, until the very end. Nothing is dropped early.
+- **The flaw (throughput):** it rules out these anomalies with the simplest reasoning (transactions serialize in commit order), but it hurts throughput at scale. Holding even a read lock until a long transaction finishes blocks every other transaction from writing that row for the whole duration.
+
+**4. Conservative 2PL.**
+
+- **The rule:** a transaction must declare and acquire every lock it will ever need at the very beginning, before executing a single statement. Because it never waits while holding locks, it **can't deadlock**.
+- **The flaw (impractical):** real applications rarely know every row they'll touch upfront, since later queries often depend on what earlier reads returned. Waiting to gather every lock at once also creates a large bottleneck at the start.
 
 ### Lock modes
 
@@ -39,6 +63,17 @@ flowchart LR
 | **Intention exclusive (IX)** | | "I will X-lock a row in this table" |
 
 Intention locks sit on the **table** (or a page) so the engine can decide whether a whole-table lock is safe without inspecting every row. A `LOCK TABLE` in X mode conflicts with a row UPDATE, which holds IX on the table plus X on the row. Without IS/IX, the engine would have to walk every row to check.
+
+**Row-level locks.**
+
+- **Shared (S):** taken when a transaction needs to read a row. Many transactions can hold an S lock on the same row at the same time.
+- **Exclusive (X):** taken when a transaction needs to write or modify a row. While it's held, nobody else can hold any other lock on that row until it's released.
+
+**Table-level intention locks.**
+
+- **Intention shared (IS):** a marker placed on the whole table announcing that the transaction will place an S lock on some row inside.
+- **Intention exclusive (IX):** a marker placed on the whole table announcing that the transaction will place an X lock on some row inside.
+- **The purpose:** intention locks let the engine decide instantly whether a whole-table lock request is safe. Without IS/IX markers, it would have to scan millions of individual rows for conflicts before approving a table-level operation. Intention locks don't conflict with each other (IS and IX coexist fine); they only conflict with table-level S or X locks.
 
 ### Granularity
 

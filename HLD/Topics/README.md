@@ -27,6 +27,10 @@ The numbers are stable because every note links to folders by name. Renumbering 
 | | [[06 - Caching]] | Cache patterns, invalidation, eviction, Redis internals |
 | | [[07 - Async Messaging]] | Queues vs logs, Kafka in depth, RabbitMQ and SQS. Index: [[HLD/Topics/07 - Async Messaging/README]] |
 | | [[09 - Storage Search and Geo]] | Object storage, search internals, vector search, geo indexes |
+| **Tools** | [[21 - Redis]] | Data structures, persistence, replication, Cluster, locks and rate limits |
+| | [[22 - Elasticsearch]] | Cluster topology, mappings, Query DSL, bulk indexing, cluster health |
+| | [[23 - MongoDB]] | Replica sets, oplog, elections, write/read concern, sharding |
+| | [[24 - Cassandra and DynamoDB]] | Partition keys, no-leader writes, LSM/tombstones, hinted handoff, GSI vs LSI |
 | **Distributed systems** | [[10 - Distributed Building Blocks]] | Hashing, IDs, probabilistic structures, gossip, CRDTs, repair |
 | | [[14 - Coordination and Concurrency]] | Locks, leases, fencing, `SKIP LOCKED`, leader election |
 | | [[17 - Consistency Time and Consensus]] | Consistency models, clocks, Raft, quorums, multi-region data |
@@ -54,8 +58,9 @@ Read **aloud**. Silent reading does not survive a whiteboard. Each step ends wit
 | 5 | [[17 - Consistency Time and Consensus]] | Say, for one product, which path is linearizable and which is eventual. Draw a 3-node Raft commit. |
 | 6 | [[11 - Services and Observability]] · [[18 - Security]] | Put the auth checks and the trace id on the diagram from step 1. |
 | 7 | [[19 - Deployment and Infrastructure]] · [[20 - Data Processing and Analytics]] | Walk a column rename with zero downtime. Say where analytics runs and why not on the primary. |
-| 8 | [[12 - Mini Designs]] | URL shortener and rate limiter, 20 minutes each, then the rest. |
-| 9 | [[13 - Question Bank]] | Concept grill out loud. |
+| 8 | [[21 - Redis]] · [[22 - Elasticsearch]] · [[23 - MongoDB]] · [[24 - Cassandra and DynamoDB]] | For each tool, say how it fails over, how you'd pick its key, and what it can't do. |
+| 9 | [[12 - Mini Designs]] | URL shortener and rate limiter, 20 minutes each, then the rest. |
+| 10 | [[13 - Question Bank]] | Concept grill out loud. |
 
 ---
 

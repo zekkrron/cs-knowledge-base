@@ -104,6 +104,8 @@ These are two families of guarantees for databases. ACID is what a relational da
 | **ACID** | A transaction is atomic, leaves data valid, doesn't see other transactions' uncommitted writes, and a committed write survives a crash | Postgres | Correctness per row matters: orders, money, bookings |
 | **BASE** | Basically available, soft state, eventually consistent | Dynamo- or Cassandra-style stores | You need partition survival and write throughput, and can give up a single global answer to "what is this row right now" |
 
+**Basically available** means the system always responds, even during a failure, rather than blocking or erroring out. **Soft state** means the data can change over time without a new write, simply by replicas syncing up to converge.
+
 More on picking a store in [[05 - Databases]].
 
 ---

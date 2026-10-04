@@ -71,12 +71,12 @@ Inside one datacenter a round trip is well under a millisecond, so this barely m
 
 That is why every serious system avoids opening new connections per request.
 
-| Technique | What it does | Pick when |
-|---|---|---|
-| **Keep-alive** | Keeps the TCP + TLS connection open for many requests | Always; it is the default in HTTP/1.1 and later |
-| **Connection pooling** | A client keeps a set of warm connections and hands them out | Service → database, service → service, gateway → backends |
+| Technique                          | What it does                                                                                         | Pick when                                                                              |
+| ---------------------------------- | ---------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| **Keep-alive**                     | Keeps the TCP + TLS connection open for many requests                                                | Always; it is the default in HTTP/1.1 and later                                        |
+| **Connection pooling**             | A client keeps a set of warm connections and hands them out                                          | Service → database, service → service, gateway → backends                              |
 | **TLS session resumption / 0-RTT** | A returning client skips most of the handshake; with TLS 1.3 0-RTT it sends data in the first flight | Repeat clients. 0-RTT data can be **replayed**, so only use it for idempotent requests |
-| **Terminate TLS at the edge** | CDN or load balancer does the expensive handshake close to the user | Global users; the edge keeps warm connections back to your origin |
+| **Terminate TLS at the edge**      | CDN or load balancer does the expensive handshake close to the user                                  | Global users; the edge keeps warm connections back to your origin                      |
 
 Pool size is a Little's Law question: in-flight requests = arrival rate × latency. See [[02 - Fundamentals]].
 
@@ -91,7 +91,11 @@ The three versions carry the same methods, status codes, and headers. What chang
 
 **HTTP/2** fixes the first problem. It uses binary framing and **multiplexes** many streams over one TCP connection, so a slow response no longer blocks others at the HTTP layer. It also adds **header compression** (HPACK), which matters because headers such as cookies repeat on every request. But all streams still share one TCP connection, so a lost packet stalls all of them.
 
-**HTTP/3** fixes the second problem by replacing TCP with **QUIC**, which runs over **UDP**. QUIC does its own reliability per stream, so a lost packet only stalls its own stream. TLS 1.3 is built in, so the transport and crypto handshakes are combined into one round trip, and returning clients can use **0-RTT**. QUIC identifies a connection by an ID rather than by IP and port, which gives **connection migration**: a phone moving from Wi-Fi to cellular keeps its connection.
+A "stream" is not a second parallel connection; it's a label. A request or a file is cut into frames, each frame tagged with a **stream ID**, and the frames from many streams are interleaved onto the one TCP connection. The receiving end sorts frames back into their streams by that ID. This is why HTTP/2's fix is only partial: TCP itself has no concept of streams, just one ordered byte sequence. If a packet carrying bytes for stream 5 is lost, TCP won't hand *any* bytes to the application past that point, including bytes for streams 7 and 9 that already arrived fine, until the lost packet is retransmitted. The streams were multiplexed at the HTTP layer, but TCP still blocks on them as a single ordered unit.
+
+TCP itself has separate send and receive directions on the same connection, so request bytes and response bytes can be in flight at once. HTTP/1.1 uses that but only halfway: one request at a time and one response at a time per connection, so there's nothing to multiplex yet. HTTP/2's stream IDs are what let many requests and many responses overlap on both directions simultaneously, which is what makes real streaming possible.
+
+**HTTP/3** fixes the second problem by replacing TCP with **QUIC**, which runs over **UDP**. The streams are the same idea, labelled chunks of a request multiplexed together, but QUIC tracks loss and ordering **per stream ID** instead of for the connection as a whole. A lost packet only blocks the stream it belonged to; frames for other streams that already arrived are delivered immediately. That per-stream accounting, not UDP itself, is what actually removes transport-level head-of-line blocking. TLS 1.3 is built in, so the transport and crypto handshakes are combined into one round trip, and returning clients can use **0-RTT**. QUIC identifies a connection by an ID rather than by IP and port, which gives **connection migration**: a phone moving from Wi-Fi to cellular keeps its connection.
 
 | Version | Connection model | HOL blocking | Extras | Pick when |
 |---|---|---|---|---|
@@ -170,6 +174,8 @@ A breaking change goes into a new version. The old version is deprecated with a 
 
 Every error from every endpoint should have the same body shape, so clients write error handling once. A common shape is a code a machine can match on, a message a human can read, and a request ID to find the logs. RFC 9457 ("problem details", `application/problem+json`) is a standard version of this.
 
+A client that gets an error (or times out) needs to know whether retrying is safe. **Idempotent requests are the ones safe to repeat.** For a request that isn't naturally idempotent, such as a POST that creates something, the **`Idempotency-Key`** is the unique identifier the server uses to recognise a repeat and return the original result instead of doing it twice.
+
 ```json
 {
   "error": {
@@ -193,6 +199,8 @@ Any endpoint that returns a list needs pagination, because the list will eventua
 | **Offset** | `LIMIT 20 OFFSET 40` | Breaks when rows are inserted at the top (a feed shows duplicates or skips); slow on large offsets because the DB still scans skipped rows | Small, stable lists; admin tables with page numbers |
 | **Cursor** | "Give me items after `id=...`", or after a `(timestamp, id)` pair | No jumping to page 7 | The right default for feeds and anything large or changing |
 
+Cursor pagination fetches the next batch by referencing the marker from the last item returned, instead of counting rows from the start. The reason this is fast is that the marker column (or pair) has an **index** on it, so the rows are already sorted in that order ahead of time; the database just jumps straight to the marker's position in the index and reads forward, rather than re-sorting or scanning the table on every request. That's what keeps performance flat regardless of how large the table gets, and it also avoids the duplicate-or-skipped-item problem offset has when rows are inserted while someone pages through. The cost is not being able to jump to an arbitrary page number, and that's not just a missing feature: you can't know the marker for "page 7" in advance, because deletions leave gaps and inserts keep shifting which row would be the 60th, so the only way to find that marker is to count 60 rows in order first, which is the exact scan a cursor exists to avoid.
+
 ---
 
 ## Realtime: Pick the Simplest Thing That Works
@@ -207,7 +215,7 @@ When the server has something new to tell the client, there's a ladder of option
 | Server pushes, client only listens (scores, order status) | **SSE** (Server-Sent Events) |
 | Both sides talk continuously (chat) | **WebSocket** |
 
-SSE is still HTTP, so it works with an ordinary load balancer and reconnects automatically. A WebSocket is a persistent TCP connection, which changes the design: a message for a user must reach the node holding that user's connection. That needs **sticky sessions** or a **pub/sub** layer (such as Redis) so any node can push, plus an L4 load balancer or a WebSocket gateway.
+SSE is still a normal HTTP request and response, just one where the server never closes the response and keeps writing new chunks into it over time, so it works with an ordinary load balancer and reconnects automatically. A WebSocket is a persistent TCP connection, which changes the design: a message for a user must reach the specific node holding that user's connection, since another node can't write into a socket it doesn't hold. That needs **sticky sessions** (pin each user to one node) or a **pub/sub** layer (such as Redis, so the node that generates an update can hand it to the node holding the connection), plus an L4 load balancer or a WebSocket gateway, since ordinary HTTP load balancers tend to close connections that stay open too long.
 
 > [!tip] "Realtime" in the prompt does **not** mean WebSockets. Order tracking can be SSE or even polling every 2 s. Chat needs WebSockets.
 
@@ -232,8 +240,12 @@ Webhooks cross the public internet, so four properties make them safe and reliab
 
 - **Signing.** The sender computes an **HMAC** of the body with a shared secret and sends it in a header. The receiver recomputes it and compares with a constant-time check. Anyone can POST to a public URL; only the provider knows the secret.
 - **Retries with backoff.** If the receiver doesn't return 2xx in time, the sender retries with exponential backoff over hours or days. So the receiver should return 200 quickly and do the real work asynchronously from a queue.
-- **Idempotent receiver.** Retries mean the same event **will** arrive more than once. Store the `event_id` with a unique constraint and skip duplicates. Also check the current state: if the order is already paid, a second "paid" event is a no-op.
+	- **Idempotent receiver.** Retries mean the same event **will** arrive more than once. Store the `event_id` with a unique constraint and skip duplicates. Also check the current state: if the order is already paid, a second "paid" event is a no-op.
 - **Replay protection.** Include a timestamp in the signed payload and reject events older than a few minutes. This stops an attacker who captured a valid signed request from resending it later.
+
+Signing matters even though the connection is already HTTPS. TLS only secures the *pipe*: it stops eavesdropping and tampering in transit, but it says nothing about *who* is on the other end of that pipe. Anyone, including an attacker, can open a perfectly valid, secure TLS connection to your public webhook URL and POST a fake payload through it. The thing that actually needs checking is the **source** of the request, not the transport, and that's exactly what the HMAC signature verifies: only whoever holds the shared secret can produce a signature your server accepts. That secret is typically a long-lived string the provider generates once when you register the webhook URL in their dashboard; you store it in your own secrets manager, and it stays valid indefinitely until you manually rotate it, unlike a short-lived OAuth token.
+
+Replay protection covers a gap signing alone leaves open. A signature doesn't expire by itself, so if an attacker ever gets hold of one complete, validly signed request, for instance from a server log, resending that exact request later would still pass the HMAC check untouched. The timestamp fixes this because it's included inside the signed payload itself, not sent alongside it. The server rejects anything older than a few minutes, and the attacker can't just bump the timestamp to look recent, because changing it changes the payload, which breaks the existing signature, and producing a new valid signature for the updated timestamp requires the secret they don't have.
 
 > [!warning] Don't trust only the client redirect after a payment. The webhook is the source of truth, and it must be idempotent. See [[12 - Mini Designs]].
 
@@ -242,7 +254,7 @@ Webhooks cross the public internet, so four properties make them safe and reliab
 ## Authentication and Authorization
 
 **Authentication** (AuthN) is who you are. **Authorization** (AuthZ) is what you're allowed to do, often as roles (RBAC). In a design, authentication usually happens once at the gateway, and authorization happens in the service that owns the data. The main options are summarised here; the deeper treatment (token lifetimes, OAuth flows, secrets, encryption) is in [[18 - Security]].
-
+	
 | Mechanism | How it works | Cost | Pick when |
 |---|---|---|---|
 | **Session cookie** | Server stores a session ID (e.g. in Redis); the cookie carries only the ID | Needs a shared session store or sticky sessions; cookies bring CSRF risk | Web apps where easy revocation matters |
@@ -250,6 +262,8 @@ Webhooks cross the public internet, so four properties make them safe and reliab
 | **OAuth2 / SSO** | "Login with Google": you are a client of an identity provider | Extra redirects and provider dependency | Third-party login or enterprise SSO. Know the authorization-code flow exists; don't derive the spec live |
 | **API keys** | A long secret per customer or service | Leaked keys need rotation | Public API customers, service-to-service. Pair with [[08 - Reliability\|rate limiting]] |
 | **mTLS** | Both sides present certificates | Certificate management | Internal service mesh. Name-drop only |
+
+In standard TLS, only the server presents a certificate; the client doesn't prove its identity at the network level at all. The session cookie, JWT, OAuth token and API key rows above are exactly how client identity gets checked instead, but all of them happen one layer up, at the **application** level, after the TLS handshake has already finished. **mTLS** is what moves client authentication down to the **network** level itself: the client also presents a certificate during the handshake, and the connection isn't established at all unless the server accepts it. That's why it's the odd one out in this table and why it's the default for a service mesh, where you want every connection between services verified before a single application-layer byte is exchanged.
 
 ---
 

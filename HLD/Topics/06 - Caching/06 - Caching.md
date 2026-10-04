@@ -96,59 +96,11 @@ In Redis this is one line of config: `maxmemory-policy allkeys-lru`.
 
 ---
 
-## How Redis Itself Works
+## Redis as the Cache Store
 
-Treating Redis as a magic box is fine until someone asks "what happens if Redis restarts?" These three mechanisms answer that.
+Redis is the default answer to "which store?" in this note, but it's a full data-structure server with its own persistence, replication, sharding, and jobs beyond caching (locks, rate limits, leaderboards, pub/sub). That depth lives in its own note so it doesn't get lost inside the caching *pattern*: **[[21 - Redis]]**.
 
-### Persistence
-
-Redis lives in memory, but it can write to disk so a restart doesn't start empty.
-
-| Mode | How it works | Loses on crash | Pick when |
-|---|---|---|---|
-| **None** | Memory only | Everything | Pure cache that can be rebuilt from the DB |
-| **RDB** (snapshot) | Periodically dumps the whole dataset to a file | Everything since the last snapshot (minutes) | Fast restarts, some loss is acceptable |
-| **AOF** (append-only file) | Logs every write; replays the log on restart | About one second, with `fsync` every second | Redis holds data you'd rather not lose, e.g. counters |
-| **RDB + AOF** | Both | About one second | Faster restart than AOF alone, with AOF's durability |
-
-> [!warning] Even with AOF, Redis is not a replacement for a database of record. If losing the data costs money, the source of truth belongs in the DB and Redis holds a copy.
-
-### Replication
-
-A Redis primary streams its writes to one or more replicas. Replicas serve reads and can take over if the primary dies. **Redis Sentinel** watches the primary and promotes a replica automatically.
-
-Replication is **asynchronous**. A write acknowledged by the primary can be lost if the primary dies before the replica receives it.
-
-### Redis Cluster (sharding)
-
-One Redis box eventually runs out of memory. Redis Cluster splits data across several primaries using **16,384 hash slots**. Each key maps to a slot with `CRC16(key) mod 16384`, and each primary owns a range of slots. Adding a node moves slots, not every key.
-
-Two consequences come up often:
-
-- **Multi-key commands** (`MGET`, transactions, Lua scripts) only work if all the keys are in the same slot. **Hash tags** force that: `{user:42}:cart` and `{user:42}:profile` hash only the part in braces, so they land together.
-- **A hot key stays on one shard.** Sharding spreads *many* keys; it does nothing for one key that gets half the traffic. See Failure Modes below.
-
----
-
-## Redis vs Memcached
-
-| | Redis | Memcached |
-|---|---|---|
-| Data types | Strings, hashes, lists, sets, **sorted sets**, bitmaps, streams | Opaque blobs |
-| Persistence | Optional (RDB / AOF) | None |
-| Replication | Built in | None |
-| Pick when | Cache **plus** counters, leaderboards, locks, pub/sub | You need only a simple, multi-threaded blob cache |
-
-Redis is rarely just `GET`/`SET`. Its data types map directly onto common features:
-
-| Feature | Redis structure |
-|---|---|
-| Leaderboard | Sorted set |
-| Feed of post IDs | List or sorted set |
-| Rate limit | `INCR` plus a TTL |
-| Lock | `SET key token NX EX 30` (details in [[14 - Coordination and Concurrency]]) |
-
-> [!tip] Name the structure, not just the tool. "I'll cache the events" is vague. "A sorted set of `event_id` by popularity, each payload in a hash, TTL five minutes" shows you've actually designed it.
+What matters for caching specifically: Redis answers in about a millisecond, supports `EXPIRE` natively (so TTL is one flag, not a column you check yourself), and `DEL` is how cache-aside invalidates on write.
 
 ---
 
@@ -180,3 +132,4 @@ Redis is rarely just `GET`/`SET`. Its data types map directly onto common featur
 - [[05 - Databases]]
 - [[08 - Reliability]]
 - [[14 - Coordination and Concurrency]]
+- [[21 - Redis]]

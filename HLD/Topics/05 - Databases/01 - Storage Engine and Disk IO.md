@@ -34,12 +34,12 @@ Most engines lay a page out as a **slotted page**:
 └──────────────────────────────────────────┘
 ```
 
-| Part | What it holds | Notes |
-|---|---|---|
-| **Header** | Checksum, page LSN (the last WAL record that touched this page), lower/upper pointers into free space, page type (heap, btree, …) | The page LSN is what recovery compares against |
-| **Line pointers (slots)** | Fixed-size entries growing **down** from the header; each is offset + length (+ flags: dead, redirected) | The slot number **is** the last part of a physical RID: `(page_id, slot)` |
-| **Tuples** | Variable-length rows growing **up** from the bottom: header + null bitmap + columns | |
-| **Free space** | The **gap in the middle** | Deleting a row marks its slot dead, so the gap can be reused without rewriting the whole page |
+| Part                      | What it holds                                                                                                                     | Notes                                                                                         |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| **Header**                | Checksum, page LSN (the last WAL record that touched this page), lower/upper pointers into free space, page type (heap, btree, …) | The page LSN is what recovery compares against                                                |
+| **Line pointers (slots)** | Fixed-size entries growing **down** from the header; each is offset + length (+ flags: dead, redirected)                          | The slot number **is** the last part of a physical RID: `(page_id, slot)`                     |
+| **Tuples**                | Variable-length rows growing **up** from the bottom: header + null bitmap + columns                                               |                                                                                               |
+| **Free space**            | The **gap in the middle**                                                                                                         | Deleting a row marks its slot dead, so the gap can be reused without rewriting the whole page |
 
 > [!tip] Why slots, not "just append rows"
 > A row can grow (an UPDATE makes it longer), and a row can move to another page, in which case its slot becomes a **redirect**. Indexes point at `(page, slot)`, not a raw byte offset that would break on every compaction.
@@ -61,7 +61,9 @@ The buffer pool is an in-memory cache of **pages**. It's the engine's answer to 
 
 On a **hit** the page is already in the pool: pin it, read or write, unpin. On a **miss** the engine evicts a victim and reads the page from disk into that frame. A page with pin count > 0 **can't be evicted**, because someone is looking at it.
 
-A **dirty page** is a page in RAM that doesn't match the copy on disk. An `UPDATE` dirties the page in the pool. It does **not** immediately `fsync` the data file, but it **does** append to the WAL first. A **checkpoint** or background flusher writes dirty pages back later. If the machine crashes with dirty pages in RAM, those bytes are gone, and the WAL plus ARIES put them back.
+A **dirty page** is a page in RAM that doesn't match the copy on disk. An `UPDATE` dirties the page in the shared buffer, and that dirty page is **not** written to disk right away. There are actually three layers to track here, not two: the engine's own **shared buffer** (in RAM), the kernel's **OS page cache** (also RAM, but outside the engine's control), and the **disk** itself. A write from shared buffer to the data file first lands in the OS page cache; it only becomes durable once something calls `fsync` to force the OS to flush that page cache out to disk.
+
+So two different mechanisms give durability at two different times, and conflating them is where confusion creeps in. The moment a transaction commits, Postgres appends the change to the **WAL** and `fsync`s the WAL file, specifically the WAL, not the dirty data page in shared buffer. That one sequential, durable write is what makes the commit safe: if the machine crashes right after, the dirty page sitting only in shared buffer is lost along with all of RAM, but the WAL on disk still has the record of what changed, and recovery can replay it. Separately, and much later, a **checkpoint** (or a background writer) takes the dirty pages out of shared buffer, writes them into the OS page cache, and calls `fsync` on the data files themselves so those pages reach disk too. Once that checkpoint's `fsync` succeeds, those specific pages no longer depend on the WAL to survive a crash; before that checkpoint happens, they absolutely do.
 
 ### Eviction
 
@@ -107,7 +109,9 @@ These are the textbook words for "when do data pages hit disk relative to commit
 | **No-steal** | A dirty page of an **uncommitted** txn may not be written to the data file | Simpler undo, less RAM flexibility |
 | **Steal** | The pool **may** evict (write) a dirty page of an uncommitted txn | Default. Undo must be able to roll that page back |
 
-Postgres and InnoDB are **steal + no-force**. Commit is a WAL `fsync`, and uncommitted dirty pages **can** reach disk. Therefore recovery must **undo** those stolen pages, and **redo** committed work whose data pages never flushed.
+Postgres and InnoDB are **steal + no-force**. Commit is a WAL `fsync`, and uncommitted dirty pages **can** reach disk. Therefore recovery must, in general, **undo** those stolen pages, and **redo** committed work whose data pages never flushed.
+
+Postgres specifically skips the undo pass, because of **MVCC**. An `UPDATE` in Postgres never overwrites the old row version in place; it writes a brand new row version onto a page (old and new versions can coexist, each tagged with the transaction that created it) and leaves the old one alone. So a page can hold several versions of "the same row" at once, each one valid for a different window of transactions. If a transaction that wrote one of those versions never committed, there's nothing to roll back: that version simply stays invisible forever, because every reader checks the writer's transaction status and ignores rows written by a transaction that aborted or never committed. Recovery only has to **redo** forward from the WAL to make sure every committed version that didn't reach disk gets reconstructed; it never needs to physically undo an uncommitted one, since visibility rules already hide it. (InnoDB, by contrast, overwrites rows in place and keeps a separate undo log specifically to reconstruct the pre-update value, which is why it needs a real undo pass.)
 
 > [!tip] Interview line
 > "Committed means the WAL is on disk, not that the heap page is." Replicas, CDC, and point-in-time recovery all **tail this log**. Debezium is "someone else reading our WAL"; see [[06 - Ecosystem Resilience and Design Patterns]].
@@ -151,7 +155,13 @@ In Postgres an `UPDATE` inserts a new tuple and marks the old one with `xmax`; a
 
 Plain `VACUUM` makes space reusable inside the table but generally doesn't shrink the file. `VACUUM FULL` rewrites the table compactly but takes an exclusive lock for the whole rewrite, which is why tools like `pg_repack` exist. **HOT updates** (heap-only tuples) reduce the damage: if no indexed column changed and the page has room, the new version goes on the same page and no new index entry is written. A lower fill factor leaves that room.
 
+Fill factor doesn't shrink the page; it's a ceiling for **inserts only**. With a table `fillfactor` of 70 (the heap default is 100), once a page is 70% full Postgres stops placing new rows there, but an `UPDATE` to a row already on that page can still use the remaining 30%. That reserved space is what lets the new version land on the same page, which is the precondition for a HOT update.
+
 **Bloat** is what you get when dead tuples pile up faster than vacuum clears them: the table and its indexes grow far beyond the live data, scans read more pages, and the buffer pool holds more garbage.
+
+"Live" data is only the current version of each row, the one queries actually see. Under MVCC every `UPDATE` or `DELETE` leaves the old version physically sitting on its 8 KB page, so a row updated 50 times exists as 51 versions in the file with just 1 of them live. When vacuum can't keep up, pages fill with these dead versions, and new writes force Postgres to allocate fresh pages and grow the file. A table can reach 100 GB on disk while its live rows, packed tightly, would fit in 10 GB; the other 90 GB of dead tuples and fragmented free space is the bloat. Indexes bloat the same way, because each non-HOT version of a row needs its own index entry pointing at it until vacuum removes the dead ones.
+
+The cost shows up in scans. A sequential scan (a `SUM` across the table, or a filter on an unindexed column) can't skip dead regions on disk; it has to read every page into shared buffer, check the XIDs on each tuple, discard the dead ones, and move on. So reading 10 GB of useful rows means doing 100 GB of disk I/O, and every one of those pulled-in pages competes for buffer space, evicting hot pages from the working set to make room for garbage that's about to be thrown away anyway.
 
 ```mermaid
 flowchart LR
@@ -168,6 +178,8 @@ flowchart LR
 ### Transaction ID wraparound
 
 Postgres transaction IDs (XIDs) are 32-bit, so they run out after about 4 billion and wrap around; visibility compares XIDs within a window of about 2 billion. To stay safe, vacuum **freezes** old tuples, marking them visible to everyone so their XID no longer matters. If freezing falls too far behind, Postgres warns and eventually refuses new writes until a vacuum finishes, to avoid old rows suddenly appearing to be "in the future." This is **transaction ID wraparound**, and it's the most serious reason never to disable autovacuum or leave transactions open forever.
+
+A row being chronologically old is normal and harmless; it only becomes a wraparound risk if autovacuum hasn't gotten around to freezing it before its XID falls about 2 billion transactions behind. So a wraparound warning is always a symptom of freezing falling behind, never of old data existing. Three things commonly cause that lag. An **abandoned or long-running transaction** (an idle-in-transaction session, or an analytics query running for days) is the most common: vacuum can't freeze any row that an open snapshot might still need, so one stuck session blocks freezing database-wide. **Resource throttling** is the second: autovacuum runs deliberately slowly by default to avoid hurting live traffic, so at thousands of writes per second its default settings simply can't keep pace. **Exclusive locks** are the third: an `ALTER TABLE` or `VACUUM FULL` holding the table makes autovacuum skip it entirely until the lock is released.
 
 ### InnoDB: undo logs and purge
 

@@ -101,11 +101,11 @@ A load balancer spreads traffic across servers inside one region. When a system 
 
 **GSLB** (global server load balancing) is a product layer, usually built on GeoDNS or anycast, that adds health checks and policies across regions. It can send traffic away from an unhealthy region, or split traffic by weight or by latency.
 
-| Technique | How it routes | Failover speed | Pick when |
-|---|---|---|---|
-| **GeoDNS** | DNS answer depends on the client's location | Slow, limited by DNS TTL | Simple multi-region setup where minutes of failover are acceptable |
-| **Anycast** | Same IP announced from many sites; the network picks the nearest | Fast, seconds | Edge networks, CDNs, DNS, DDoS absorption |
-| **GSLB** | Health-aware policies across regions on top of DNS or anycast | Depends on the layer underneath, usually fast | Active-active multi-region apps that need health-based failover. Managed examples: AWS Route 53, Cloudflare Load Balancing. |
+| Technique   | How it routes                                                    | Failover speed                                | Pick when                                                                                                                   |
+| ----------- | ---------------------------------------------------------------- | --------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| **GeoDNS**  | DNS answer depends on the client's location                      | Slow, limited by DNS TTL                      | Simple multi-region setup where minutes of failover are acceptable                                                          |
+| **Anycast** | Same IP announced from many sites; the network picks the nearest | Fast, seconds                                 | Edge networks, CDNs, DNS, DDoS absorption                                                                                   |
+| **GSLB**    | Health-aware policies across regions on top of DNS or anycast    | Depends on the layer underneath, usually fast | Active-active multi-region apps that need health-based failover. Managed examples: AWS Route 53, Cloudflare Load Balancing. |
 
 For regional failover strategy and DR tiers, see [[08 - Reliability]].
 
@@ -147,6 +147,7 @@ A **pull** CDN fetches a file from your origin the first time an edge gets a req
 |---|---|---|
 | **Pull** | Edge fetches from origin on a cache miss | Default. Almost everything. |
 | **Push** | You preload the edges before users ask | You know a specific file is about to get huge traffic, such as a video launch, and don't want the first requests to all miss |
+
 
 ### Invalidation
 

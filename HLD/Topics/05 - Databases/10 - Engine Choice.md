@@ -34,7 +34,7 @@ Notice it picks per table. One system can use Postgres, Redis, Cassandra and S3 
 |---|---|---|
 | Users, orders, payments | **Postgres**, strong | Transactions, joins, constraints |
 | Session, hot profile | **Redis** (cache or rebuildable store) | Tiny, TTL, `O(1)` |
-| Chat messages, huge append | **Cassandra / Dynamo**, partition by `chat_id` | Write-heavy, key-shaped |
+| Chat messages, huge append | **Cassandra / Dynamo**, partition by `chat_id` | Write-heavy, key-shaped. Mechanics: [[24 - Cassandra and DynamoDB]] |
 | Analytics events | **Kafka → warehouse** | OLTP Postgres is not the sink. See [[20 - Data Processing and Analytics]] |
 | Search | **Elasticsearch**, lag OK | Inverted index. [[09 - Storage Search and Geo]] |
 | Files | **S3**, URL in Postgres | [[09 - Storage Search and Geo]] |
