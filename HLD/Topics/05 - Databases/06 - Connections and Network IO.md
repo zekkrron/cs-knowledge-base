@@ -65,6 +65,16 @@ PgBouncer sits between the apps and Postgres and maps many client connections on
 | **Transaction** | At `COMMIT` | The usual choice |
 | **Statement** | After each statement (even tighter) | Rarely; it breaks session state and multi-statement transactions |
 
+**The three modes.**
+
+- **Session mode:** when your application opens a connection to PgBouncer, PgBouncer grabs one heavy Postgres server process and glues the two together. It won't release that process back to the shared pool until your application closes its connection to PgBouncer.
+- **Transaction mode:** PgBouncer lends a Postgres process only when a transaction starts (a `BEGIN`, or any statement that runs in its own implicit transaction). The moment your application sends `COMMIT` or `ROLLBACK`, PgBouncer takes the process back to share with others, even though your application's connection to PgBouncer stays open.
+- **Statement mode:** PgBouncer lends the process for a single SQL statement (one `SELECT` or `UPDATE`) and takes it back the moment that statement finishes. Multi-statement transactions aren't allowed, because consecutive statements can land on different server processes.
+
+**The "client disconnect" trap (why session mode fails at scale).** From PgBouncer's point of view the **client is your application server** (your Node.js backend or Java connection pool), not the end user hitting your API. App servers keep a pool of **warm** connections open indefinitely to save setup time, so they rarely disconnect. In session mode, PgBouncer sees 100 warm app connections and pins 100 heavy Postgres processes to match them, even if 99 are idle and doing no work. That defeats the point of a pooler.
+
+That's why **transaction mode** is the standard choice. The app servers can keep thousands of warm, idle connections to PgBouncer, and PgBouncer multiplexes them onto a small set of Postgres processes, only using one for the few milliseconds a transaction is actually running.
+
 Transaction pooling **breaks** session features: `SET`, temp tables, and prepared statements unless you're careful, because the next transaction may run on a different server connection.
 
 Name PgBouncer when the **app count** is the problem, not when you have two boxes.
@@ -109,6 +119,36 @@ This is how Nginx, Redis, PgBouncer, Node and modern gateways hold **tens of tho
 | Process/thread per connection | Hundreds to low thousands | Memory + scheduler | Few clients, each doing heavy work (DB backends) |
 | `epoll` / `kqueue` | Tens to hundreds of thousands idle | One loop, work only when data arrives | Many mostly-idle clients (gateways, websockets, poolers) |
 
+**How an `epoll` event loop handles a connection, step by step:**
+
+1. **Connection acceptance.**
+   - A client initiates a TCP handshake to the server's listening socket.
+   - A single **event loop thread** (often the only thread doing network work in the instance, as in Redis or one Nginx worker) calls `accept()`, which produces a new client socket represented by a **file descriptor (FD)**.
+   - The same thread immediately sets this socket to **non-blocking** mode. On a non-blocking socket with no data, `read()` returns `EAGAIN` / `EWOULDBLOCK` immediately instead of freezing the thread.
+2. **Registration with `epoll`.**
+   - The same thread registers the client's FD with the kernel via `epoll_ctl()`, saying: "notify me whenever **`EPOLLIN`** (incoming data ready to read) happens on this socket."
+   - The kernel stores the descriptor in epoll's internal **interest list**.
+3. **Waiting for events (`epoll_wait`).**
+   - The thread calls `epoll_wait()`, passing an empty array for the kernel to fill with ready events.
+   - If every connected client is idle, the kernel puts the thread to **sleep**.
+   - No CPU cycles or per-client thread stacks are spent while waiting; 100,000 idle sockets sit in kernel memory using minimal resources.
+4. **Data arrival at the kernel.**
+   - A client sends data over the network.
+   - The **NIC** receives the packets and raises a hardware interrupt.
+   - The Linux network stack processes the packets and places the payload in that socket's **receive buffer**.
+   - The kernel marks the socket ready and adds it to epoll's **ready list**.
+5. **Notification and handling multiple ready sockets.**
+   - As soon as at least one socket is on the ready list, the kernel wakes the sleeping event loop thread.
+   - `epoll_wait()` returns the **number** of ready sockets and fills the array with their FDs.
+   - If many sockets got data at once, `epoll_wait()` doesn't pick just one; it returns all ready sockets up to the array size (e.g. 50 descriptors in one call).
+   - The thread walks that list in a simple loop: read from socket A and process it, read from socket B and process it, and so on until the batch is done.
+6. **Resetting the loop.**
+   - After processing the batch, the thread calls `epoll_wait()` again.
+   - If new data arrived while it was busy, `epoll_wait()` returns immediately with the next batch.
+   - If nothing is pending on any socket, the thread goes back to sleep until the kernel wakes it again.
+
+Because one thread processes every ready socket in turn, any slow or blocking work inside the loop (a CPU-heavy request, a synchronous disk call) stalls **every** client on that loop. That's why event-loop servers keep per-event work tiny and push heavy work to worker threads.
+
 ### Idle is the key word
 
 Holding 50k open TLS connections that rarely send is an `epoll` problem. Running 50k **active queries** is still a question of how many backends and cores you have.
@@ -138,7 +178,7 @@ Multiplexing clients is not the same as multiplexing **queries on one Postgres b
 > - "A Postgres connection is a process, so connections are scarce. Every app uses a small pool."
 > - "200 pods with a pool of 50 is 10,000 backends. Shrink the pools and put PgBouncer in transaction mode in front."
 > - "Transaction pooling breaks session features like `SET` and temp tables."
-> - "Event-driven I/O lets a gateway hold many idle clients. It doesn't let one Postgres backend run more than one query."
+> - "Event-driven I/O lets a gateway or PgBouncer hold many idle clients, but Postgres itself is process-per-connection, so active queries are still capped by backends and cores."
 
 ## Related Notes
 

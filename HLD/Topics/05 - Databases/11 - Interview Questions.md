@@ -45,7 +45,7 @@ Which level prevents which anomaly:
 |---|---|
 | Dirty read | Read Committed |
 | Non-repeatable read | Repeatable Read |
-| Phantom | Serializable (InnoDB RR ≈ via gap locks) |
+| Phantom | Serializable (Postgres / InnoDB RR only for plain re-reads; range invariants still need Serializable or locks) |
 | Write skew | True Serializable (or lock the invariant) |
 
 | Question | Short answer | Deep link |

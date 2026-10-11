@@ -29,6 +29,8 @@ Before your code sees anything, four things happen in order. Each one depends on
 3. **TLS** encrypts the pipe. The server's certificate proves you are talking to the right host. HTTPS is simply HTTP over TLS.
 4. **HTTP** carries the actual request.
 
+**DNS also runs privately inside your network.** The public lookup above happens once at the edge, but backend services resolve names too, deep inside the infrastructure. Every cloud network has its own resolver: each AWS **VPC** gets the **Route 53 Resolver** automatically, and Kubernetes runs CoreDNS for service names ([[11 - Services and Observability]]). It's the same protocol (UDP port 53, A records, CNAMEs, TTLs); only the scope differs. Names in a **private hosted zone** or the cluster domain resolve entirely inside the network and never touch the public root servers; public names still get resolved recursively as usual. A database endpoint like the Aurora reader endpoint is a DNS name that resolves to the **private IPs** of the current healthy replicas, rotated with a short TTL, so the client only spreads load and survives failover if it actually re-resolves (JVMs and connection pools that cache DNS too long keep hitting the old or dead instance). Private IPs aren't reachable from the internet, but the real access control is security groups and network rules, not the DNS name being hard to find. Read-endpoint routing: [[08 - Replication]].
+
 After that the request reaches your edge: CDN, gateway, load balancer, then service. That part is covered in [[04 - Load Balancing CDN and Gateway]].
 
 > [!tip] If they ask "walk a request from the browser," this sequence **is** the answer. Then LB, then service. Say "all public traffic is TLS" and move on unless they push on certificates.

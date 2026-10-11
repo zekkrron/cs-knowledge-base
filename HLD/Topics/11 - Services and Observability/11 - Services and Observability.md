@@ -74,6 +74,10 @@ These two patterns are worth naming, not designing in full. They come up when re
 
 **CQRS** (command query responsibility segregation) means the write model is not the read model. You write to normalised order tables and read from a denormalised feed or cache. You're already doing CQRS whenever you fan out a timeline.
 
+Fanning out a timeline is the architectural process of taking a single piece of newly created data and distributing it to the individual feeds of every user who needs to see it.
+
+Because the shape and scale of the data being written (a single post) is entirely decoupled from the shape of the data being read (an aggregated feed), you have inherently implemented CQRS just by building the fan-out mechanism.
+
 **Event sourcing** means storing the events themselves ("item added," "order paid") as the source of truth and rebuilding current state by replaying them. It fits audit-heavy domains, but it's heavy to run. Don't lead with it.
 
 | Pattern | Pick when |
@@ -100,6 +104,15 @@ You won't install Prometheus in the interview. Draw one box: "metrics + logs + t
 ### Golden signals
 
 When deciding what to measure for a service, start with the four **golden signals**: **latency**, **traffic**, **errors** and **saturation**. They cover most user-visible problems and are the usual base for SLIs.
+
+**"Saturation"** measures how "full" your service is. It represents the fraction of a system's total physical or logical capacity that is currently being consumed.
+
+While _traffic_ measures the raw volume of requests hitting your system (e.g., 5,000 HTTP requests per second), _saturation_ measures how much of your underlying infrastructure is being used to handle that exact traffic.
+
+Key areas of saturation include:
+
+- **Physical Resources:** CPU utilization, memory consumption, disk I/O bandwidth, or network throughput.
+- **Logical Limits:** Database connection pool exhaustion, maxed-out thread pools, or full Kafka consumer buffers.
 
 ---
 
@@ -181,16 +194,16 @@ Going multi-region is either **active-passive** (a primary region plus a standby
 
 ## Failure Modes
 
-| Failure | What happens | Mitigation |
-|---|---|---|
-| **Distributed monolith** | Services share a DB or must deploy together; all the cost, none of the independence | Each service owns its data; split only where forced |
-| **Sync call chain** | One slow downstream service stalls every caller above it | Timeouts, circuit breakers, prefer async ([[08 - Reliability]]) |
-| **Stale discovery** | Traffic goes to instances that no longer exist | Health checks, short DNS TTLs, registry deregistration |
-| **Broken trace** | A service drops `traceparent`; the trace splits in two | Instrument HTTP and queue clients with OpenTelemetry |
-| **Head sampling hides failures** | The rare failed request was never recorded | Tail sampling, or always keep errors |
-| **No request ID** | Logs across services can't be joined | Generate at the gateway, propagate, log on every line |
-| **Alert fatigue** | Noisy cause-based alerts get ignored; a real outage is missed | Symptom and burn-rate alerts; page vs ticket; delete unactionable alerts |
-| **Mesh overhead** | Added latency and a hard-to-debug control plane | Use a mesh only at many-service scale |
+| Failure                          | What happens                                                                        | Mitigation                                                               |
+| -------------------------------- | ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| **Distributed monolith**         | Services share a DB or must deploy together; all the cost, none of the independence | Each service owns its data; split only where forced                      |
+| **Sync call chain**              | One slow downstream service stalls every caller above it                            | Timeouts, circuit breakers, prefer async ([[08 - Reliability]])          |
+| **Stale discovery**              | Traffic goes to instances that no longer exist                                      | Health checks, short DNS TTLs, registry deregistration                   |
+| **Broken trace**                 | A service drops `traceparent`; the trace splits in two                              | Instrument HTTP and queue clients with OpenTelemetry                     |
+| **Head sampling hides failures** | The rare failed request was never recorded                                          | Tail sampling, or always keep errors                                     |
+| **No request ID**                | Logs across services can't be joined                                                | Generate at the gateway, propagate, log on every line                    |
+| **Alert fatigue**                | Noisy cause-based alerts get ignored; a real outage is missed                       | Symptom and burn-rate alerts; page vs ticket; delete unactionable alerts |
+| **Mesh overhead**                | Added latency and a hard-to-debug control plane                                     | Use a mesh only at many-service scale                                    |
 
 ---
 

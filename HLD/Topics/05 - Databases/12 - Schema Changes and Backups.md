@@ -37,15 +37,15 @@ Most DDL needs a strong lock on the table, and some DDL has to rewrite every row
 
 The same logical change can be instant or dangerous depending on how you write it. This table covers the common cases in Postgres, with MySQL notes where they differ.
 
-| Operation | Cost in Postgres | MySQL (InnoDB) | Pick when / how |
-|---|---|---|---|
-| Add nullable column, no default | Metadata only; brief lock | `ALGORITHM=INSTANT` in 8.0 | Always safe. The default first step of any expand. |
-| Add column with a constant default | Metadata only since Postgres 11 (the default is stored in the catalog). A volatile default like `clock_timestamp()` still rewrites the table | `INSTANT` in recent 8.0 | Safe on modern versions with a constant default. On older versions, add nullable, backfill, then set the default. |
-| `CREATE INDEX` | Blocks writes for the whole build | Online (`INPLACE`) with concurrent DML | Only on small tables or during maintenance. |
-| `CREATE INDEX CONCURRENTLY` | Doesn't block writes. Slower, can't run inside a transaction, and a failure leaves an `INVALID` index to drop and retry | n/a (normal index build is already online) | Default for adding an index to a live Postgres table. |
-| Change column type | Usually a full table rewrite under `ACCESS EXCLUSIVE`. Some binary-compatible changes (e.g. widening `varchar(n)` or `varchar` → `text`) are metadata only | Usually a table copy | Avoid on large tables. Use expand–migrate–contract with a new column instead. |
-| Add `NOT NULL` | Full table scan under `ACCESS EXCLUSIVE` to check for nulls | Often a rebuild | Add `CHECK (col IS NOT NULL) NOT VALID`, then `VALIDATE CONSTRAINT` (weaker lock, no blocking), then `SET NOT NULL`, which on Postgres 12+ uses the validated constraint and skips the scan. |
-| Drop column | Metadata only in Postgres (space reclaimed later) | Rebuild or `INSTANT` in newer 8.0 | Safe once no code reads or writes the column. The last step of contract. |
+| Operation                          | Cost in Postgres                                                                                                                                           | MySQL (InnoDB)                             | Pick when / how                                                                                                                                                                              |
+| ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Add nullable column, no default    | Metadata only; brief lock                                                                                                                                  | `ALGORITHM=INSTANT` in 8.0                 | Always safe. The default first step of any expand.                                                                                                                                           |
+| Add column with a constant default | Metadata only since Postgres 11 (the default is stored in the catalog). A volatile default like `clock_timestamp()` still rewrites the table               | `INSTANT` in recent 8.0                    | Safe on modern versions with a constant default. On older versions, add nullable, backfill, then set the default.                                                                            |
+| `CREATE INDEX`                     | Blocks writes for the whole build                                                                                                                          | Online (`INPLACE`) with concurrent DML     | Only on small tables or during maintenance.                                                                                                                                                  |
+| `CREATE INDEX CONCURRENTLY`        | Doesn't block writes. Slower, can't run inside a transaction, and a failure leaves an `INVALID` index to drop and retry                                    | n/a (normal index build is already online) | Default for adding an index to a live Postgres table.                                                                                                                                        |
+| Change column type                 | Usually a full table rewrite under `ACCESS EXCLUSIVE`. Some binary-compatible changes (e.g. widening `varchar(n)` or `varchar` → `text`) are metadata only | Usually a table copy                       | Avoid on large tables. Use expand–migrate–contract with a new column instead.                                                                                                                |
+| Add `NOT NULL`                     | Full table scan under `ACCESS EXCLUSIVE` to check for nulls                                                                                                | Often a rebuild                            | Add `CHECK (col IS NOT NULL) NOT VALID`, then `VALIDATE CONSTRAINT` (weaker lock, no blocking), then `SET NOT NULL`, which on Postgres 12+ uses the validated constraint and skips the scan. |
+| Drop column                        | Metadata only in Postgres (space reclaimed later)                                                                                                          | Rebuild or `INSTANT` in newer 8.0          | Safe once no code reads or writes the column. The last step of contract.                                                                                                                     |
 
 ---
 
@@ -87,12 +87,12 @@ flowchart LR
 
 A backfill copies or computes data for existing rows. One giant `UPDATE` over a large table holds row locks for a long time, generates a burst of WAL that makes replicas lag, and if it fails halfway you start again from zero. A safe backfill has four properties.
 
-| Property | What it means | How |
-|---|---|---|
-| **Batched** | Touch a bounded number of rows per transaction | `UPDATE … WHERE id BETWEEN $lo AND $hi`, a few thousand rows at a time |
-| **Throttled** | Leave headroom for production traffic | Sleep between batches; pause if replica lag or DB CPU goes above a threshold |
-| **Resumable** | A crash doesn't restart from the beginning | Walk the primary key in order and store the last processed id |
-| **Idempotent** | Re-running a batch is harmless | Guard with a condition like `WHERE full_name IS NULL`, so done rows are skipped |
+| Property       | What it means                                  | How                                                                             |
+| -------------- | ---------------------------------------------- | ------------------------------------------------------------------------------- |
+| **Batched**    | Touch a bounded number of rows per transaction | `UPDATE … WHERE id BETWEEN $lo AND $hi`, a few thousand rows at a time          |
+| **Throttled**  | Leave headroom for production traffic          | Sleep between batches; pause if replica lag or DB CPU goes above a threshold    |
+| **Resumable**  | A crash doesn't restart from the beginning     | Walk the primary key in order and store the last processed id                   |
+| **Idempotent** | Re-running a batch is harmless                 | Guard with a condition like `WHERE full_name IS NULL`, so done rows are skipped |
 
 ```sql
 -- One batch; the job loops, advancing :last_id, and sleeps between batches

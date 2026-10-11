@@ -24,6 +24,12 @@ This is the sentence to say, and then stop talking:
 
 > "Postgres for users/orders because I want transactions and arbitrary queries. If this table is a firehose of events or a 100 TB write-heavy log, I'd put *that* in Cassandra/Kafka and keep the source of truth for money in Postgres."
 
+**"Firehose of events or a 100 TB write-heavy log":** This refers to massive, continuous streams of append-only data, such as user clickstreams, tracking logs, or IoT sensor readings. A standard relational database like PostgreSQL will eventually become hopelessly bottlenecked trying to process this because all writes must funnel through a single primary node.
+
+**"Put that in Cassandra/Kafka":** To survive this massive write volume, you route these specific data streams to distributed systems built explicitly for infinite write scaling. As discussed earlier, a system like Cassandra uses a leaderless architecture where every node can accept writes, completely removing the single-primary bottleneck.
+
+**"Keep the source of truth for money in Postgres":** For financial transactions, billing, or inventory balances, absolute data consistency is non-negotiable. You cannot tolerate the "last-write-wins" data loss or eventual consistency of NoSQL systems when handling money. PostgreSQL provides strict ACID guarantees and robust locking mechanisms to ensure payments are never double-spent, safely isolating your critical transactional data from the noise of the high-volume event logs.
+
 Notice it picks per table. One system can use Postgres, Redis, Cassandra and S3 at once.
 
 ---
@@ -65,6 +71,8 @@ Sharded Postgres gives you scale but loses cross-shard joins and transactions. C
 ### What they give
 
 Data is split into **ranges** (contiguous key spans), and each range is replicated to several nodes that agree on every write through **consensus** (Raft or Paxos) per range. The database moves and splits ranges automatically. On top of that, it runs distributed transactions across ranges and offers **serializable** isolation. To the app it looks like one SQL database that accepts writes on every node.
+
+The leader-follower model in distributed SQL is applied per shard range rather than on the complete data. So each range has it's leader and followers and they are replicated across servers. This is analogous to how Kafka treats it's partitions.
 
 ```mermaid
 flowchart LR

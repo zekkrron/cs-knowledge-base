@@ -58,6 +58,31 @@ Two writers can also drift apart, which makes this a cache-shaped problem. It's 
 
 ## NoSQL: The Key Is the Design
 
+**1. Distributed NoSQL and the primary key.**
+
+- In distributed NoSQL databases like Cassandra or DynamoDB there's **no query optimizer** to figure out or rescue a poorly planned query.
+- The primary key is strictly enforced because its **partition key** determines exactly which server in the cluster holds the data.
+- Design the partition and primary key specifically to answer your **#1 most frequent query** directly, without a scan.
+- Querying by a non-key attribute means scanning data across every server. Cassandra rejects it outright unless you add `ALLOW FILTERING`, and DynamoDB only allows it as a `Scan`, which reads (and bills for) the whole table. Either way it's a serious performance and cost failure.
+
+**2. MongoDB as the middle ground.**
+
+- MongoDB sits between rigid NoSQL systems and flexible relational databases: it supports traditional **B-tree secondary indexes** and has a **query optimizer**.
+- A query without a usable index doesn't fail; MongoDB does a full **collection scan**, which returns correct data but becomes a major bottleneck as the dataset grows.
+- When MongoDB is sharded across servers, it routes by a **shard key**. A query without the shard key forces **scatter-gather**: the request is broadcast to every shard and the router waits for all of them to reply, which hurts performance at distributed scale. See [[23 - MongoDB]].
+
+**3. Global secondary indexes (GSIs).**
+
+- A **GSI** is a secondary table that the database maintains automatically.
+- When you create one, the database copies the relevant attributes from the base table and reorganizes them entirely around a **new key** (with its own partitioning).
+- That lets a new type of query route directly to the right partition, giving fast lookups without scanning the original table. GSIs in DynamoDB are updated **asynchronously**, so reads from them are eventually consistent. See [[24 - Cassandra and DynamoDB]].
+
+**4. Second access paths and data duplication.**
+
+- A **second access path** is when you need to query the same data by a completely different attribute than the original primary key.
+- Because NoSQL databases can't efficiently scan or filter the original table to find unindexed data, the answer is never "we'll scan the first table."
+- To support a second access path, you **duplicate the data** into a new table or a GSI whose key is designed for that path.
+
 In Cassandra or DynamoDB there's no optimizer to rescue a bad query. Pick the **#1 query** first, then choose a partition and primary key that answers it **without a scan**.
 
 | Query | Key that works | What now fails |

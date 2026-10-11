@@ -144,6 +144,23 @@ Pick one fix and say why.
 
 What you must **not** do is `SELECT` in the app, subtract, and `UPDATE` with no predicate. Which tool fits which HLD: [[14 - Coordination and Concurrency]].
 
+**The lost update problem (the last line).** The line above warns against a dangerous pattern: reading a value into application code, doing math on it, and sending an `UPDATE` back without checking whether the data changed in between. If two concurrent requests both read `10`, both subtract 1 in the app, and both write `9`. One operation is completely lost; the true value should be `8`. The table gives three ways to prevent it:
+
+**Fix 1: Atomic SQL.**
+
+- **How it works:** instead of pulling the value into the app, send a single instruction to the database, such as `SET qty = qty - 1`. The database computes the new value from whatever the row holds at that exact moment (the `UPDATE` takes the row lock, so concurrent decrements queue up instead of overwriting each other).
+- **When to use it:** the default for simple numeric counters.
+
+**Fix 2: Optimistic versioning.**
+
+- **How it works:** add a `version` column. When you read the row, record its version (e.g. `3`). When you update, require that it's still `3` with `WHERE id = ? AND version = 3`, and bump it to `4` in the same statement. If another process updated the row meanwhile, the version is already `4`, your update matches **0 rows**, and the app can reject the request with **HTTP 409 Conflict** (or re-read and retry).
+- **When to use it:** updating richer entities like user profiles, issues, or stock records, where changes must be made carefully and conflicts are rare.
+
+**Fix 3: `SELECT FOR UPDATE`.**
+
+- **How it works:** take an **exclusive (X) row lock** at the moment you read the row. No other transaction can update, delete, or lock that row until you commit. (Under MVCC, plain `SELECT`s from others still read the last committed version; they just can't change it.)
+- **When to use it:** short transactions where you must pull the data into the app, make a decision (branch) based on it, and then safely write the result.
+
 ---
 
 ## Deadlock

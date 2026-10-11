@@ -61,6 +61,29 @@ The basics are in [[05 - Databases]]. These are the pieces that actually get fol
 
 **Hot row.** Everyone updates the same counter, so the row lock *is* the bottleneck. Fix: shard the counter, use Redis `INCR`, or append events and sum them.
 
+A hot row occurs when a massive, highly concurrent volume of traffic attempts to update the exact same database record simultaneously—such as tens of thousands of users instantaneously clicking "Like" on a viral celebrity post, or thousands of traders bidding on the same stock.
+
+Because relational databases use row-level locking (like the `FOR UPDATE` mechanism you just looked at) to ensure data is not corrupted, those 10,000 concurrent requests are forced into a strict, single-file line. Only one database connection can write to the row at a time. The remaining 9,999 transactions stall in a queue. This rapidly exhausts the database's connection pool, spikes system latency, and can easily cause a cascading crash.
+
+Here is how the three architectural patterns eliminate that bottleneck:
+
+**1. Shard the Counter** Instead of maintaining a single row where `likes = 10,000`, you split the counter across multiple distinct rows.
+
+- You create a dedicated table for the counter and pre-populate it with, for example, 100 separate rows for that single post.
+- When a user clicks "Like", the application randomly selects just one of those 100 rows and applies the update.
+- This instantly divides the lock contention by a factor of 100. When a user loads the page, the system simply executes a rapid `SELECT SUM(count) FROM counter_shards WHERE post_id = X` to display the total.
+
+**2. Use Redis INCR** This strategy bypasses the relational database's heavy disk I/O and locking mechanisms entirely by absorbing the traffic spike in memory.
+
+- Redis features a built-in `INCR` command explicitly designed for atomic increments. Because Redis operates entirely in RAM and executes commands sequentially on a highly optimized single thread, it can easily process hundreds of thousands of increments per second without complex locking overhead.
+- The application increments the counter in Redis in real-time, providing immediate feedback to the user. Meanwhile, a background worker periodically reads that total and flushes it to the permanent relational database (e.g., once every 5 seconds) to ensure long-term durability.
+
+**3. Append Events and Sum Them** This pattern removes the `UPDATE` bottleneck by completely abandoning updates, shifting to an append-only Event Sourcing model.
+
+- Instead of modifying an existing total, every single "Like" is written as a brand new, independent row (e.g., `INSERT INTO likes_events (post_id, user_id, timestamp)`).
+- Relational databases can execute parallel `INSERT` operations exponentially faster than concurrent `UPDATE` operations because there are no shared row locks to fight over.
+- A background process continuously consumes this stream of append events, aggregates the sum, and pushes the final number to a read-optimized cache (utilizing the CQRS pattern discussed earlier).
+
 ---
 
 ## Optimistic vs Pessimistic
@@ -75,6 +98,10 @@ Both stop lost updates. The difference is whether you assume a conflict and wait
 | Pick when | Profiles, likes: low contention | Booking the last seat: high contention |
 
 CAS is the same idea in Redis: `WATCH`, or a Lua script that says "read tokens, write only if still N."
+
+**CAS (Compare-And-Set / Compare-And-Swap)** is an atomic operation that updates a record only if its current state perfectly matches an expected baseline value. It bundles a read check ("Is the version still 1?") and an update ("Set the value to 4 and version to 2") into a single, indivisible step.
+
+In database concurrency, CAS is the exact underlying mechanism used to execute an optimistic lock. The version comparison pattern discussed earlier (`UPDATE inventory SET qty = 4 WHERE item_id = 123 AND version = 1`) is a direct implementation of CAS at the SQL level.
 
 ---
 
@@ -123,6 +150,35 @@ Redis `SET NX EX` **alone has no fencing**. That's why people call Redlock slipp
 
 **ZooKeeper / etcd / Consul** give an ephemeral node plus a watch, which is a lock with built-in liveness. It's "someone else's Raft." Use them when the lock *is* the product (leader election for a primary), not for a seat. How consensus makes these correct is in [[17 - Consistency Time and Consensus]].
 
+Here is a breakdown of the specific concepts mentioned in the text:
+
+**The "Zombie" Server Problem**
+
+Imagine Server A acquires a Redis lock with a 10-second expiration (`EX 10`). Five seconds later, Server A suffers a massive CPU spike or network delay and completely freezes. Because 10 seconds pass, Redis automatically deletes the lock. Server B then safely acquires the new lock and begins updating the database. Suddenly, Server A unfreezes. Because it never formally crashed, it still believes it holds the lock and blindly writes its outdated data to the database, overwriting Server B's work and corrupting the system.
+
+**How Fencing Tokens Fix This** A fencing token is a strictly increasing number (1, 2, 3) handed out alongside the lock.
+
+- Server A gets the lock and Fencing Token 1.
+- Server A freezes, and the lock expires.
+- Server B gets the lock and Fencing Token 2, and successfully writes to the database. The database records that the latest token it has seen is 2.
+- Server A wakes up and tries to write to the database using Token 1.
+- The "storage layer" (the database) explicitly rejects Server A's write because 1 is older than 2. The database acts as a bouncer, bouncing the late writer away.
+
+**Why Redis is "Slippery"** The standard Redis lock (`SET NX EX`) only manages time; it does not natively generate or validate these increasing fencing tokens. Because of this, "Redlock" (the official Redis algorithm for distributed locks) is heavily criticized by system designers. It is considered "slippery" because it cannot mathematically guarantee safety if a server freezes and wakes up late.
+
+**ZooKeeper / etcd** Unlike Redis, systems like ZooKeeper or etcd are built on strict consensus protocols (like Raft). When they issue a lock, they natively attach a guaranteed, monotonically increasing sequence number (like a `zxid`). Because they provide this built-in fencing, they are universally trusted by engineers as "correct" tools for highly critical leader election or distributed coordination.
+
+**The "Money" Rule**
+
+The text concludes with a practical rule of thumb for system design:
+
+- **For harmless tasks:** If you are running a cron job to send a nightly newsletter, a Redis lock is perfectly fine. If the zombie server bug happens and a few users get an email twice, it is not a disaster.
+- **For money/critical data:** If you are processing financial transactions, you never trust a time-based Redis lock alone. You must rely on the permanent database to protect itself using a fencing token or a version column (optimistic locking), ensuring that a delayed server can never accidentally commit a rogue financial update.
+
+A standard Redis lock relies on the `SET NX EX` command executed on a single Redis instance. If that one Redis server crashes or restarts, the lock state can be lost, compromising the system's safety. Redlock is an algorithm designed to fix this single point of failure by deploying multiple, completely independent Redis master nodes (typically five). To successfully acquire a Redlock, a client application must successfully execute the `SET NX EX` command across a majority of those independent nodes (e.g., at least three out of five) within a strict time limit. It is a distributed consensus wrapper built on top of the standard single-node command.
+
+The random UUID token and the fencing token serve entirely different purposes and operate at different layers of your architecture to prevent different types of damage.
+
 ---
 
 ## Lease vs Lock
@@ -162,12 +218,12 @@ When 100 requests miss the same cache key at once, single-flight lets **one** go
 
 "The nightly bill run must run once" is a leader-election problem, but it rarely needs real consensus. The options below go cheapest first; pick the first one that fits. Not Raft on the whiteboard.
 
-| Option | How | Pick when |
-|---|---|---|
-| 1. Cloud scheduler | It hits **one** HTTP endpoint; the provider elects for you | Available on your platform. Cheapest |
-| 2. `jobs` table + `SKIP LOCKED` | Workers claim rows | You already have a DB and many jobs |
-| 3. Redis lock around the job | `SET NX EX` + token | Single job, Redis already present |
-| 4. ZooKeeper / etcd | Ephemeral node, lease | You already run the cluster |
+| Option                          | How                                                        | Pick when                            |
+| ------------------------------- | ---------------------------------------------------------- | ------------------------------------ |
+| 1. Cloud scheduler              | It hits **one** HTTP endpoint; the provider elects for you | Available on your platform. Cheapest |
+| 2. `jobs` table + `SKIP LOCKED` | Workers claim rows                                         | You already have a DB and many jobs  |
+| 3. Redis lock around the job    | `SET NX EX` + token                                        | Single job, Redis already present    |
+| 4. ZooKeeper / etcd             | Ephemeral node, lease                                      | You already run the cluster          |
 
 ---
 
@@ -176,6 +232,10 @@ When 100 requests miss the same cache key at once, single-flight lets **one** go
 [[07 - Async Messaging]] covers the **outbox**: commit to the DB and publish in one step. The inbox is its twin on the consumer side.
 
 The consumer writes the `event_id` into an `inbox` table **in the same transaction** as the side effect. If Kafka delivers the event twice, the second insert hits a unique violation and the consumer skips it. That's idempotency you can point at.
+
+In this context, the **side effect** is the actual business operation or database change that the consumer is supposed to execute in response to receiving the incoming Kafka event.
+
+To prevent your system from double-deducting inventory, you must bind your business logic (the side effect) and the logging of the event's ID into the inbox table together **within the exact same database transaction**.
 
 ```mermaid
 flowchart LR
