@@ -183,12 +183,12 @@ Languages/
 
 | # | Note | Covers |
 |---|---|---|
-| 01 | Concurrency Models Compared | Java platform vs virtual threads, Go goroutines, Python threads + GIL, asyncio, event loops; 10k connections in each |
-| 02 | Memory and GC Compared | JVM GCs vs Go's collector vs CPython refcounting; latency vs throughput; tuning knobs |
-| 03 | Web Server Models Compared | Tomcat thread-per-request, Netty/WebFlux, Go `net/http`, WSGI pre-fork, ASGI event loop |
-| 04 | Error Handling Compared | Checked/unchecked exceptions vs errors as values vs Python exceptions |
-| 05 | Compilation and Startup Compared | JIT vs AOT vs interpreted; containers, serverless, autoscaling implications |
-| 06 | Choosing a Language for a Service | Decision table by workload, team and operational needs |
+| 01 | [[01 - Concurrency Models Compared\|Concurrency Models Compared]] | Java platform vs virtual threads, Go goroutines, Python threads + GIL, asyncio, event loops; 10k connections in each |
+| 02 | [[02 - Memory and GC Compared\|Memory and GC Compared]] | JVM GCs vs Go's collector vs CPython refcounting; latency vs throughput; tuning knobs |
+| 03 | [[03 - Web Server Models Compared\|Web Server Models Compared]] | Tomcat thread-per-request, Netty/WebFlux, Go `net/http`, WSGI pre-fork, ASGI event loop |
+| 04 | [[04 - Error Handling Compared\|Error Handling Compared]] | Checked/unchecked exceptions vs errors as values vs Python exceptions |
+| 05 | [[05 - Compilation and Startup Compared\|Compilation and Startup Compared]] | JIT vs AOT vs interpreted; containers, serverless, autoscaling implications |
+| 06 | [[06 - Choosing a Language for a Service\|Choosing a Language for a Service]] | Decision table by workload, team and operational needs |
 
 ---
 
