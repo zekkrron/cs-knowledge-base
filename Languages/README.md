@@ -137,47 +137,47 @@ Languages/
 
 | # | Note | Covers |
 |---|---|---|
-| 01 | Async LLM Client Patterns | Official SDKs sync vs async, bounded concurrency, retries, timeouts, streaming parsing, structured outputs |
-| 02 | NumPy for Engineers | Arrays, dtypes, broadcasting, vectorisation, memory layout, views vs copies |
-| 03 | Embeddings and Similarity in Python | Normalisation, batched cosine similarity, top-k, memory math |
-| 04 | PyTorch for Inference Engineers | Tensors, devices, dtypes, `inference_mode`, batching, CUDA memory, mixed precision |
-| 05 | Hugging Face Stack | `transformers`, tokenizers, `datasets`, PEFT/LoRA, loading quantized models |
-| 06 | Serving Models from Python | vLLM Python API and OpenAI-compatible server, GPU worker processes vs API processes |
-| 07 | Data Tooling for Evals | pandas vs Polars, eval datasets, result analysis |
-| 08 | Python AI Performance Traps | GIL with CPU-heavy pre/post-processing, process pools for tokenisation, forked workers and model memory |
+| 01 | [[01 - Async LLM Client Patterns\|Async LLM Client Patterns]] | Official SDKs sync vs async, bounded concurrency, retries, timeouts, streaming parsing, structured outputs |
+| 02 | [[02 - NumPy for Engineers\|NumPy for Engineers]] | Arrays, dtypes, broadcasting, vectorisation, memory layout, views vs copies |
+| 03 | [[03 - Embeddings and Similarity in Python\|Embeddings and Similarity in Python]] | Normalisation, batched cosine similarity, top-k, memory math |
+| 04 | [[04 - PyTorch for Inference Engineers\|PyTorch for Inference Engineers]] | Tensors, devices, dtypes, `inference_mode`, batching, CUDA memory, mixed precision |
+| 05 | [[05 - Hugging Face Stack\|Hugging Face Stack]] | `transformers`, tokenizers, `datasets`, PEFT/LoRA, loading quantized models |
+| 06 | [[06 - Serving Models from Python\|Serving Models from Python]] | vLLM Python API and OpenAI-compatible server, GPU worker processes vs API processes |
+| 07 | [[07 - Data Tooling for Evals\|Data Tooling for Evals]] | pandas vs Polars, eval datasets, result analysis |
+| 08 | [[08 - Python AI Performance Traps\|Python AI Performance Traps]] | GIL with CPU-heavy pre/post-processing, process pools for tokenisation, forked workers and model memory |
 
 ### Go / Go
 
 | # | Note | Covers |
 |---|---|---|
-| 00 | Go Version History | Go 1 compatibility promise, 1.5 concurrent GC, 1.11 modules, 1.13 error wrapping, 1.14 async preemption, 1.18 generics, 1.19 `GOMEMLIMIT`, 1.21 `slog`, 1.22 loop variables and routing, 1.23 iterators, 1.24 Swiss-table maps, 1.25 container-aware `GOMAXPROCS`, 1.26 new GC default and leak detection, 1.27 generic methods and `encoding/json/v2` |
-| 01 | Go Runtime and the GMP Scheduler | Goroutines, G-M-P, run queues, work stealing, network poller, syscalls, preemption, `GOMAXPROCS` |
-| 02 | Go Memory and Escape Analysis | Stack growth, escape analysis, allocator size classes, struct layout and alignment |
-| 03 | Go Garbage Collector | Concurrent tri-colour mark-sweep, write barriers, pacing, `GOGC`, `GOMEMLIMIT`, newer GC designs |
-| 04 | Go Types Interfaces and Embedding | Implicit interfaces, interface values, nil-interface trap, embedding, method sets, value vs pointer receivers |
-| 05 | Go Slices Maps and Strings Internals | Slice headers and `append` aliasing, map internals, strings vs bytes vs runes |
-| 06 | Go Errors and Panics | Errors as values, wrapping, `errors.Is/As`, sentinel vs typed errors, `panic`/`recover` |
-| 07 | Go Concurrency Primitives | Channels, `select`, closing rules, `sync`, `sync/atomic`, `errgroup` |
-| 08 | Go Concurrency Patterns and Context | Worker pools, pipelines, fan-in/out, bounded concurrency, `context` cancellation and deadlines, goroutine leaks |
-| 09 | Go Generics | Type parameters, constraints, generic methods (1.27), when not to use them |
-| 10 | Go Modules Build and Tooling | Modules, versioning, `go vet`, `go fix`, static binaries, cross-compilation, cgo costs |
-| 11 | Go Testing and Benchmarks | Table-driven tests, subtests, fuzzing, benchmarks, `testing/synctest` |
-| 12 | Go Diagnostics pprof and Tracing | CPU/heap/goroutine/block/mutex profiles, execution tracer, race detector, leak profiles |
-| 13 | Go in Containers and Production | Small images, CPU and memory limits, GC tuning in containers, graceful shutdown |
+| 00 | [[00 - Go Version History\|Go Version History]] | Go 1 compatibility promise, 1.5 concurrent GC, 1.11 modules, 1.13 error wrapping, 1.14 async preemption, 1.18 generics, 1.19 `GOMEMLIMIT`, 1.21 `slog`, 1.22 loop variables and routing, 1.23 iterators, 1.24 Swiss-table maps, 1.25 container-aware `GOMAXPROCS`, 1.26 new GC default and leak detection, 1.27 generic methods and `encoding/json/v2` |
+| 01 | [[01 - Go Runtime and the GMP Scheduler\|Go Runtime and the GMP Scheduler]] | Goroutines, G-M-P, run queues, work stealing, network poller, syscalls, preemption, `GOMAXPROCS` |
+| 02 | [[02 - Go Memory and Escape Analysis\|Go Memory and Escape Analysis]] | Stack growth, escape analysis, allocator size classes, struct layout and alignment |
+| 03 | [[03 - Go Garbage Collector\|Go Garbage Collector]] | Concurrent tri-colour mark-sweep, write barriers, pacing, `GOGC`, `GOMEMLIMIT`, newer GC designs |
+| 04 | [[04 - Go Types Interfaces and Embedding\|Go Types Interfaces and Embedding]] | Implicit interfaces, interface values, nil-interface trap, embedding, method sets, value vs pointer receivers |
+| 05 | [[05 - Go Slices Maps and Strings Internals\|Go Slices Maps and Strings Internals]] | Slice headers and `append` aliasing, map internals, strings vs bytes vs runes |
+| 06 | [[06 - Go Errors and Panics\|Go Errors and Panics]] | Errors as values, wrapping, `errors.Is/As`, sentinel vs typed errors, `panic`/`recover` |
+| 07 | [[07 - Go Concurrency Primitives\|Go Concurrency Primitives]] | Channels, `select`, closing rules, `sync`, `sync/atomic`, `errgroup` |
+| 08 | [[08 - Go Concurrency Patterns and Context\|Go Concurrency Patterns and Context]] | Worker pools, pipelines, fan-in/out, bounded concurrency, `context` cancellation and deadlines, goroutine leaks |
+| 09 | [[09 - Go Generics\|Go Generics]] | Type parameters, constraints, generic methods (1.27), when not to use them |
+| 10 | [[10 - Go Modules Build and Tooling\|Go Modules Build and Tooling]] | Modules, versioning, `go vet`, `go fix`, static binaries, cross-compilation, cgo costs |
+| 11 | [[11 - Go Testing and Benchmarks\|Go Testing and Benchmarks]] | Table-driven tests, subtests, fuzzing, benchmarks, `testing/synctest` |
+| 12 | [[12 - Go Diagnostics pprof and Tracing\|Go Diagnostics pprof and Tracing]] | CPU/heap/goroutine/block/mutex profiles, execution tracer, race detector, leak profiles |
+| 13 | [[13 - Go in Containers and Production\|Go in Containers and Production]] | Small images, CPU and memory limits, GC tuning in containers, graceful shutdown |
 
 ### Go / Gin
 
 | # | Note | Covers |
 |---|---|---|
-| 00 | Gin Version History | Major releases, HTTP/3 in 1.11, 1.12 changes |
-| 01 | Go net/http Server Model | Goroutine per connection, `Handler`, server timeouts, `http.Client` reuse and body leaks, 1.22 routing |
-| 02 | Gin Architecture Routing and Context | Radix-tree router, `*gin.Context` lifecycle, pooling, `c.Copy()` across goroutines |
-| 03 | Gin Middleware | Chain, `c.Next()`/`c.Abort()`, recovery, logging, auth, ordering |
-| 04 | Gin Binding Validation and Errors | Binding, validator tags, error handling and responses |
-| 05 | Go Data Access | `database/sql` pools, pgx, sqlc vs GORM, transactions with context |
-| 06 | Gin Production | Graceful shutdown, timeouts, `slog`, Prometheus, OpenTelemetry, config |
-| 07 | Gin Project Structure and Testing | Layout, constructor wiring, `httptest` |
-| 08 | Gin vs Alternatives | Echo, Fiber (fasthttp caveats), chi, plain `net/http` |
+| 00 | [[00 - Gin Version History\|Gin Version History]] | Major releases, HTTP/3 in 1.11, 1.12 changes |
+| 01 | [[01 - Go net-http Server Model\|Go net/http Server Model]] | Goroutine per connection, `Handler`, server timeouts, `http.Client` reuse and body leaks, 1.22 routing |
+| 02 | [[02 - Gin Architecture Routing and Context\|Gin Architecture Routing and Context]] | Radix-tree router, `*gin.Context` lifecycle, pooling, `c.Copy()` across goroutines |
+| 03 | [[03 - Gin Middleware\|Gin Middleware]] | Chain, `c.Next()`/`c.Abort()`, recovery, logging, auth, ordering |
+| 04 | [[04 - Gin Binding Validation and Errors\|Gin Binding Validation and Errors]] | Binding, validator tags, error handling and responses |
+| 05 | [[05 - Go Data Access\|Go Data Access]] | `database/sql` pools, pgx, sqlc vs GORM, transactions with context |
+| 06 | [[06 - Gin Production\|Gin Production]] | Graceful shutdown, timeouts, `slog`, Prometheus, OpenTelemetry, config |
+| 07 | [[07 - Gin Project Structure and Testing\|Gin Project Structure and Testing]] | Layout, constructor wiring, `httptest` |
+| 08 | [[08 - Gin vs Alternatives\|Gin vs Alternatives]] | Echo, Fiber (fasthttp caveats), chi, plain `net/http` |
 
 ### Cross-Language
 
