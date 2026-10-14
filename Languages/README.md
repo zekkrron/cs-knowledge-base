@@ -24,8 +24,8 @@ created: 2026-10-14
 |---|---|---|
 | **Java** | JDK 27 (Sep 2026) | JDK 25 is the current **LTS** (Sep 2025); previous LTS releases 21, 17, 11, 8 |
 | **Spring Boot** | 4.1 (Jun 2026), on Spring Framework 7 | 4.0 (Nov 2025); the 3.x line is out of OSS support since Jun 2026 |
-| **Python** | 3.15 (Oct 2026) | 3.14 made the free-threaded (no-GIL) build officially supported; 3.13 introduced it experimentally |
-| **FastAPI** | 0.14x (still 0.x; pin exact versions) | Built on Starlette and Pydantic v2 |
+| **Python** | 3.15 (Oct 2026) | Default builds still have the GIL; 3.14 made the separate free-threaded build officially supported (3.13 introduced it experimentally) |
+| **FastAPI** | 0.143 (Oct 2026; still 0.x, pin exact versions) | Starlette 1.x and Pydantic v2 only (v1 dropped in 0.126–0.128); Python 3.10+; built-in OpenTelemetry since 0.142 |
 | **Go** | 1.27 (Aug 2026) | 1.26 (Feb 2026); two releases a year, Go 1 compatibility promise |
 | **Gin** | 1.12 | 1.11 added HTTP/3 support |
 
@@ -98,38 +98,40 @@ Languages/
 
 ### Python / Python
 
+- Centred on the **standard (GIL) build** of the latest releases (3.14, 3.15). Free-threaded builds and subinterpreters are covered as extra sections, since most production Python still runs with the GIL.
+
 | # | Note | Covers |
 |---|---|---|
-| 00 | Python Version History | 2 → 3, 3.5 async/await, 3.6–3.8 milestones, 3.10 `match`, 3.11 faster CPython, 3.12 type syntax, 3.13 experimental no-GIL and JIT, 3.14 supported free-threading and t-strings, 3.15 lazy imports and `frozendict` |
-| 01 | CPython Execution Model | Source → bytecode → eval loop, specialising adaptive interpreter, the experimental JIT, frames |
-| 02 | Python Memory Management and GC | Everything is an object, reference counting, cyclic GC, pymalloc, why memory isn't returned to the OS |
-| 03 | The GIL and Free-Threaded Python | What the GIL protects, CPU- vs I/O-bound behaviour, C extensions releasing it, free-threaded builds, subinterpreters |
-| 04 | Python Threads Processes and Executors | `threading`, `multiprocessing` (fork vs spawn, pickling), `concurrent.futures`, when to use each |
-| 05 | asyncio Internals | Event loop, coroutines vs tasks vs futures, blocking the loop, `TaskGroup`, timeouts, cancellation, uvloop |
-| 06 | WSGI vs ASGI and Python Servers | WSGI sync model, ASGI async model, Gunicorn workers, Uvicorn, pre-fork, sizing workers |
-| 07 | Python Data Model | Dunder methods, descriptors, properties, `__slots__`, MRO, metaclasses in brief |
-| 08 | Decorators Generators and Context Managers | Closures, late binding, generators and `yield from`, context managers, common traps |
-| 09 | Python Typing | Type hints, generics, `Protocol`, `TypedDict`, mypy/pyright, dataclasses vs Pydantic vs attrs |
-| 10 | Python Errors and Exception Groups | Exception hierarchy, chaining, `ExceptionGroup` and `except*`, cleanup |
-| 11 | Python Packaging and Environments | `pyproject.toml`, uv, virtualenvs, wheels, lockfiles, dependency hell |
-| 12 | Python Testing with pytest | Fixtures, parametrisation, mocking, async tests |
-| 13 | Python Performance and Profiling | cProfile, py-spy, scalene, vectorisation, C/Rust extensions, PyPy |
+| 00 | [[00 - Python Version History\|Python Version History]] | 2 → 3, 3.5 async/await, 3.6–3.8 milestones, 3.10 `match`, 3.11 faster CPython, 3.12 type syntax, 3.13 experimental no-GIL and JIT, 3.14 supported free-threading and t-strings, 3.15 lazy imports and `frozendict` |
+| 01 | [[01 - CPython Execution Model\|CPython Execution Model]] | Source → bytecode → eval loop, specialising adaptive interpreter, the experimental JIT, frames |
+| 02 | [[02 - Python Memory Management and GC\|Python Memory Management and GC]] | Everything is an object, reference counting, cyclic GC, pymalloc, why memory isn't returned to the OS |
+| 03 | [[03 - The GIL and Free-Threaded Python\|The GIL and Free-Threaded Python]] | What the GIL protects, CPU- vs I/O-bound behaviour, C extensions releasing it, free-threaded builds, subinterpreters |
+| 04 | [[04 - Python Threads Processes and Executors\|Python Threads Processes and Executors]] | `threading`, `multiprocessing` (fork vs spawn, pickling), `concurrent.futures`, when to use each |
+| 05 | [[05 - asyncio Internals\|asyncio Internals]] | Event loop, coroutines vs tasks vs futures, blocking the loop, `TaskGroup`, timeouts, cancellation, uvloop |
+| 06 | [[06 - WSGI vs ASGI and Python Servers\|WSGI vs ASGI and Python Servers]] | WSGI sync model, ASGI async model, Gunicorn workers, Uvicorn, pre-fork, sizing workers |
+| 07 | [[07 - Python Data Model\|Python Data Model]] | Dunder methods, descriptors, properties, `__slots__`, MRO, metaclasses in brief |
+| 08 | [[08 - Decorators Generators and Context Managers\|Decorators Generators and Context Managers]] | Closures, late binding, generators and `yield from`, context managers, common traps |
+| 09 | [[09 - Python Typing\|Python Typing]] | Type hints, generics, `Protocol`, `TypedDict`, mypy/pyright, dataclasses vs Pydantic vs attrs |
+| 10 | [[10 - Python Errors and Exception Groups\|Python Errors and Exception Groups]] | Exception hierarchy, chaining, `ExceptionGroup` and `except*`, cleanup |
+| 11 | [[11 - Python Packaging and Environments\|Python Packaging and Environments]] | `pyproject.toml`, uv, virtualenvs, wheels, lockfiles, dependency hell |
+| 12 | [[12 - Python Testing with pytest\|Python Testing with pytest]] | Fixtures, parametrisation, mocking, async tests |
+| 13 | [[13 - Python Performance and Profiling\|Python Performance and Profiling]] | cProfile, py-spy, scalene, vectorisation, C/Rust extensions, PyPy |
 
 ### Python / FastAPI
 
 | # | Note | Covers |
 |---|---|---|
-| 00 | FastAPI Version History and Ecosystem | Starlette, Pydantic v1 → v2, versioning policy (0.x, pin exactly), notable releases |
-| 01 | FastAPI Architecture | Starlette (ASGI app, routing, middleware) + Pydantic (validation, serialisation) + OpenAPI generation |
-| 02 | FastAPI Request Lifecycle and Sync vs Async | `async def` on the loop vs `def` in the threadpool, the blocking-call outage, threadpool limits |
-| 03 | FastAPI Dependency Injection | `Depends`, yield dependencies, scopes, sub-dependencies, overrides |
-| 04 | Pydantic v2 Deep Dive | Models, validators, serialisation, settings, the Rust core, performance |
-| 05 | FastAPI Data Access with SQLAlchemy | SQLAlchemy 2.0 async, sessions per request, pools, asyncpg, Alembic |
-| 06 | FastAPI Streaming SSE and WebSockets | `StreamingResponse`, SSE for LLM streams, WebSockets, disconnect handling |
-| 07 | FastAPI Security and Middleware | OAuth2/JWT, CORS, rate limiting, middleware ordering |
-| 08 | FastAPI Background Work | `BackgroundTasks` limits vs real queues (Celery, arq, Dramatiq), lifespan resources |
-| 09 | FastAPI Production Deployment | Workers, timeouts, graceful shutdown, OpenTelemetry, health checks |
-| 10 | FastAPI Testing | `TestClient`, `httpx.AsyncClient`, dependency overrides, DB fixtures |
+| 00 | [[00 - FastAPI Version History and Ecosystem\|FastAPI Version History and Ecosystem]] | Starlette, Pydantic v1 → v2, versioning policy (0.x, pin exactly), notable releases |
+| 01 | [[01 - FastAPI Architecture\|FastAPI Architecture]] | Starlette (ASGI app, routing, middleware) + Pydantic (validation, serialisation) + OpenAPI generation |
+| 02 | [[02 - FastAPI Request Lifecycle and Sync vs Async\|FastAPI Request Lifecycle and Sync vs Async]] | `async def` on the loop vs `def` in the threadpool, the blocking-call outage, threadpool limits |
+| 03 | [[03 - FastAPI Dependency Injection\|FastAPI Dependency Injection]] | `Depends`, yield dependencies, scopes, sub-dependencies, overrides |
+| 04 | [[04 - Pydantic v2 Deep Dive\|Pydantic v2 Deep Dive]] | Models, validators, serialisation, settings, the Rust core, performance |
+| 05 | [[05 - FastAPI Data Access with SQLAlchemy\|FastAPI Data Access with SQLAlchemy]] | SQLAlchemy 2.0 async, sessions per request, pools, asyncpg, Alembic |
+| 06 | [[06 - FastAPI Streaming SSE and WebSockets\|FastAPI Streaming SSE and WebSockets]] | `StreamingResponse`, SSE for LLM streams, WebSockets, disconnect handling |
+| 07 | [[07 - FastAPI Security and Middleware\|FastAPI Security and Middleware]] | OAuth2/JWT, CORS, rate limiting, middleware ordering |
+| 08 | [[08 - FastAPI Background Work\|FastAPI Background Work]] | `BackgroundTasks` limits vs real queues (Celery, arq, Dramatiq), lifespan resources |
+| 09 | [[09 - FastAPI Production Deployment\|FastAPI Production Deployment]] | Workers, timeouts, graceful shutdown, OpenTelemetry, health checks |
+| 10 | [[10 - FastAPI Testing\|FastAPI Testing]] | `TestClient`, `httpx.AsyncClient`, dependency overrides, DB fixtures |
 
 ### Python / Python for AI
 
