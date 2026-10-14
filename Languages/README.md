@@ -80,21 +80,21 @@ Languages/
 
 | # | Note | Covers |
 |---|---|---|
-| 00 | Spring Boot Version History | Boot 1 → 2 → 3 (Jakarta EE, Java 17 baseline, AOT/native) → 4 (Framework 7, modular Boot, null-safety, API versioning) → 4.1 |
-| 01 | Spring IoC and Bean Lifecycle | Container, bean definitions, scopes, lifecycle callbacks, circular dependencies |
-| 02 | Spring Boot Auto-Configuration and Config | Conditions, starters, property sources and precedence, profiles, `@ConfigurationProperties` |
-| 03 | Spring AOP and Proxies | JDK vs CGLIB proxies, self-invocation trap, why `@Transactional` / `@Async` / `@Cacheable` silently don't apply |
-| 04 | Spring MVC Request Lifecycle | Filters, `DispatcherServlet`, handler mapping, interceptors, message converters, Tomcat threads, virtual threads |
-| 05 | Spring WebFlux and Reactive | Netty event loop, Reactor, backpressure, never blocking the loop, when it's worth it |
-| 06 | Spring Transactions | Propagation, isolation, rollback rules, transaction boundaries, `TransactionTemplate` |
-| 07 | Spring Data JPA and Hibernate | Persistence context, dirty checking, lazy loading, N+1, fetch strategies, open-session-in-view, locking |
-| 08 | Spring Database Connections and Migrations | HikariCP sizing, JDBC vs JPA, Flyway/Liquibase, read replicas |
-| 09 | Spring Security | Filter chain, authentication flows, JWT resource server, OAuth2, method security, CSRF/CORS |
-| 10 | Spring Validation Errors and API Design | Bean validation, `@ControllerAdvice`, problem details, API versioning |
-| 11 | Spring HTTP Clients Resilience and Messaging | `RestClient`, HTTP interface clients, timeouts, Resilience4j, Kafka/RabbitMQ integration |
-| 12 | Spring Observability | Actuator, health groups, Micrometer metrics, OpenTelemetry tracing, structured logging |
-| 13 | Spring Boot Testing | Test slices, Testcontainers, mocking beans, context caching |
-| 14 | Spring Boot Performance and Native | Startup, memory, lazy init, AOT processing, GraalVM native images, CRaC |
+| 00 | [[00 - Spring Boot Version History\|Spring Boot Version History]] | Boot 1 → 2 → 3 (Jakarta EE, Java 17 baseline, AOT/native) → 4 (Framework 7, modular Boot, null-safety, API versioning) → 4.1 |
+| 01 | [[01 - Spring IoC and Bean Lifecycle\|Spring IoC and Bean Lifecycle]] | Container, bean definitions, scopes, lifecycle callbacks, circular dependencies |
+| 02 | [[02 - Spring Boot Auto-Configuration and Config\|Spring Boot Auto-Configuration and Config]] | Conditions, starters, property sources and precedence, profiles, `@ConfigurationProperties` |
+| 03 | [[03 - Spring AOP and Proxies\|Spring AOP and Proxies]] | JDK vs CGLIB proxies, self-invocation trap, why `@Transactional` / `@Async` / `@Cacheable` silently don't apply |
+| 04 | [[04 - Spring MVC Request Lifecycle\|Spring MVC Request Lifecycle]] | Filters, `DispatcherServlet`, handler mapping, interceptors, message converters, Tomcat threads, virtual threads |
+| 05 | [[05 - Spring WebFlux and Reactive\|Spring WebFlux and Reactive]] | Netty event loop, Reactor, backpressure, never blocking the loop, when it's worth it |
+| 06 | [[06 - Spring Transactions\|Spring Transactions]] | Propagation, isolation, rollback rules, transaction boundaries, `TransactionTemplate` |
+| 07 | [[07 - Spring Data JPA and Hibernate\|Spring Data JPA and Hibernate]] | Persistence context, dirty checking, lazy loading, N+1, fetch strategies, open-session-in-view, locking |
+| 08 | [[08 - Spring Database Connections and Migrations\|Spring Database Connections and Migrations]] | HikariCP sizing, JDBC vs JPA, Flyway/Liquibase, read replicas |
+| 09 | [[09 - Spring Security\|Spring Security]] | Filter chain, authentication flows, JWT resource server, OAuth2, method security, CSRF/CORS |
+| 10 | [[10 - Spring Validation Errors and API Design\|Spring Validation Errors and API Design]] | Bean validation, `@ControllerAdvice`, problem details, API versioning |
+| 11 | [[11 - Spring HTTP Clients Resilience and Messaging\|Spring HTTP Clients Resilience and Messaging]] | `RestClient`, HTTP interface clients, timeouts, Resilience4j, Kafka/RabbitMQ integration |
+| 12 | [[12 - Spring Observability\|Spring Observability]] | Actuator, health groups, Micrometer metrics, OpenTelemetry tracing, structured logging |
+| 13 | [[13 - Spring Boot Testing\|Spring Boot Testing]] | Test slices, Testcontainers, mocking beans, context caching |
+| 14 | [[14 - Spring Boot Performance and Native\|Spring Boot Performance and Native]] | Startup, memory, lazy init, AOT processing, GraalVM native images, CRaC |
 
 ### Python / Python
 
