@@ -15,7 +15,70 @@ created: 2026-08-04
 
 `[LLD Course Question]` marks problems from the course. These are fixed and never dropped regardless of priority.
 
+P values were re-checked against the market in October 2026 (see the ranked list below). Problems not in the ranked list keep their August 2026 value.
+
 **Tier assignment (must-code vs architect-via-dictation) is deliberately not in this file yet** — that's the next pass.
+
+---
+
+## Market Priority — October 2026 (SDE 1–3, India and similar markets)
+
+> [!abstract] Flat ranked list
+> The archetype tables below say *what exists*. This list says *what to expect first*, re-checked against interview reports and company guides published up to October 2026. Ranking = how often a problem (or its direct reskin) is reported at Indian product companies (Flipkart, PhonePe, Razorpay, Swiggy, Zepto, Meesho, Uber India, Amazon India, Atlassian India), weighted by recency. It's a synthesis, not an official count.
+
+### What the 2026 reports say about the round
+
+- **Format**: a 60–120 min machine coding round with working, compilable code, then a 30–45 min review where the interviewer adds a requirement live (Flipkart, Swiggy, Razorpay). PhonePe runs it as 90 min live **or a 24-hour take-home**, followed by a code review. Uber runs object-oriented design plus implementation on CodeSignal, testing concurrency. Amazon SDE-2 has a dedicated LLD round graded on SOLID, extensibility and exception handling, with a behavioural question mixed in. Atlassian runs a 60 min LLD in your own IDE.
+- **What is graded**: extensibility under a live change request, SOLID, naming, exception handling, and **thread safety** (PhonePe explicitly rejects correct but non-thread-safe solutions). A simple design that fully works beats an ambitious half-finished one.
+- **Growing style**: "API + state machine" LLD, where the prompt asks for the public API, in-memory structures with complexities, a persisted schema and a status state machine (e.g. Amazon's delayed job scheduler). Class diagrams alone fail these.
+
+### Ranked list
+
+| # | Problem | P | Recent evidence (2025–26) | Archetype |
+|---|---|---|---|---|
+| 1 | Parking Lot | P0 | Most frequent in PracHub's LLD bank; Uber, Flipkart, Swiggy | §2 Strategy |
+| 2 | Rate Limiter (thread-safe, per-user limits) | P0 | Atlassian, Uber, Swiggy LLD rounds; Razorpay | §7 Concurrency |
+| 3 | Elevator System | P0 | Google, Salesforce, Remitly, Amazon prompts with scheduling follow-ups | §1 State |
+| 4 | Splitwise / Expense Sharing | P0 | Named in Swiggy's 2026 machine coding guide; Flipkart, Razorpay, Paytm | §10 Fintech |
+| 5 | In-Memory Cache with Eviction → Multi-Level Cache | P0 | PhonePe (multi-level cache, multiple reports), CRED (LRU, KV) | §8 Caching |
+| 6 | Pub/Sub / In-Memory Message Broker | P0 | Uber, Swiggy, Razorpay ("pub-sub workflows"), Flipkart practice list | §6 Observer |
+| 7 | Job / Task Scheduler (delayed jobs, producer–worker queue) | P0 | Razorpay SDE-2 (Jun 2026: producers submit jobs, workers pull), Amazon delayed job scheduler LLD, Uber | §4 / §7 |
+| 8 | Digital Wallet / Thread-safe Money Transfer | P0 | Swiggy, PhonePe, Paytm; thread-safe transfer is a common concurrency follow-up | §10 Fintech |
+| 9 | Vending Machine | P0 | Amazon, Flipkart; standard State-pattern prompt | §1 State |
+| 10 | Billing / Discount / Cart Pricing Engine | P0 | Flipkart (e-commerce billing engine in machine coding), cart-pricing and delivery-cost prompts | §2 Strategy |
+| 11 | Booking with Holds (BookMyShow, conference room, flight, doctor slots) | P0 | Flipkart (conference room booking, airline booking), BookMyShow-style at Paytm/Swiggy | §9 Booking |
+| 12 | Inventory Management (reserve, release, no oversell) | P0 | Flipkart machine coding practice set; Zepto/Meesho; pairs with HLD flash sale | §16 → treat as §1/§9 |
+| 13 | Board Games: Snake & Ladder, Tic-Tac-Toe, Chess | P0 | PhonePe, Swiggy, Zepto; quick OOP-modelling screens | §14 Games |
+| 14 | Order Management / Food Delivery state machine | P0 | Swiggy, Zomato, Meesho, Amazon | §1 State / §9 |
+| 15 | Logging Framework | P0 | Amazon; extension-axis favourite | §15 Framework |
+| 16 | Ride Sharing (Uber/Ola) | P1 | Uber, Ola, Flipkart | §4 Matching |
+| 17 | Vehicle / Car Rental | P1 | PhonePe machine coding (2026 guide example) | §9 Booking |
+| 18 | DAG / Workflow Execution Engine | P1 | PhonePe machine coding (2026 guide example) | §12 Command / §4 |
+| 19 | Customer Issue Resolution / Helpdesk | P1 | Flipkart LLD (recent), PhonePe | §16 Misc |
+| 20 | Stock Exchange Order Matching | P1 | Zerodha, Groww, Upstox | §4 Matching |
+| 21 | Thread Pool / Producer–Consumer / Connection Pool | P1 | Uber and fintech concurrency follow-ups; lazy connection pool prompts | §7 Concurrency |
+| 22 | Load Balancer (strategy-based, LLD) | P1 | Razorpay machine coding reports | §4 Allocation |
+| 23 | BNPL / Lending Ledger | P1 | Flipkart SDE-2 machine coding (Jan 2026) | §10 Fintech |
+| 24 | URL Shortener (LLD) | P1 | Flipkart machine coding examples | §8 Storage |
+| 25 | In-Memory Database / KV / Document Store with search | P1 | Razorpay senior machine coding (insert/delete/search documents), in-memory DB API prompts | §8 Storage |
+| 26 | Circuit Breaker / Retry | P1 | Razorpay, PhonePe resilience follow-ups | §7 Concurrency |
+| 27 | Text Editor (Undo/Redo) | P1 | Widely asked command/memento prompt | §12 Command |
+| 28 | File System (Composite) | P1 | Amazon, Microsoft | §5 Composite |
+| 29 | Meeting Scheduler / Calendar | P1 | Flipkart, Razorpay, Groww | §9 Booking |
+| 30 | Task Management (Jira/Trello), Snake Game | P1 | Atlassian (both reported in LLD rounds) | §5 / §14 |
+| 31 | RBAC / Permissions | P1 | Atlassian, Rippling, SaaS | §11 Access |
+| 32 | Payment Gateway (provider adapters, retries, idempotent status) | P1 | Razorpay, PhonePe; fintech LLD staple | §10 Fintech |
+| 33 | Notification System (channels, templates, retries) | P1 | Flipkart, Swiggy; often a follow-up to Order Management | §6 Observer |
+| 34 | Online Auction | P1 | Amazon India SDE-2 (asked as a design round), Flipkart | §4 Matching |
+| 35 | Library Management | P2 | Mostly service companies and campus rounds; rarer at product companies | §5 Composite |
+
+> [!info] Level guide
+> - **SDE 1**: #1–15. Code each in 90 minutes, runnable, with one live extension.
+> - **SDE 2**: #1–34. Add thread safety, clear exception handling, and the extension the reviewer asks for without a rewrite.
+> - **SDE 3 / senior**: everything, plus the API + state-machine style (persisted schema, leases, idempotency) and concurrency trade-offs stated unprompted.
+
+> [!warning] Changes vs the August 2026 version of this file
+> Promoted on recent evidence: **Task/Job Scheduler** (P1 → P0), **Inventory Management** (P1 → P0), **In-Memory DB / document store** (P2 → P1), **Airline / Flight booking** (P2 → P1), **Vehicle Rental**, **Load Balancer**, **BNPL** and **Snake Game** now carry 2026 company evidence, and **DAG / Workflow Execution Engine** is new. **Multi-Level Cache** goes P1 → P0 (it is how PhonePe actually phrases the cache question). Demoted P0 → P1 because they show up less often as the *primary* prompt in 2026 reports: Stock Exchange, Ride Sharing, File System, Text Editor, Thread Pool, Producer–Consumer, RBAC, Online Auction, Payment Gateway, Notification System. Library Management is demoted to P2 for product-company prep. The archetype tables below use the same P values. See the *Market check* callout in the execution plan for what this means for your schedule.
 
 ---
 
@@ -77,14 +140,14 @@ created: 2026-08-04
 
 | P | Problem | Patterns | Asked At |
 |---|---|---|---|
-| P0 | Stock Exchange Order Matching Engine `[LLD Course Question]` | Strategy, Observer | Upstox, Groww, Zerodha |
-| P0 | Design Uber / Ride-Sharing System | Strategy, Factory, Observer | Uber, Ola, Flipkart |
-| P0 | Online Auction System `[LLD Course Question]` | Strategy, Observer, State | Flipkart |
-| P1 | Design a Task Scheduler (Cron Job) | Strategy, Command | Uber |
+| P0 | Design a Task Scheduler (Cron / Delayed Jobs / Producer–Worker Queue) | Strategy, Command | Uber, **Razorpay SDE-2 (Jun 2026)**, **Amazon (delayed job scheduler)** |
+| P1 | Stock Exchange Order Matching Engine `[LLD Course Question]` | Strategy, Observer | Upstox, Groww, Zerodha |
+| P1 | Design Uber / Ride-Sharing System | Strategy, Factory, Observer | Uber, Ola, Flipkart |
+| P1 | Online Auction System `[LLD Course Question]` | Strategy, Observer, State | Flipkart, Amazon India SDE-2 |
 | P1 | Design a Real-Time Leaderboard System | Strategy, Observer | Dream11, Gaming |
 | P1 | **Peer-to-Peer Parcel Delivery** *(new)* | Strategy, Observer | Flipkart |
-| P1 | **Load Balancer** *(new)* | Strategy | Uber, Infra roles |
-| P2 | **Airline Seat Allocation** *(new)* | Strategy, State | Travel |
+| P1 | **Load Balancer** *(new)* | Strategy | Uber, **Razorpay (machine coding)** |
+| P1 | **Airline Seat Allocation / Flight Booking** *(new)* | Strategy, State | **Flipkart (LLD, recent)**, Travel |
 | P2 | **Warehouse / Inventory Allocation** *(new)* | Strategy | Flipkart, Meesho |
 
 ---
@@ -95,10 +158,10 @@ created: 2026-08-04
 
 | P | Problem | Patterns | Asked At |
 |---|---|---|---|
-| P0 | Design a File System (Unix) | Composite, Strategy, Visitor | Amazon, Microsoft |
+| P1 | Design a File System (Unix) | Composite, Strategy, Visitor | Amazon, Microsoft |
 | P1 | **File Search System (filters, nested)** *(new)* | Composite, Strategy | Amazon, Microsoft |
 | P1 | **Trello / Jira Task Management** *(new)* | Composite, Observer, State | **Atlassian**, Flipkart |
-| P1 | Design a Library Management System | Composite, State | TCS, Infosys, Amazon, Flipkart |
+| P2 | Design a Library Management System | Composite, State | TCS, Infosys, campus rounds; rare at product companies |
 | P1 | Cap Table Generator `[LLD Course Question]` | Composite, Visitor | Fintech |
 | P2 | **Organisation / Employee Hierarchy (HRMS)** *(new)* | Composite | Rippling, Darwinbox |
 | P2 | **Survey / Form Builder** *(new)* | Composite, Builder | Google, SaaS |
@@ -113,7 +176,7 @@ created: 2026-08-04
 | P | Problem | Patterns | Asked At |
 |---|---|---|---|
 | P0 | Design a Pub/Sub & In-Memory Messaging Queue `[LLD Course Question]` | Observer, Strategy | **Uber**, Flipkart |
-| P0 | Design a Notification System | Observer, Strategy, Factory | Flipkart, Swiggy |
+| P1 | Design a Notification System | Observer, Strategy, Factory | Flipkart, Swiggy |
 | P0 | Data Stream Consumer `[LLD Course Question]` | Observer, Strategy | Course |
 | P1 | Movie Content Management System (Netflix CMS) `[LLD Course Question]` | Observer, State | Course |
 | P1 | **Audit Log / Activity Feed** *(new)* | Observer, Command | SaaS, Fintech |
@@ -132,8 +195,8 @@ created: 2026-08-04
 | P | Problem | Patterns | Asked At |
 |---|---|---|---|
 | P0 | Design a Rate Limiter (Multi-Threaded) | Strategy, Singleton | **Uber, Flipkart** |
-| P0 | **Thread Pool / Executor Service** *(new)* | Object Pool, Command | Uber, PhonePe |
-| P0 | **Producer–Consumer Bounded Buffer** *(new)* | Monitor, Observer | Fintech, Trading |
+| P1 | **Thread Pool / Executor Service** *(new)* | Object Pool, Command | Uber, PhonePe |
+| P1 | **Producer–Consumer Bounded Buffer** *(new)* | Monitor, Observer | Fintech, Trading |
 | P1 | **Connection Pool** *(new)* | Object Pool, Singleton | Razorpay, Backend roles |
 | P1 | **Circuit Breaker (Hystrix-style)** *(new)* | State, Proxy | Razorpay, PhonePe |
 | P1 | **Retry with Exponential Backoff** *(new)* | Strategy, Decorator | Infra, Fintech |
@@ -148,11 +211,11 @@ created: 2026-08-04
 | P | Problem | Patterns | Asked At |
 |---|---|---|---|
 | P0 | In-Memory Cache with Multiple Eviction Policies `[LLD Course Question]` | Strategy, Observer | **PhonePe** |
-| P1 | **Multi-Level Cache (pluggable eviction per level)** *(new)* | Strategy, Chain of Responsibility | **PhonePe** |
-| P1 | Design a Key-Value Store | Strategy, Singleton | Infra, Databases |
-| P1 | Design a URL Shortener (Bitly) | Strategy, Singleton | Widely asked |
+| P0 | **Multi-Level Cache (pluggable eviction per level)** *(new)* | Strategy, Chain of Responsibility | **PhonePe (multiple reports)** |
+| P1 | Design a Key-Value Store | Strategy, Singleton | CRED, Infra, Databases |
+| P1 | Design a URL Shortener (Bitly) | Strategy, Singleton | **Flipkart (machine coding)**, widely asked |
+| P1 | **In-Memory Database / Document Store (transactions, insert/delete/search)** *(new)* | Memento, Command | **Razorpay (senior machine coding)**, Arcesium |
 | P2 | **Browser History Simulator** *(new)* | Memento, Iterator | Easy warm-up |
-| P2 | **In-Memory Database with Transactions** *(new)* | Memento, Command | Arcesium, Databases |
 
 ---
 
@@ -166,14 +229,14 @@ created: 2026-08-04
 | P0 | Design Swiggy / Food Delivery System | State, Strategy, Observer | Swiggy, Zomato, Flipkart |
 | P1 | Design Hotel Booking / Airbnb | Strategy, State | Widely asked |
 | P1 | Design a Meeting Scheduler (Google Calendar) | Strategy, Observer | Flipkart, Razorpay, Groww |
-| P1 | Design a Car Rental System (ZoomCar) | Strategy, State | Widely asked |
+| P1 | Design a Car Rental System (ZoomCar) | Strategy, State | **PhonePe (machine coding, 2026)**, widely asked |
 | P1 | **Doctor Appointment Booking (Practo)** *(new)* | Strategy, State | **Flipkart** |
 | P1 | **Gym / Fitness Slot Booking** *(new)* | Strategy, State | **Flipkart** |
 | P2 | **Restaurant Table Reservation** *(new)* | Strategy, State | Zomato, Dineout |
 | P2 | **IRCTC Train Reservation** *(new)* | Strategy, State | Indian-specific |
 | P2 | **Course Registration System** *(new)* | Strategy, State | EdTech |
 | P2 | **Amazon Locker System** *(new)* | Strategy, Factory, State | **Amazon** |
-| P2 | **Conference Room Management** *(new)* | Strategy | Flipkart |
+| P1 | **Conference Room Management** *(new)* | Strategy | **Flipkart (machine coding examples)** |
 
 ---
 
@@ -183,13 +246,13 @@ created: 2026-08-04
 
 | P | Problem | Patterns | Asked At |
 |---|---|---|---|
-| P0 | Design a Payment Gateway System `[LLD Course Question]` | Strategy, State, Adapter | Razorpay, PhonePe |
+| P1 | Design a Payment Gateway System `[LLD Course Question]` | Strategy, State, Adapter | Razorpay, PhonePe |
 | P0 | **Digital Wallet (Paytm / PhonePe / Flipkart Wallet)** *(new)* | State, Command | **Flipkart, PhonePe, Paytm** |
 | P0 | Scalable Banking System (Ops & Top Spender Ranking) `[LLD Course Question]` | Strategy, Observer | Widely asked |
 | P0 | Design Splitwise `[LLD Course Question]` | Strategy, Factory, Observer | ShareChat, Razorpay, Flipkart, Paytm, Swiggy |
 | P1 | Stock Broker System (Zerodha / Groww) `[LLD Course Question]` | Strategy, Observer, State | Groww, Zerodha, Upstox |
 | P1 | **Double-Entry Ledger / Accounting Core** *(new)* | Command, Memento | Razorpay, Cred |
-| P1 | **Buy Now Pay Later (BNPL)** *(new)* | State, Strategy | **Flipkart**, Cred |
+| P1 | **Buy Now Pay Later (BNPL)** *(new)* | State, Strategy | **Flipkart SDE-2 (Jan 2026)**, Cred |
 | P1 | **Refund & Settlement System** *(new)* | State, Command | Razorpay, PhonePe |
 | P2 | **Loan / EMI Scheduling System** *(new)* | Strategy, Builder | Navi, Cred |
 | P2 | **Insurance Policy Management** *(new)* | State, Strategy | Insurtech |
@@ -203,7 +266,7 @@ created: 2026-08-04
 
 | P | Problem | Patterns | Asked At |
 |---|---|---|---|
-| P0 | **RBAC / Permission System** *(new)* | Composite, Strategy, Proxy | Atlassian, Rippling, SaaS |
+| P1 | **RBAC / Permission System** *(new)* | Composite, Strategy, Proxy | Atlassian, Rippling, SaaS |
 | P1 | **Authentication / Session & Token Management** *(new)* | Strategy, State | Widely asked |
 | P2 | **Multi-Tenant Resource Isolation** *(new)* | Proxy, Strategy | B2B SaaS |
 | P2 | **API Key & Quota Management** *(new)* | Strategy, Proxy | Infra, SaaS |
@@ -214,8 +277,9 @@ created: 2026-08-04
 
 | P | Problem | Patterns | Asked At |
 |---|---|---|---|
-| P0 | Text Editor (Undo/Redo Engine) `[LLD Course Question]` | Command, Memento | Widely asked |
+| P1 | Text Editor (Undo/Redo Engine) `[LLD Course Question]` | Command, Memento | Widely asked |
 | P0 | Middleware Framework `[LLD Course Question]` | Chain of Responsibility, Decorator | Widely asked |
+| P1 | **DAG / Workflow Execution Engine (dependencies, parallel steps, retries)** *(new)* | Command, State, Observer | **PhonePe (machine coding, 2026)** |
 | P1 | Design an API Gateway / Router | Chain of Responsibility, Proxy | Infra |
 | P1 | **Food Order Management using Commands** *(new)* | Command, State | **Flipkart** |
 | P2 | **Terminal / Shell Command Parser** *(new)* | Command, Interpreter | Amazon |
@@ -245,7 +309,7 @@ created: 2026-08-04
 | P0 | Design Snake & Ladder | Factory, Strategy | **PhonePe**, Amazon, Adobe, Swiggy |
 | P0 | Design a Chess Game `[LLD Course Question]` | Strategy, Factory, Command | Zepto, widely asked |
 | P1 | Design Battleship Game `[LLD Course Question]` | Strategy, State | Course |
-| P1 | **Snake Game (single-player, grid)** *(new)* | State, Strategy | **Atlassian** |
+| P1 | **Snake Game (single-player, grid)** *(new)* | State, Strategy | **Atlassian (LLD round, own IDE)** |
 | P1 | **Deck of Cards / Card Game Engine** *(new)* | Factory, Strategy | Amazon, Adobe |
 | P2 | **Minesweeper** *(new)* | Strategy, Flyweight | Amazon, Microsoft |
 | P2 | **Sudoku Validator / Solver** *(new)* | Strategy | Amazon |
@@ -275,7 +339,7 @@ created: 2026-08-04
 | P | Problem | Patterns | Asked At |
 |---|---|---|---|
 | P1 | **Customer Issue Resolution / Helpdesk Ticketing** *(new)* | Strategy, Observer, State | **PhonePe, Flipkart**, Freshworks |
-| P1 | **Inventory Management System** *(new)* | State, Observer | **Flipkart**, Meesho |
+| P0 | **Inventory Management System (reserve, release, no oversell)** *(new)* | State, Observer | **Flipkart (machine coding practice set)**, Meesho, Zepto |
 | P2 | **Online Coding Platform** *(new)* | Strategy, State | Flipkart |
 | P2 | **Music Streaming / Playlist (Spotify)** *(new)* | Iterator, Strategy, Composite | Widely asked |
 | P2 | **Leave / Attendance Management** *(new)* | State, Strategy | Rippling, Darwinbox |
@@ -319,7 +383,15 @@ Use this to check exhaustiveness by **pattern**, not by problem count. If a patt
 
 ## Sources
 
-Compiled 2026-08-04 from recent candidate reports and curated question banks:
+Market re-check on 2026-10-17 (ranked list, P values, execution plan market check):
+- PracHub, LLD interview guide and question bank (Jun 2026): Parking Lot and Elevator most frequent; Amazon delayed job scheduler; Uber concurrency on CodeSignal
+- TechPrep, Flipkart interview guide (2026): machine coding examples (URL shortener, e-commerce billing engine, conference room booking, in-memory message broker, inventory management), LLD examples (airline booking, customer issue resolution)
+- TechPrep, PhonePe interview guide (2026): DAG execution engine, vehicle rental, 90 min live or 24 h take-home, thread safety mandatory; multi-level cache reports
+- Swiggy machine coding guides (2026): parking lot, expense sharing, wallet, pub-sub, rate limiter
+- Razorpay candidate reports: SDE-2 job queue with producers and workers (Jun 2026), load balancer, pub-sub, senior document store with insert/delete/search
+- Flipkart SDE-2 BNPL machine coding (Jan 2026); Amazon SDE-2 LLD round (SOLID + LP, auction); Atlassian LLD (rate limiter, snake game, Jira-style task management); CRED (LRU, KV store)
+
+Original compile 2026-08-04 from recent candidate reports and curated question banks:
 - Flipkart recent machine-coding rounds (Prashant Priyadarshi, Feb 2026)
 - `github.com/ashishps1/awesome-low-level-design`
 - `github.com/jkaus324/machine-coding-interview-questions` (105 problems, company-mapped)
@@ -354,6 +426,14 @@ Must-code problems take a weekend day each; architect problems take an evening. 
 > [!danger] All 24 `[LLD Course Question]` items are in the plan, but they now consume **24 of the 43 slots**. That leaves only 19 slots for everything the market actually asks. This is the binding constraint — it is why several P0 problems below sit in Tier B that would otherwise be coded, and why 17 problems from the 21-week version were cut outright.
 
 > [!warning] Fifteen weeks at 3/week is materially harder than the original 42-over-21-weeks (2/week). The 43 below is already the ruthless cut. Do not add anything back without removing something.
+
+> [!check] Market check (Oct 2026)
+> Re-checked against the ranked list at the top of this file. Tier A already codes 12 of the 15 P0s. The other three are architected: Booking with Holds (BookMyShow, B3), Order Management (B6) and Inventory Management (B5 after this swap). So the plan mostly stands. Changes:
+> - **B5 swap**: Library Management (now P2) is out, **Inventory Management** (now P0) is in. Same slot, same architect format. Library moves to the bottom of Tier C.
+> - **A17 Task Scheduler** stays coded but widen the scope: delayed jobs, producers submitting to a queue, workers pulling with leases, a status state machine (`PENDING → RUNNING → DONE/FAILED/RETRY`). That one problem now covers the Razorpay and Amazon prompts.
+> - **A6 In-Memory Cache**: finish with a second level (L1/L2 with per-level eviction). PhonePe asks the multi-level version directly.
+> - **Tier C re-ordered**: DAG Execution Engine, In-Memory DB / Document Store, Car Rental, Load Balancer, BNPL, URL Shortener and Snake Game now carry 2026 evidence and sit near the top. Load Balancer, BNPL, Snake Game and In-Memory DB came out of CUT.
+> - **If Flipkart or PhonePe is the target**: pull Tier C #1–5 forward ahead of B14–B19. Every `[LLD Course Question]` stays in the plan either way.
 
 ---
 
@@ -404,7 +484,7 @@ UML class diagram, entity interfaces, relationships and pattern choices — all 
 | 2 | Design Swiggy / Food Delivery System | Booking + state archetype, both coded (A2, A23). Reskin. |
 | 3 | Design BookMyShow `[LLD Course Question]` | ==Would be coded with more time.== Seat-lock concurrency is real; pin it in the diagram. |
 | 4 | Design an ATM System `[LLD Course Question]` | ==Would be coded with more time.== State already coded at A2. |
-| 5 | Design a Library Management System | Very widely asked but structurally simple. Fluency beats typing. |
+| 5 | Inventory Management System *(Oct 2026: replaces Library Management)* | P0 at Flipkart, Zepto, Meesho. Reserve/release/commit states and the oversell guard; pin the lock granularity (per SKU) in the diagram. |
 | 6 | Order Management System | ==Would be coded with more time.== Reference state machine with guarded transitions. |
 | 7 | RBAC / Permission System | ==Would be coded with more time.== Hierarchy walk + deny-overrides-grant is diagram-friendly. |
 | 8 | Design a Payment Gateway System `[LLD Course Question]` | ==Would be coded with more time.== Adapter-per-provider is mostly structural. |
@@ -427,10 +507,10 @@ UML class diagram, entity interfaces, relationships and pattern choices — all 
 > [!info] These stay documented above in the catalog so you can glance at one if an interviewer names it. But do not spend a slot on them.
 
 **Reskins of something already in the plan** — the archetype is covered, the domain is a costume:
-Coffee Vending Machine · Amazon Locker (= Parking Lot) · Conference Room Management (= Meeting Scheduler) · Restaurant Table Reservation · IRCTC Train Reservation · Course Registration · Airline Seat Allocation · Warehouse Allocation · Menu/Category Tree · Org/Employee Hierarchy · Smart Home IoT · Traffic Signal Control · UPI Payment Flow · Ride Surge Pricing · Peer-to-Peer Parcel Delivery · Music Streaming/Playlist · Minesweeper · Connect 4 · Deck of Cards · Snake Game · Order Fulfilment/Delivery Tracking
+Coffee Vending Machine · Amazon Locker (= Parking Lot) · Conference Room Management (= Meeting Scheduler) · Restaurant Table Reservation · IRCTC Train Reservation · Course Registration · Airline Seat Allocation *(P1 now, but it is BookMyShow with flights: 20 minutes of reskinning B3 if Flipkart is the target)* · Warehouse Allocation (= Inventory, B5) · Menu/Category Tree · Org/Employee Hierarchy · Smart Home IoT · Traffic Signal Control · UPI Payment Flow · Ride Surge Pricing · Peer-to-Peer Parcel Delivery · Music Streaming/Playlist · Minesweeper · Connect 4 · Deck of Cards · Order Fulfilment/Delivery Tracking
 
 **HLD wearing an LLD costume** — you'd be practising the wrong round:
-Load Balancer · Distributed ID Generator · Distributed Lock · Social Network / LinkedIn · Web Crawler · StackOverflow · Simplified Twitter · Recommendation/Ranking Policy
+Distributed ID Generator · Distributed Lock · Social Network / LinkedIn · Web Crawler · StackOverflow · Simplified Twitter · Recommendation/Ranking Policy
 
 **DSA in disguise** — you already train this separately:
 Regex / Pattern Matcher · Search Autocomplete / Typeahead · Sudoku Validator · Ten-Pin Bowling Scorer · Browser History Simulator
@@ -439,12 +519,12 @@ Regex / Pattern Matcher · Search Autocomplete / Typeahead · Sudoku Validator �
 Bug Bounty Program · Dating App · Online Coding Platform · Gym Slot Booking *(cut reluctantly — it's a pure Practo reskin at B12)* · Vehicle Service Centre · Voting System · Quiz Platform · CricInfo
 
 **Subsumed by something stronger in the plan:**
-Validation Framework (= Rule Engine, A7) · Audit Log (= Observer, A13) · Retry with Backoff (folded into Circuit Breaker, A19) · Read-Write Lock (= Producer–Consumer, A16) · API Key & Quota (= Rate Limiter + RBAC) · Multi-Tenant Isolation (= RBAC, A31) · File Search System (= File System, A30) · Connection Pool (= Thread Pool, A15) · Feature Flag / A-B Testing · Tax Calculation Engine
+Validation Framework (= Rule Engine, A7) · Audit Log (= Observer, A13) · Retry with Backoff (folded into Circuit Breaker, A19) · Read-Write Lock (= Producer–Consumer, A16) · API Key & Quota (= Rate Limiter + RBAC) · Multi-Tenant Isolation (= RBAC, B7) · File Search System (= File System, A23) · Connection Pool (= Thread Pool, A15) · Feature Flag / A-B Testing · Tax Calculation Engine
 
 **Niche or advanced, genuinely low yield:**
-JSON Parser · Terminal/Shell Parser · CI/CD Pipeline Engine · DI / IoC Container · ORM / Query Builder · Object Mapper · Config Management Library · Unit Test Framework · In-Memory DB with Transactions · Loan/EMI Scheduling · Insurance Policy Management · BNPL · Refund & Settlement · Leave / Attendance Management · Survey / Form Builder · Customer Loyalty Program
+JSON Parser · Terminal/Shell Parser · CI/CD Pipeline Engine · DI / IoC Container · ORM / Query Builder · Object Mapper · Config Management Library · Unit Test Framework · Loan/EMI Scheduling · Insurance Policy Management · Refund & Settlement · Leave / Attendance Management · Survey / Form Builder · Customer Loyalty Program
 
-> [!info] Seventeen further problems were in the 21-week version and lost their slot when the timeline shortened. Those are **not** dead — they live in [Tier C](#tier-c--backlog-todo-after-dec-end) at the bottom of this file.
+> [!info] Twenty-one further problems (the ones that lost their slot when the timeline shortened, plus the Oct 2026 market additions) are **not** dead — they live in [Tier C](#tier-c--backlog-todo-after-dec-end) at the bottom of this file.
 
 ---
 
@@ -468,26 +548,30 @@ Week 1 starts **Sept 15**. Week 15 ends **Dec 28**, leaving the last few days of
 
 ## TIER C — BACKLOG (TODO after Dec end)
 
-> [!abstract] **TODO — after Dec 31, if there is time.** These seventeen were in the 21-week plan and lost their slot when the timeline shortened to 15 weeks. Nothing here is low-quality; they are ordered by what buys the most coverage per hour, so work top-down and stop whenever you stop. Everything in the *CUT — Do Not Do* section above stays cut permanently — this list is separate from that.
+> [!abstract] **TODO — after Dec 31, if there is time.** These are the problems that lost their slot when the timeline shortened to 15 weeks, re-ordered in October 2026 against current interview reports, plus the 2026 market additions. Ordered by interview likelihood first, coverage per hour second, so work top-down and stop whenever you stop. Everything still in the *CUT — Do Not Do* section above stays cut permanently.
 
 | # | Problem | Code or architect | Why it's worth coming back to |
 |---|---|---|---|
-| 1 | Multi-Level Cache (pluggable eviction per level) | Code | PhonePe asks this directly. Direct extension of A6, so it's cheap and high-yield. |
-| 2 | Customer Issue Resolution / Helpdesk Ticketing | Code | PhonePe and Flipkart both ask it. Assignment strategy + SLA escalation. |
-| 3 | Inventory Management System | Architect | Flipkart. Reservation and oversell prevention. |
-| 4 | Log Query Engine | Code | Appeared in a recent Flipkart round in the extend-existing-code format. Filter composition. |
-| 5 | Spreadsheet / Formula Engine | Architect | Atlassian. The dependency DAG and cycle detection are a genuinely distinct insight. |
-| 6 | Doctor Appointment Booking (Practo) | Architect | Flipkart. Slot booking with practitioner availability. |
-| 7 | Chat Application (WhatsApp / real-time) | Architect | Mediator + Observer at scale. Asked at Zepto and Meesho. |
-| 8 | Design a Key-Value Store | Code | Storage internals with TTL and persistence hooks. |
-| 9 | Design an API Gateway / Router | Architect | Route matching + filter chain on top of A9. |
-| 10 | Workflow / Approval Engine (multi-level) | Architect | Rippling and Razorpay. Configurable approval chains. |
-| 11 | Double-Entry Ledger / Accounting Core | Code | Razorpay, Cred. Invariant enforcement is worth typing once. |
-| 12 | Authentication / Session & Token Management | Architect | Refresh-token rotation and revocation. Pairs with RBAC at B7. |
-| 13 | Expression Evaluator / Calculator | Code | Cheap Interpreter exercise. Two hours, good ROI. |
-| 14 | Design a Real-Time Leaderboard System | Architect | Dream11. Heap and tie-breaking choices. |
-| 15 | Design Hotel Booking / Airbnb | Architect | Booking reskin. Do only for domain fluency. |
-| 16 | Design a Car Rental System (ZoomCar) | Architect | Booking reskin with fleet inventory. |
-| 17 | Design a URL Shortener (Bitly) | Architect | Thin on LLD. Lowest priority in this file for a reason. |
+| 1 | Multi-Level Cache (pluggable eviction per level) | Code | P0. PhonePe asks this directly. Direct extension of A6, so it's cheap. |
+| 2 | DAG / Workflow Execution Engine | Code | PhonePe machine coding (2026). Topological order, parallel ready steps on a thread pool (reuses A15), per-step retry and failure propagation. |
+| 3 | Customer Issue Resolution / Helpdesk Ticketing | Code | PhonePe and Flipkart. Assignment strategy + SLA escalation. |
+| 4 | In-Memory Database / Document Store (KV, transactions, search) | Code | Razorpay senior machine coding. Insert/delete/search with secondary indexes, `BEGIN/COMMIT/ROLLBACK` via a change log. Replaces the old standalone Key-Value Store item. |
+| 5 | Design a Car Rental System (ZoomCar) | Code | PhonePe machine coding (2026). Booking archetype with fleet inventory and overlapping-interval checks; fits 90 min. |
+| 6 | Load Balancer (strategy-based, LLD) | Code | Razorpay machine coding. Round robin / weighted / least-connections behind one interface, plus health checks. Two hours. |
+| 7 | Buy Now Pay Later (BNPL) | Architect | Flipkart SDE-2 machine coding (Jan 2026). Credit limit, dues, repayment state machine. Reuses A22 wallet thinking. |
+| 8 | Design a URL Shortener (Bitly) | Code | Flipkart lists it as a machine coding example. Thin, but cheap to code with custom alias and expiry. |
+| 9 | Snake Game (single-player, grid) | Code | Atlassian LLD round. Small, and a good test of keeping game state clean under live extensions. |
+| 10 | Log Query Engine | Code | Recent Flipkart round in the extend-existing-code format. Filter composition. |
+| 11 | Spreadsheet / Formula Engine | Architect | Atlassian. Dependency DAG and cycle detection; overlaps with #2. |
+| 12 | Doctor Appointment Booking (Practo) | Architect | Flipkart. Slot booking with practitioner availability. |
+| 13 | Workflow / Approval Engine (multi-level) | Architect | Rippling and Razorpay. Configurable approval chains. |
+| 14 | Chat Application (WhatsApp / real-time) | Architect | Mediator + Observer. Asked at Zepto and Meesho. |
+| 15 | Double-Entry Ledger / Accounting Core | Code | Razorpay, Cred. Invariant enforcement is worth typing once. |
+| 16 | Design an API Gateway / Router | Architect | Route matching + filter chain on top of A9. |
+| 17 | Authentication / Session & Token Management | Architect | Refresh-token rotation and revocation. Pairs with RBAC at B7. |
+| 18 | Expression Evaluator / Calculator | Code | Cheap Interpreter exercise. Two hours, good ROI. |
+| 19 | Design a Real-Time Leaderboard System | Architect | Dream11. Heap and tie-breaking choices. |
+| 20 | Design Hotel Booking / Airbnb | Architect | Booking reskin. Do only for domain fluency. |
+| 21 | Design a Library Management System | Architect | Moved out of B5 in Oct 2026. P2 for product companies; keep for service-company or campus rounds. |
 
-> [!tip] If you reach Tier C at all, prefer the six marked **Code** over the architect ones. By January your architecting will be well-practised from 19 Tier B problems, but coded reps are what stay in your fingers.
+> [!tip] If you reach Tier C at all, prefer the items marked **Code** over the architect ones. By January your architecting will be well-practised from 19 Tier B problems, but coded reps are what stay in your fingers.
