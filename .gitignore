@@ -23,3 +23,6 @@ desktop.ini
 
 # Temporary scratch files
 temp.*
+
+# LLD Java project build output
+LLD/Code/target/

@@ -41,15 +41,20 @@ All **12** stay.
 | 10 | [[10 - Order Management]] | Order state machine + snapshots |
 | 11 | [[11 - Collaborative Workspace]] | Optimistic version + presence |
 | 12 | [[12 - E-commerce Checkout]] | Freeze + reserve + one order |
+| 13 | [[13 - URL Shortener]] | Permuted counter ranges, cached 302s, clicks off the hot path · **new format** |
+
+> [!info] New format (October 2026)
+> [[13 - URL Shortener]] and [[06 - Seat Booking]] are the pilots of the new format: clarify script → requirements → estimates that drive V0 → V0 → scale ladder (V1–V4, each with its trigger number) → twist cards → break it → operations → close. Shared mechanics live in [[12 - Mini Designs]]. The rules are in `CONVENTIONS.md` under *HLD Problems and Mini Designs*, including the mandatory research step. The other notes here are in the older format until converted.
 
 ## How you walk any of them
 
-1. Functional / NFR / **out of scope**
-2. DAU → QPS → storage (only to justify one PG vs Redis vs queue)
-3. 4–6 APIs, tables + FKs
-4. 6–8 boxes, one write, one read
-5. The invariant
-6. Double-click / process death / cache lie
+1. Clarify, then functional / NFR (with numbers) / **out of scope**
+2. Only the estimates that pick something
+3. APIs, tables + FKs
+4. V0: the simplest design that works, and what it can't handle
+5. Climb the ladder: each step names the number that breaks the previous version and the mini design it uses
+6. Expect twists off the ladder: consistency, features, failures, cost, regions, compliance, abuse
+7. Break it: double-click / process death / cache lie
 
 ## Related Notes
 

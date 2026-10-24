@@ -22,7 +22,7 @@ High Level Design notes.
 | [[09 - Storage Search and Geo]] | S3, ES, geohash |
 | [[10 - Distributed Building Blocks]] | Hash ring, IDs, quorum |
 | [[11 - Services and Observability]] | Monolith vs MS, telemetry |
-| [[12 - Mini Designs]] | 20-min skeletons |
+| [[12 - Mini Designs]] | Reusable sub-systems (MD-01 … MD-22) |
 | [[13 - Question Bank]] | Grill + prompts |
 | [[14 - Coordination and Concurrency]] | Locks, leases, fencing, SKIP LOCKED |
 | [[15 - Out of Scope]] | Named, not taught this week |
@@ -47,6 +47,7 @@ High Level Design notes.
 | 10 | [[10 - Order Management]] |
 | 11 | [[11 - Collaborative Workspace]] |
 | 12 | [[12 - E-commerce Checkout]] |
+| 13 | [[13 - URL Shortener]] |
 
 ## Other
 

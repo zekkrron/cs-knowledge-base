@@ -36,7 +36,11 @@ LLD/
   Tech/
     Java/
     Spring Boot/
-  Problems/         ONLY Akash's own solved designs. Empty for now.
+  Problems/         Researched LLD / machine-coding problem notes (format: "LLD Problems"
+                    below). Code lives in Code/, notes link to it.
+  Code/             Maven project: plain-Java solutions, two self-contained packages per
+                    problem (v0, full), JUnit tests. Source of truth for all LLD code.
+  Problem Catalog.md
   Pattern Selection.md
   Interview Approach.md
   README.md
@@ -305,6 +309,209 @@ Rules:
 - Callouts: `[!tip]` insight · `[!warning]` gotcha · `[!danger]` failure · `[!example]` numbers · `[!info]` context. At most one per section.
 - Don't write "SDE-1 slice." Depth is organised by section, not by level.
 - Keep every fact from the old note unless it's wrong. Rewriting is for shape, not deletion.
+
+---
+
+## HLD Problems and Mini Designs
+
+This section governs `HLD/Problems/` and `HLD/Topics/12 - Mini Designs/`. It overrides the HLD topic note template for those two folders.
+
+### Ideology
+
+- A real HLD round is not one question with one answer.
+    + The interviewer moves the problem while you solve it: scales it 10x and 100x, swaps a requirement, kills a dependency, asks what it costs, or drags you into one component and never lets go.
+    + So a note that holds one "final" architecture is useless. A note must hold a **simple working V0**, a **ladder** of upgrades with the number that triggers each one, and a **menu of twist cards** for follow-ups that are not on the ladder.
+- **Level: SDE 3 only.** Every note assumes the hardest version of the round.
+    + No "SDE 1 / SDE 2 / SDE 3" sections, tags, or comparisons anywhere.
+    + Failure, cost and operations are written in, not left for the interviewer to ask.
+- **Market: Indian product companies and similar markets.** Spikes are Indian spikes (IPL, Tatkal, Big Billion Day, a Coldplay sale, UPI month-end), and regulation is Indian regulation (RBI, NPCI, TRAI, DPDP) where it changes the design.
+- **Two layers, write-once:**
+    + **Mini Designs (MDs)** are reusable sub-systems that many problems are assembled from (rate limiter and waiting room, reservation with TTL, saga, hot-key shield, ID generator, baseline scaling, sharding, multi-region...). The generic mechanics, alternatives, numbers and failures live **only** in the MD.
+    + **Problem notes** are one per interview question, even when two problems share most MDs. They carry the problem's own requirements, numbers, schema, V0, ladder and twists, and link to MDs instead of re-explaining them.
+    + MDs link down to topic notes (`05 - Databases`, `21 - Redis`, `07 - Async Messaging`...) for theory. An MD explains how blocks are wired and tuned, not what Redis is.
+- **Estimates exist to force a decision.** Write only the numbers that pick or break something. Each ladder step states the number that breaks the previous version.
+
+> [!danger] Research is mandatory
+> Before writing **any** new problem note or MD, do thorough internet research aimed at **SDE 3-level interviews in the Indian market**:
+> - Recent interview reports (LeetCode Discuss, GeeksforGeeks, takeuforward, Glassdoor, company prep guides) for how the question is actually asked and which follow-ups come up.
+> - Indian engineering blogs and incident write-ups (JioHotstar, Razorpay, PhonePe, Flipkart, Swiggy, Zomato, Zepto, Dream11, IRCTC, BookMyShow, CRED) for real scale numbers and real failure stories.
+> - Regulators and official docs (RBI, NPCI, TRAI, DPDP Act, vendor docs) for any rule or number the design depends on.
+> - Record every source with its date in the note's `## Sources` section. Never invent a number. If a number is an estimate, say so.
+
+### Files
+
+- MDs: `HLD/Topics/12 - Mini Designs/MD-NN - <Name>.md`. `12 - Mini Designs.md` in the same folder is the index (catalog plus a problem → MD map).
+- Problems: `HLD/Problems/NN - <Name>.md`, numbered in creation order. Priority lives in [[Interview Question Priority]], not in the file name.
+- Tags: `hld/mini-designs` for MDs, `hld/problems` for problems, plus a `status/*` tag.
+
+### Mini Design template
+
+```
+---
+tags: [hld/mini-designs, status/draft]
+created: YYYY-MM-DD
+---
+# MD-NN — <Name>
+
+> [!abstract] What this is
+> What the block solves, in two or three sentences, and the one decision that defines it.
+
+## 1. What It Solves and Where It Appears
+Prose on the problem class, then a table: Problem | How it uses this block (the parameters it sets).
+
+## 2. Knobs
+The settings that change between problems (TTL, key shape, consistency level, threshold...), with what each trades.
+
+## 3. Evolution of the Block
+The block's own V0 → Vn ladder. Each step: trigger number, what breaks, the change.
+
+## 4. Core Mechanics
+Data structures, algorithms, schema, Lua / SQL / pseudocode where it helps. Mermaid for flows.
+
+## 5. Decision Tables
+Alternatives with trade-offs and a "pick when" column.
+
+## 6. Numbers to Know
+Throughput per node, latencies, memory and storage sizing. Sourced.
+
+## 7. Failure Modes
+| Failure | What happens | Detect | Fix |
+
+## 8. Twist Cards
+Follow-ups that hit this block in any problem: what the interviewer says → the answer.
+
+## 9. Operations and Cost
+Metrics, alerts, the main cost driver.
+
+## 10. Say It in One Minute
+The explanation as you'd say it in the round.
+
+## Sources
+## Related Notes
+```
+
+### Problem note template
+
+```
+---
+tags: [hld/problems, status/draft]
+created: YYYY-MM-DD
+---
+# <Problem>
+
+> [!abstract] Priority #N. Mini designs: MD-a (role) → MD-b (role) → ... The hard part, in one sentence.
+
+## 1. Clarify Script
+Questions to ask, the default assumption for each, and the twist card that applies if the answer differs.
+
+## 2. Requirements
+Functional (top 3–5), non-functional (quantified), out of scope.
+
+## 3. Estimates That Drive V0
+Only the numbers that pick something.
+
+## 4. Entities, API, Schema
+
+## 5. V0 — Simplest Design That Works
+Diagram, core flows, and what V0 can't handle.
+
+## 6. Scale Ladder
+### V1 — <name>
+Trigger (the number and the maths) → what breaks → the change → the diagram delta → the trade-off → MD link.
+(V2, V3, V4...)
+
+## 7. Twist Cards
+Problem-specific follow-ups across consistency, features, failures, cost, multi-region, compliance, abuse and Indian-scale spikes.
+Each card: what the interviewer says → what it hits → the answer → which version it attaches to.
+
+## 8. Break It
+| Failure | What you say |
+
+## 9. Operations and Cost
+
+## 10. One-Minute Close
+
+## Sources
+## Related Notes
+```
+
+### Writing rules
+
+- Follow the HLD topic note rules above (prose opens every section, "pick when" columns, Mermaid for mechanisms).
+- A problem note never re-explains MD mechanics. It states the problem-specific choice and the numbers, then links the MD.
+- An MD never carries one problem's numbers as if they were universal. Problem-specific numbers belong in the problem note; the MD gives ranges.
+- In a 45-minute round you reach V0 plus one or two ladder steps or twist cards. The rest of the note exists so that whichever way the interviewer turns, the answer is already written.
+
+---
+
+## LLD Problems
+
+This section governs `LLD/Problems/` and `LLD/Code/`. It applies the same ideology as the HLD section above to low-level design and machine coding.
+
+### Ideology
+
+- A real LLD round never stops at the first working version.
+    + **Machine coding** (Flipkart, PhonePe, Swiggy, Razorpay): ~90 minutes of working, demoable, in-memory code, then a 30–45 minute review where the interviewer adds requirements live and runs edge cases ("run it with slot 9", "what if two requests arrive together").
+    + **LLD discussion** (Amazon, Atlassian, Uber-style): ~45 minutes of requirements, entities, class design, key-method code, a trace, then a burst of "what if we…" extensions.
+    + So a note holds a **V0** (what you'd submit at minute 90), an **extension ladder E1–E4** (the change requests interviewers actually make, each showing which classes are added vs edited), and **review cards** for off-ladder questions.
+- **Level: SDE 3 only.** No level sections or comparisons. Thread safety is always one of the ladder steps.
+- **Market: Indian product companies and similar.** Prefer the prompt wording and CLI formats Indian rounds actually use.
+- **Plain Java only.** Machine coding rounds forbid databases and frameworks and expect in-memory, CLI-driven code. Solution code imports only `java.*`. Maven exists only to compile and run JUnit in the vault.
+- **Every snapshot is self-contained.** There is no shared library: each `v0` and `full` package contains everything it needs, including the boilerplate you'd type in the round (exception classes, the CLI loop, a demo clock). The code must look like what one candidate writes from scratch, not like something leaning on helpers the interviewer will never see.
+- **Problem notes** link to `Patterns/`, `Concurrency/` and `Foundations/` notes for theory instead of re-explaining it, and list the boilerplate files each V0 needs so you know what to type in the first ten minutes.
+
+> [!danger] Research is mandatory
+> Before writing **any** new LLD problem, do thorough internet research aimed at **SDE 3-level LLD / machine-coding rounds in the Indian market**: the prompt as actually given (workat.tech, LeetCode Discuss, GeeksforGeeks, takeuforward), the follow-ups reported in reviews, and company guides. Record every source with its date in `## Sources`.
+
+### Code rules
+
+- **Location:** `LLD/Code/src/main/java/lld/<problem>/v0` and `lld/<problem>/full`; tests mirror it under `src/test/java`. The code folder is the source of truth; notes carry only short excerpts and link to files.
+- **Two snapshots per problem:**
+    + `v0` = exactly what you'd submit at the 90-minute mark: correct, clean, with a CLI demo.
+    + `full` = V0 + every ladder extension E1–E4. Each extension's Javadoc says which step introduced it.
+- **Every problem ships, inside each package:** a `*App` class with a `CommandLineDriver` demo and `main`; its own `DomainException` hierarchy (only the subtypes it uses: `ValidationException`, `NotFoundException`, `ConflictException`); an injected `java.time.Clock` wherever time matters, with a package-local `ManualClock` for the demo and tests; JUnit 5 tests per extension plus at least one multi-threaded test.
+- **No cross-package imports.** A `full` package never imports from its `v0`, and no problem imports from another. Duplication of the small boilerplate is intended.
+- **Prefer what you'd type:** a plain `EnumMap<Key, Strategy>` over a custom registry class; a `ScheduledExecutorService` over a wrapper.
+- **Java 21** (`maven.compiler.release`), no preview features, `-Xlint:all` clean.
+- **Done means:** `.\mvnw.cmd test` passes. Run it before reporting a problem finished.
+- **Package root:** `lld`. Money in paise (`long`), never `double`.
+
+### LLD problem note template
+
+```
+---
+tags: [lld/problems, status/draft]
+created: YYYY-MM-DD
+---
+# <Problem>
+
+> [!abstract] Catalog #N · archetype · patterns. The hard part, in one sentence.
+
+## 1. Clarify Script
+Questions, default assumption, which extension fires if the answer differs.
+## 2. Requirements
+Functional, constraints (in-memory, CLI, thread-safe?), out of scope.
+## 3. Entities and Responsibilities
+Who owns which rule (data rules in the owning entity, workflow in the orchestrator).
+## 4. Class Design
+Mermaid classDiagram + short state/behaviour list.
+## 5. V0 — the 90-Minute Build
+Package layout, key code excerpts, exceptions, CLI demo. Link the v0 package.
+## 6. Trace
+One scenario, operation by operation.
+## 7. Extension Ladder
+### E1 — <request>
+Interviewer says → classes added / edited → code delta → pattern. (E2, E3, E4; one is concurrency.)
+## 8. Review Cards
+Off-ladder questions with answers (SOLID, complexity, validations, testing, races, "how would this scale" → HLD link).
+## 9. Edge Cases and Tests
+| Case | Expected | Test |
+## 10. Self-Review Rubric
+Naming · SRP · OCP on extensions · exceptions · thread safety · demo runs.
+## 11. One-Minute Pitch
+## Sources
+## Related Notes
+```
 
 ---
 

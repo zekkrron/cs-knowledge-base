@@ -409,6 +409,9 @@ Original compile 2026-08-04 from recent candidate reports and curated question b
 
 # EXECUTION PLAN — Absolute Priority Order
 
+> [!warning] Updated October 2026: you are no longer typing solutions yourself
+> Every problem now gets a researched note in [[LLD/Problems/README|LLD/Problems]] and full working code (v0 + full) in `LLD/Code`. Read **"must code" vs "architect via dictation"** below as **priority order only**: Tier A first, then Tier B, then Tier C. The coding-effort reasoning in the tiers and the weekly budget no longer applies. Done so far: [[01 - Parking Lot]], [[02 - Rate Limiter]].
+
 > [!important] This is the section to follow verbatim. No archetype grouping, no domain grouping — just two flat ordered lists. Work top to bottom. If you run out of time, you stop at the bottom of what you finished and nothing important was left behind.
 
 ## The Budget

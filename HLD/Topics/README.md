@@ -40,7 +40,7 @@ The numbers are stable because every note links to folders by name. Renumbering 
 | | [[19 - Deployment and Infrastructure]] | Compute, Kubernetes, autoscaling, rollouts, zero-downtime changes |
 | **Data at scale** | [[20 - Data Processing and Analytics]] | OLTP vs OLAP, warehouses, batch and stream processing |
 | **Problem → solution map** | [[25 - Problem to Solution Map]] | Every recurring design problem across the notes, mapped to its standard solutions, trade-offs and when to pick each |
-| **Practice** | [[12 - Mini Designs]] | Small designs, one hard part each |
+| **Mini designs** | [[12 - Mini Designs]] | Reusable sub-systems (MD-01 … MD-22) that problems are assembled from, plus a problem → MD map |
 | | [[13 - Question Bank]] | Concept grill with one-line answers |
 | **Backlog** | [[15 - Out of Scope]] | Named topics that don't have a note yet |
 
@@ -61,7 +61,7 @@ Read **aloud**. Silent reading does not survive a whiteboard. Each step ends wit
 | 7 | [[19 - Deployment and Infrastructure]] · [[20 - Data Processing and Analytics]] | Walk a column rename with zero downtime. Say where analytics runs and why not on the primary. |
 | 8 | [[21 - Redis]] · [[22 - Elasticsearch]] · [[23 - MongoDB]] · [[24 - Cassandra and DynamoDB]] | For each tool, say how it fails over, how you'd pick its key, and what it can't do. |
 | 9 | [[25 - Problem to Solution Map]] | Cover each options table, read only the problem and signal, and say the options and the default out loud. |
-| 10 | [[12 - Mini Designs]] | URL shortener and rate limiter, 20 minutes each, then the rest. |
+| 10 | [[12 - Mini Designs]] | Learn MD-19, MD-20 and MD-21 first (they appear in almost every problem), then the MDs of the next problem you'll do. Practise with [[13 - URL Shortener]] and [[06 - Seat Booking]]. |
 | 11 | [[13 - Question Bank]] | Concept grill out loud. |
 
 ---

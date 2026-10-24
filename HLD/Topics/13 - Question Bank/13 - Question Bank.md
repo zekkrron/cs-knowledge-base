@@ -30,7 +30,7 @@ These test whether you know what actually happens between the browser and your s
 | DNS? HTTPS? | DNS turns a name into an IP; HTTPS is HTTP over TLS, which encrypts and proves the server's identity. | [[03 - Networking and APIs]] · [[18 - Security]] |
 | TCP vs UDP. | TCP is ordered and reliable with a handshake; UDP is fire-and-forget, used where late data is useless. | [[03 - Networking and APIs]] |
 | REST vs gRPC. When GraphQL. | REST for public APIs, gRPC for internal service-to-service, GraphQL when clients need flexible shapes from many sources. | [[03 - Networking and APIs]] |
-| 301 vs 302. | 301 is cached forever by browsers; 302 makes every click hit you. | [[12 - Mini Designs#1. URL shortener — the one they will ask\|URL shortener]] |
+| 301 vs 302. | 301 is cached forever by browsers; 302 makes every click hit you. | [[13 - URL Shortener\|URL shortener]] |
 | PUT vs POST, idempotency. | PUT replaces a resource and is idempotent; POST creates and isn't, unless you add an idempotency key. | [[03 - Networking and APIs]] · [[08 - Reliability]] |
 | WebSocket vs SSE vs polling. Sticky sessions? | Polling for rare updates, SSE for server → client, WebSocket for two-way; WS needs sticky routing or a pub/sub bus between pods. | [[03 - Networking and APIs]] |
 | JWT vs session cookies. How do you revoke a JWT? | Sessions are server-side and easy to revoke; JWTs are stateless, so revoke with short expiry plus a denylist or refresh-token rotation. | [[18 - Security]] |
@@ -94,7 +94,7 @@ These are about what happens when a dependency misbehaves, and about who is allo
 |---|---|---|
 | Timeouts and retries with jitter. What should you not retry? | Always set timeouts, retry with backoff and jitter; don't retry non-idempotent writes or 4xx errors. | [[08 - Reliability]] |
 | Circuit breaker. | Stop calling a failing dependency for a while so it can recover and you fail fast. | [[08 - Reliability]] |
-| Rate limit algorithm. Why Redis. 429. | Token bucket; Redis because the counter must be shared across nodes; reply 429 + `Retry-After`. | [[12 - Mini Designs#2. Rate limiter — the other one they will ask\|Rate limiter]] · [[08 - Reliability]] |
+| Rate limit algorithm. Why Redis. 429. | Token bucket; Redis because the counter must be shared across nodes; reply 429 + `Retry-After`. | [[MD-02 - Traffic Shaper Rate Limiter and Waiting Room\|Rate limiter]] · [[08 - Reliability]] |
 | Idempotency-Key on payments. | The client sends a key; a unique constraint makes a retry return the first result. | [[08 - Reliability]] · [[07 - Wallet and Ledger]] |
 | Optimistic version vs `SELECT FOR UPDATE`. When is a Redis lock the wrong answer? | Optimistic for low contention, `FOR UPDATE` for high; a Redis lock is wrong when correctness must survive Redis failover. | [[14 - Coordination and Concurrency]] |
 | `SKIP LOCKED` for workers. What if the lock TTL expires while you still hold the work? | Workers claim different rows without blocking; an expired lease means another worker can start, so writes need a fencing check. | [[14 - Coordination and Concurrency]] |
@@ -123,10 +123,10 @@ These dominate intern, entry-level, and "light HLD" loops.
 
 | # | Design | Notes |
 |---|---|---|
-| 1 | [[12 - Mini Designs#1. URL shortener — the one they will ask\|URL shortener]] | |
-| 2 | [[12 - Mini Designs#2. Rate limiter — the other one they will ask\|Rate limiter]] | |
-| 3 | [[12 - Mini Designs#3. Notification system — most common "product" design\|Notification system]] | Email / push / SMS, sometimes "notify users that X happened" |
-| 4 | [[12 - Mini Designs#5. Chat (1-1 first, then groups)\|1-1 chat]] | |
+| 1 | [[13 - URL Shortener\|URL shortener]] | |
+| 2 | [[MD-02 - Traffic Shaper Rate Limiter and Waiting Room\|Rate limiter]] | |
+| 3 | [[MD-09 - Multi-Lane Priority Queue Retry and Vendor Failover Hub\|Notification system]] | Email / push / SMS, sometimes "notify users that X happened" |
+| 4 | [[MD-01 - Stateful Connection and Realtime Push Mesh\|1-1 chat]] | |
 | 5 | "Scale **this CRUD**" | A resume feature: auth, the feed of *your* app, file upload |
 
 ### Tier 2 — very common once they want a "system"
@@ -196,7 +196,7 @@ Run these against whatever you drew. They're where a good design shows it was ac
 | 6 | Queue lag grows for 40 minutes. | [[07 - Async Messaging]] |
 | 7 | Payment succeeds, your DB write fails (or the inverse). | [[07 - Wallet and Ledger]] |
 | 8 | Deploy: cache flush. | [[06 - Caching]] · [[19 - Deployment and Infrastructure]] |
-| 9 | Clock skew on two rate-limiter nodes. | [[12 - Mini Designs#2. Rate limiter — the other one they will ask\|Rate limiter]] · [[17 - Consistency Time and Consensus]] |
+| 9 | Clock skew on two rate-limiter nodes. | [[MD-02 - Traffic Shaper Rate Limiter and Waiting Room\|Rate limiter]] · [[17 - Consistency Time and Consensus]] |
 | 10 | Search index is 2 minutes stale. Is that OK? | [[09 - Storage Search and Geo]] |
 
 > [!danger] If you cannot answer #4 and #7, you are not done.
