@@ -31,6 +31,7 @@ created: 2026-09-19
 7. [[05 - Ask AI Search]] — `ask-ai` (TAZS name, `RERANKER_TYPE` vs character-count)
 8. [[06 - Supporting Modules]] — RBAC, transformers, SOP (follow-ups)
 9. [[07 - Langfuse]] — how to talk traces (you did not build Langfuse)
+10. [[08 - Voice Agent]] — `voice-agent` (Dograh pipeline, post-call workflow, cost model)
 
 ## ClearTax — study order
 
@@ -45,13 +46,14 @@ created: 2026-09-19
 
 | id | Note |
 |---|---|
+| `narad` | no note yet (Golang ticket listing API, RBAC permissions API) |
 | `mcp-servers` | [[01 - MCP Servers]] |
-| `dev-productivity` | [[01 - MCP Servers]] |
 | `catalog-gateway` | [[02 - Catalog and Gateway]] |
 | `multi-agent` | [[03 - Agents and Orion]] |
-| `orion` | [[03 - Agents and Orion]] |
 | `ask-ai` | [[05 - Ask AI Search]] |
 | `workflows` | [[04 - Workflows]] · [[05 - Pause Resume]] |
+| `voice-agent` | [[08 - Voice Agent]] |
+| *(removed Oct 2026)* `dev-productivity`, `orion` | [[01 - MCP Servers]], [[03 - Agents and Orion]] (kept as interview material) |
 | `cleartax-harvester` | [[01 - Data Harvester]] |
 | `cleartax-recon` | [[02 - Transactional Reconciliation]] |
 | `cleartax-singapore` | [[03 - Singapore Expansion]] |

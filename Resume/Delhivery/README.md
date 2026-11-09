@@ -4,7 +4,7 @@ created: 2026-09-19
 ---
 # Delhivery — Resume Defence
 
-> [!abstract] How to answer the seven Delhivery bullets without inventing traffic. Start at [[00 - Ownership and How to Talk]]. ClearTax: [[ClearTax/README]].
+> [!abstract] How to answer the Delhivery bullets without inventing traffic. Start at [[00 - Ownership and How to Talk]]. ClearTax: [[ClearTax/README]].
 
 | File | Resume ids | Deep docs |
 |---|---|---|
@@ -17,6 +17,11 @@ created: 2026-09-19
 | [[05 - Ask AI Search]] | `ask-ai` | [[09-ask-ai-search]] |
 | [[06 - Supporting Modules]] | follow-ups | [[08-supporting-modules]] |
 | [[07 - Langfuse]] | follow-up (not yours) | [[12-observability-langfuse]] |
+| [[08 - Voice Agent]] | `voice-agent` | (self-contained) |
+| (no note yet) | `narad` | Golang ticket listing API + RBAC permissions API |
+
+> [!info] October 2026 resume update
+> `orion` and `dev-productivity` were removed from `resume.tex`. Their notes ([[03 - Agents and Orion]], [[01 - MCP Servers]]) stay as interview material: Orion still appears inside the `workflows` bullet (₹1.5 per indent).
 
 ## Related Notes
 

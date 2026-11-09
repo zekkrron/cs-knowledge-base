@@ -66,32 +66,9 @@ DSA/
 **Ratta Sheet source of truth:** lives in a Google Doc (needed during office hours where the
 vault isn't available). Content pasted into `temp.md` for conversion must be transcribed
 **exactly as given** — no rewording, paraphrasing, or restructuring of the explanation text.
-Only the heading structure below is imposed on top of it.
+Only the heading structure and bold labels are imposed on top of it.
 
-**Ratta Sheet question format:**
-
-```
-## <Exact Question Name as Pasted> (<Source Tag>)
-
-**Problem Statement:** ... (if given)
-
-### Brute
-Intuition: ...
-Complexity: ...
-(explanation and code included only if explicitly given/asked for)
-
-### Better
-Intuition: ...
-Complexity: ...
-(explanation and code included only if explicitly given/asked for)
-
-### Optimal
-Intuition: ...
-Explanation: ...
-Code: ...
-Complexity: ...
-(explanation and code always included)
-```
+**Ratta Sheet answer format:** defined in one place, `DSA/README.md` → *Ratta Sheet Answer Format*. It holds the copyable Gemini prompt (Brute / Better / Optimal, each with Intuition, Explanation, Complexity, C++ Code) and the vault formatting rules the agent applies when transcribing.
 
 ---
 
@@ -446,72 +423,7 @@ Each card: what the interviewer says → what it hits → the answer → which v
 
 ## LLD Problems
 
-This section governs `LLD/Problems/` and `LLD/Code/`. It applies the same ideology as the HLD section above to low-level design and machine coding.
-
-### Ideology
-
-- A real LLD round never stops at the first working version.
-    + **Machine coding** (Flipkart, PhonePe, Swiggy, Razorpay): ~90 minutes of working, demoable, in-memory code, then a 30–45 minute review where the interviewer adds requirements live and runs edge cases ("run it with slot 9", "what if two requests arrive together").
-    + **LLD discussion** (Amazon, Atlassian, Uber-style): ~45 minutes of requirements, entities, class design, key-method code, a trace, then a burst of "what if we…" extensions.
-    + So a note holds a **V0** (what you'd submit at minute 90), an **extension ladder E1–E4** (the change requests interviewers actually make, each showing which classes are added vs edited), and **review cards** for off-ladder questions.
-- **Level: SDE 3 only.** No level sections or comparisons. Thread safety is always one of the ladder steps.
-- **Market: Indian product companies and similar.** Prefer the prompt wording and CLI formats Indian rounds actually use.
-- **Plain Java only.** Machine coding rounds forbid databases and frameworks and expect in-memory, CLI-driven code. Solution code imports only `java.*`. Maven exists only to compile and run JUnit in the vault.
-- **Every snapshot is self-contained.** There is no shared library: each `v0` and `full` package contains everything it needs, including the boilerplate you'd type in the round (exception classes, the CLI loop, a demo clock). The code must look like what one candidate writes from scratch, not like something leaning on helpers the interviewer will never see.
-- **Problem notes** link to `Patterns/`, `Concurrency/` and `Foundations/` notes for theory instead of re-explaining it, and list the boilerplate files each V0 needs so you know what to type in the first ten minutes.
-
-> [!danger] Research is mandatory
-> Before writing **any** new LLD problem, do thorough internet research aimed at **SDE 3-level LLD / machine-coding rounds in the Indian market**: the prompt as actually given (workat.tech, LeetCode Discuss, GeeksforGeeks, takeuforward), the follow-ups reported in reviews, and company guides. Record every source with its date in `## Sources`.
-
-### Code rules
-
-- **Location:** `LLD/Code/src/main/java/lld/<problem>/v0` and `lld/<problem>/full`; tests mirror it under `src/test/java`. The code folder is the source of truth; notes carry only short excerpts and link to files.
-- **Two snapshots per problem:**
-    + `v0` = exactly what you'd submit at the 90-minute mark: correct, clean, with a CLI demo.
-    + `full` = V0 + every ladder extension E1–E4. Each extension's Javadoc says which step introduced it.
-- **Every problem ships, inside each package:** a `*App` class with a `CommandLineDriver` demo and `main`; its own `DomainException` hierarchy (only the subtypes it uses: `ValidationException`, `NotFoundException`, `ConflictException`); an injected `java.time.Clock` wherever time matters, with a package-local `ManualClock` for the demo and tests; JUnit 5 tests per extension plus at least one multi-threaded test.
-- **No cross-package imports.** A `full` package never imports from its `v0`, and no problem imports from another. Duplication of the small boilerplate is intended.
-- **Prefer what you'd type:** a plain `EnumMap<Key, Strategy>` over a custom registry class; a `ScheduledExecutorService` over a wrapper.
-- **Java 21** (`maven.compiler.release`), no preview features, `-Xlint:all` clean.
-- **Done means:** `.\mvnw.cmd test` passes. Run it before reporting a problem finished.
-- **Package root:** `lld`. Money in paise (`long`), never `double`.
-
-### LLD problem note template
-
-```
----
-tags: [lld/problems, status/draft]
-created: YYYY-MM-DD
----
-# <Problem>
-
-> [!abstract] Catalog #N · archetype · patterns. The hard part, in one sentence.
-
-## 1. Clarify Script
-Questions, default assumption, which extension fires if the answer differs.
-## 2. Requirements
-Functional, constraints (in-memory, CLI, thread-safe?), out of scope.
-## 3. Entities and Responsibilities
-Who owns which rule (data rules in the owning entity, workflow in the orchestrator).
-## 4. Class Design
-Mermaid classDiagram + short state/behaviour list.
-## 5. V0 — the 90-Minute Build
-Package layout, key code excerpts, exceptions, CLI demo. Link the v0 package.
-## 6. Trace
-One scenario, operation by operation.
-## 7. Extension Ladder
-### E1 — <request>
-Interviewer says → classes added / edited → code delta → pattern. (E2, E3, E4; one is concurrency.)
-## 8. Review Cards
-Off-ladder questions with answers (SOLID, complexity, validations, testing, races, "how would this scale" → HLD link).
-## 9. Edge Cases and Tests
-| Case | Expected | Test |
-## 10. Self-Review Rubric
-Naming · SRP · OCP on extensions · exceptions · thread safety · demo runs.
-## 11. One-Minute Pitch
-## Sources
-## Related Notes
-```
+The complete procedure for LLD / machine-coding problems (ideology, V0 and extension ladder, research steps, code layout and driver rules, diagrams, note template, study order) lives in one place: `LLD/Problems/README.md`. Read it before writing or changing any LLD problem.
 
 ---
 

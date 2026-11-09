@@ -26,3 +26,30 @@ temp.*
 
 # LLD Java project build output
 LLD/Code/target/
+*.class
+*.jar
+*.log
+
+# IDE settings (per machine)
+.idea/
+.vscode/
+*.iml
+
+# Large binaries: keep originals in OneDrive, not in git history
+*.one
+*.onepkg
+*.zip
+*.7z
+*.rar
+*.tar
+*.gz
+*.mp4
+*.mov
+*.mkv
+*.avi
+*.mp3
+*.wav
+*.m4a
+
+# Job hunt: separate private git repo nested here (contact data must not enter this repo)
+Job Hunt/
