@@ -22,6 +22,7 @@ created: 2026-10-11
 
 | # | Note | What it covers |
 |---|---|---|
+| 00 | [[00 - Processes the JVM and the OS]] | The JVM as one OS process, 1:1 kernel threads, the JVM's own threads, the scheduler, blocking, safepoints, cores and pool sizing, cgroup CPU and memory limits, JVM exit |
 | 01 | [[01 - Threads and Lifecycle]] | `Thread`/`Runnable`/`Callable`, states, `start` vs `run`, `join`, daemon threads, interruption |
 | 02 | [[02 - Race Conditions and Shared State]] | Check-then-act, read-modify-write, why races hide, the three safety strategies |
 | 03 | [[03 - Java Memory Model]] | Visibility, atomicity, ordering, happens-before, `volatile`, safe publication, DCL |
@@ -46,6 +47,7 @@ created: 2026-10-11
 
 ## Suggested Order
 
+0. **00** first: what runs underneath (process, kernel threads, scheduler, container limits).
 1. **01–09** in order, ending with producer-consumer written three ways in [[18 - Classic Problems - Coordination]]. That one exercise touches nearly everything in Tier 1.
 2. **12 and 13**: the design reasoning that turns tools into correct classes.
 3. **10, 11, 14, 15**: the rest of Tier 2.

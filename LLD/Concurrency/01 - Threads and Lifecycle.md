@@ -6,6 +6,7 @@ created: 2026-10-11
 
 > [!abstract] What this is
 > What a thread is in Java, the three ways to hand it work (`Runnable`, `Callable`, a subclass of `Thread`), the states it moves through, and how threads stop each other politely (interruption). Everything else in this folder assumes this vocabulary.
+> What the JVM, the OS and the container do underneath is in [[00 - Processes the JVM and the OS]].
 
 ---
 

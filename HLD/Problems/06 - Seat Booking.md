@@ -1,7 +1,7 @@
 ---
 tags: [hld/problems, status/draft]
 created: 2026-09-22
-updated: 2026-10-24
+updated: 2026-11-09
 ---
 # Seat Booking
 
@@ -12,6 +12,8 @@ updated: 2026-10-24
 
 ## 1. Clarify Script
 
+Defaults are assumptions unless a source is given.
+
 | Question | Default assumption | If different |
 |---|---|---|
 | Movies (assigned seats, many small shows) or live events (stadium, sections, general admission)? | Both: movies daily, a few mega events a month | GA sections → T3 |
@@ -19,7 +21,7 @@ updated: 2026-10-24
 | Hold duration? | 10 min to pay | UPI collect / slow banks → T2 |
 | Seats per booking? | Up to 10, all-or-nothing | Adjacent seats → T4 |
 | Payment? | Third-party PSP (Razorpay-like), UPI and cards | Wallet → [[07 - Wallet and Ledger]] |
-| Scale? | ~1M tickets/day normally; mega sales with 1 crore+ users | Drives V1 and V3 |
+| Scale? | *Assumed* ~1M tickets/day normally (from BookMyShow's ~29M record month); mega sales with 1 crore+ users (Coldplay 2024) | Drives V1 and V3 |
 | Anti-scalping requirements? | Yes, per-user caps and bot defence | T1 |
 | Box office / offline sales on the same inventory? | Yes, at venues | T6 |
 
@@ -139,6 +141,9 @@ stateDiagram-v2
     sold --> free: cancel + refund
 ```
 
+> [!important] The most drilled component
+> Two users, one seat: the hold and its locking come up in nearly every report (Amazon L5, WEX SDE3, Junglee Games, Meesho, an SDE-2 BookMyShow round, Hello Interview, PracHub). Expect "pessimistic or optimistic locking?" and "what if payment takes longer than the hold?" first. The answers are this section and T2.
+
 ### Why not the obvious alternatives
 
 - **`SELECT … FOR UPDATE` for 10 minutes:** a lock held across a human paying. Connections pile up, deadlocks multiply, a crashed pod holds locks until timeout. The hold is **state plus a clock** instead. `FOR UPDATE` is fine only inside a millisecond transaction that reads then branches, with IDs locked in sorted order.
@@ -156,6 +161,7 @@ stateDiagram-v2
 
 ### V1 — Separate the browse path
 
+- **Evidence:** "scale the view path for popular events" is a Hello Interview Ticketmaster deep dive; real-time availability is in PracHub's "ticketing purchase system"; "search may be eventually consistent, checkout may not" in PracHub's "High-Demand Ticketing". Confidence **medium**.
 - **Trigger:** seat-map views run ~20× bookings; at Friday-morning release peaks that's thousands of reads/s, each scanning a show's 200–400 seats on the primary that also takes the holds.
 - **What breaks:** hold latency rises because the primary is busy serving browse.
 - **Change ([[MD-19 - Baseline Scaling Path]]):**
@@ -167,6 +173,7 @@ stateDiagram-v2
 
 ### V2 — Make confirm, ticket and notify a saga
 
+- **Evidence:** payment edge cases and idempotent retries come up in most reports (SDE-2 BookMyShow, Quora; MakeMyTrip, LC 5916765; PracHub "ticketing purchase system" and "High-Demand Ticketing"; Educative 2026). Confidence **strong**.
 - **Trigger:** webhooks arrive late, twice, or never; tickets must be issued (QR code, sometimes in a partner's system) and notifications sent; a crash between "seat sold" and "ticket issued" loses work.
 - **Change ([[MD-06 - Distributed Saga and Compensating State Machine]]):**
     + The booking is a saga: `HELD → PAYMENT_PENDING → CONFIRMED → TICKETED → NOTIFIED`, with `EXPIRED` and `REFUND_PENDING → REFUNDED` branches.
@@ -178,6 +185,7 @@ stateDiagram-v2
 
 ### V3 — Mega-event mode: waiting room and allocation
 
+- **Evidence:** Amazon L5 SDE-II Bangalore (LC 8423184, "scaling for peak traffic during popular event releases"); an Indian HLD round asking about an IPL final or Avengers sale (Medium, 2026); wait queues in PracHub's "ticketing purchase system"; virtual waiting queue deep dive in Hello Interview. Confidence **strong**.
 - **Trigger:** a Coldplay-style sale: ~1.3 crore people for ~1.5 lakh seats, sold out in ~30 minutes. Arrivals could hit 2.6M req/s at the origin; actual booking capacity needed is ~40 holds/s.
 - **What breaks:** everything in front of the database, long before the database itself.
 - **Change ([[MD-02 - Traffic Shaper Rate Limiter and Waiting Room]]):**
@@ -194,6 +202,7 @@ stateDiagram-v2
 
 ### V4 — Shard by show, then two regions
 
+- **Evidence:** no report found that pushes sharding or regions for this problem; kept because the growth logic needs it. Confidence **judgement**. Keep it short in the round.
 - **Trigger:** total seat and booking volume across all cities and events grows past one primary (hundreds of millions of seat rows, sustained write load during festival weeks), or the region becomes a single point of failure for a 99.9% confirm SLA.
 - **Change:**
     + **Shard key `show_id`** (or `event_id` for multi-show events), hashed into logical shards on a few physical primaries ([[MD-20 - Partitioning Shard Keys and Resharding]]). A hold touches one show, so it stays a single-shard transaction. "My bookings" becomes a separate table sharded by `user_id`, fed by CDC.
@@ -203,43 +212,65 @@ stateDiagram-v2
 
 ## 7. Twist Cards
 
-**T1 — "Bots and scalpers bought everything and resold at 10× (the Coldplay backlash)."**
-- **Hits:** waiting room, identity, caps.
-- **Answer:** randomised positions at opening, admission tokens bound to a verified account and device, per-account and per-card/UPI-ID caps, CAPTCHA or device attestation at queue entry, velocity checks (many accounts, one device or payment instrument). For the highest-demand events, named tickets with ID checks at the gate, and resale only through an official channel at face value. IRCTC's approach for Tatkal is the same idea: Aadhaar-authenticated accounts and Aadhaar OTP since July 2025, and agents barred for the first 30 minutes.
-- **Attaches to:** V3.
+Ids are kept from the first version so references elsewhere still work; the order is by evidence (see *Evidence*). T12 is new.
+
+### Most asked
 
 **T2 — "The hold is 10 minutes, but UPI collect requests and bank OTPs take longer, or the payment confirms after the hold expired."**
+- **Evidence:** payment edge cases (SDE-2 BookMyShow report, Quora); double payment on retry (MakeMyTrip SDE/SSE2, LC 5916765); PSP times out after charging (PracHub "High-Demand Ticketing"); PSP responds late or twice (Educative 2026). Confidence **strong**.
 - **Hits:** MD-04 dual TTL, MD-06 late success.
 - **Answer:** dual TTL: the user sees 10 minutes; the sweeper and lazy-expiry clause use 10 + 2 minutes of grace. Stop new payment attempts in the last minute. If the PSP confirms after the hard TTL (Indian gateways can authorise late after their ~10-minute timeout), re-claim the same seats for that booking if they're still free; otherwise refund automatically and say so in the UI.
 - **Attaches to:** V0 confirm, V2 saga.
 
+**T1 — "Bots and scalpers bought everything and resold at 10× (the Coldplay backlash)."**
+- **Evidence:** anti-bot measures and rate limiting (PracHub "ticketing purchase system"); Ticketmaster queue docs (bots detected in the queue). Confidence **medium**.
+- **Hits:** waiting room, identity, caps.
+- **Answer:** randomised positions at opening, admission tokens bound to a verified account and device, per-account and per-card/UPI-ID caps, CAPTCHA or device attestation at queue entry, velocity checks (many accounts, one device or payment instrument). For the highest-demand events, named tickets with ID checks at the gate, and resale only through an official channel at face value. IRCTC's approach for Tatkal is the same idea: Aadhaar-authenticated accounts and Aadhaar OTP since July 2025, and agents barred for the first 30 minutes.
+- **Attaches to:** V3.
+
 **T3 — "It's a stadium with 50,000 general-admission tickets."**
+- **Evidence:** reserved seating and general admission (Hello Interview community question). Confidence **medium**.
 - Fungible inventory: a counter per section, not seat rows. Hot counter → bucketed rows or a Redis gate with DB reconciliation ([[MD-04 - High-Contention Reservation and TTL Lease Sweeper]]).
 - **Attaches to:** V3.
 
+**T7 — "Users want to cancel and get a refund."**
+- **Evidence:** refunds and chargebacks (PracHub "ticketing purchase system"). Confidence **medium**.
+- `sold → cancelled` and seats back to `free`, refund as a saga step with an idempotency key, release fees per policy. Cancelled seats appear in the seat map within seconds via CDC. For mega events, released seats can go back to the queue rather than to whoever refreshes fastest.
+
+**T8 — "Show a live countdown of seats left for a mega event."**
+- **Evidence:** real-time availability updates (PracHub "ticketing purchase system"). Confidence **medium**.
+- An approximate counter per section from the read model, pushed to queued and admitted users over SSE every few seconds. Exactness isn't needed; the hold is the truth.
+
+**T12 — "Users search events by name, city and date."**
+- **Evidence:** search is a core requirement and a deep dive in Hello Interview Ticketmaster (Feb 2026); added in this pass because the note had no search. Confidence **medium**.
+- Listings are read-heavy and change rarely: index events in a search engine (Elasticsearch/OpenSearch) fed by CDC from the events table, filter by city and date, and let the CDN cache popular queries. Results may be minutes stale; seat availability always comes from the seat-map read model, never from the search index.
+- **Attaches to:** V1.
+
+### Lower priority (recall / judgement)
+
 **T4 — "A group of 6 wants seats together."**
+- **Evidence:** no report found; kept from design logic. Confidence **judgement**.
 - The seat-map service suggests adjacent free blocks from the read model; the hold is still one all-or-nothing `UPDATE` on those exact IDs. If it fails, suggest the next block. "Best available together" is a search over the row layout, then the same atomic claim.
 
 **T5 — "Cinema chains run their own ticketing systems; we're one of several sellers."**
+- **Evidence:** no report; B2B theatre partners appear in one design write-up (Medium, May 2023). Real for Indian cinema chains. Confidence **judgement**.
 - The source of truth is now the chain's system. The hold becomes a saga step that calls the chain's hold API with our booking ID as the idempotency key; confirm calls their confirm API. Their hold TTL sets ours. Cache their seat map with a short TTL and expect 409s. If their API is down, that show is unavailable for booking: circuit-break per chain rather than queueing holds.
 - **Attaches to:** V2.
 
 **T6 — "The venue box office sells from the same inventory."**
+- **Evidence:** no report found; kept from design logic. Confidence **judgement**.
 - The box office is just another client of the hold API (with its own rate limits and a priority lane), so the single conditional `UPDATE` keeps both channels correct. Never pre-split inventory between channels unless the business wants quotas.
 
-**T7 — "Users want to cancel and get a refund."**
-- `sold → cancelled` and seats back to `free`, refund as a saga step with an idempotency key, release fees per policy. Cancelled seats appear in the seat map within seconds via CDC. For mega events, released seats can go back to the queue rather than to whoever refreshes fastest.
-
-**T8 — "Show a live countdown of seats left for a mega event."**
-- An approximate counter per section from the read model, pushed to queued and admitted users over SSE every few seconds. Exactness isn't needed; the hold is the truth.
-
 **T9 — "Dynamic pricing as demand rises."**
+- **Evidence:** no report found; kept from design logic. Confidence **judgement**.
 - Price is computed when the hold is taken and stored on the booking (`amount_paise`), so a price change mid-checkout never changes what that user pays. The pricing engine reads demand signals from the stream ([[MD-14 - Streaming Window Watermark and Top-K Pipeline]]).
 
 **T10 — "The payment gateway is down during the sale."**
+- **Evidence:** no report found; kept from design logic. Confidence **judgement**.
 - Fail over to a second PSP for new payment sessions, extend hold TTLs for people already mid-payment by a bounded amount, and slow admission from the waiting room while payments recover so seats aren't locked in holds nobody can pay for.
 
 **T11 — "Cut cost; the mega-sale infrastructure sits idle most of the month."**
+- **Evidence:** no report found; kept from design logic. Confidence **judgement**.
 - The waiting room and edge do the heavy lifting and scale on demand at the CDN. Pre-scale the origin only for scheduled sales and run it lean otherwise.
 
 ---
@@ -275,8 +306,40 @@ stateDiagram-v2
 
 ---
 
+## Evidence
+
+Reports and guides tallied in November 2026. Most LeetCode posts carry no date; dates are given where stated.
+
+| Follow-up | Reports | Count | Placed as | Deep dive? |
+|---|---|---|---|---|
+| Two users, one seat; seat locking; pessimistic vs optimistic | Amazon L5 SDE-II Bangalore; WEX SDE3; Junglee Games (2024); Meesho SDE-1; SDE-2 BookMyShow (Quora); PracHub "seat hold"; Hello Interview | 7 | V0, **strong** | Yes, the most common |
+| Hold with TTL, release on timeout | PracHub ×3 (seat hold, high-demand, hotel/ticket); Hello Interview; LC 315763 | 5 | V0 + MD-04, **strong** | Yes |
+| Payment edge cases, double payment, late or ambiguous PSP result | SDE-2 BookMyShow; MakeMyTrip SDE/SSE2; PracHub ×2; Educative | 5 | V2 + T2, **strong** | Yes |
+| Peak traffic for popular releases, wait queue | Amazon L5; Medium (IPL final / Avengers, 2026); PracHub "purchase system"; Hello Interview | 4 | V3, **strong** | Yes |
+| Seat-map / view path for popular events, real-time availability | Hello Interview; PracHub ×2 | 3 | V1 + T8, **medium** | Sometimes |
+| Anti-bot, rate limiting | PracHub "purchase system"; Ticketmaster queue docs | 2 | T1, **medium** | No |
+| Reserved vs general admission | Hello Interview community question | 1 | T3, **medium** | No |
+| Refunds, chargebacks | PracHub "purchase system" | 1 | T7, **medium** | No |
+| Event search | Hello Interview (core requirement and deep dive) | 1 | T12 (new), **medium** | In that guide |
+| Sharding, regions, adjacent seats, partner chains, box office, dynamic pricing, PSP down, cost | none | 0 | V4, T4–T6, T9–T11, **judgement** | No |
+
+- **What the tally changed:** the ladder order and V0 stay. It added evidence and confidence to each step, marked V4 as judgement, put locking up front as the first deep dive, regrouped the twists, added T12 (search), and labelled the scale default as an assumption.
+
 ## Sources
 
+- LeetCode Discuss, Amazon L5 SDE-II Bangalore (post 8423184): concurrency, pessimistic vs optimistic locking, double booking, peak traffic for popular releases. https://leetcode.com/discuss/post/8423184/
+- LeetCode Discuss, WEX SDE3 (post 8509616): many users booking the same seats at once. https://leetcode.com/discuss/post/8509616/
+- LeetCode Discuss, Junglee Games (post 4716465, ~Sept 2024): database locking constructs, BookMyShow seat booking. https://leetcode.com/discuss/interview-experience/4716465/
+- LeetCode Discuss, Meesho SDE-1 machine coding (post 6702200): who gets the slot when thousands book at once. https://leetcode.com/discuss/post/6702200/
+- LeetCode Discuss, MakeMyTrip SDE/SSE 2 (post 5916765): preventing double payment on repeated requests. https://leetcode.com/discuss/post/5916765/
+- LeetCode Discuss, *Seat reservation like Ticketmaster or BookMyShow* (post 315763): timed hold, release to the free pool. https://leetcode.com/discuss/post/315763/
+- Quora, SDE-2 selection post (Nikhil Sharma): BookMyShow HLD with concurrent bookings, seat locking and payment edge cases. https://www.quora.com/profile/NIKHIL-SHARMA-8388
+- Medium, *I made a mistake in my System Design interview* (2026): follow-up on an IPL final or Avengers sale. https://medium.com/@sheelganvir/i-made-a-mistake-in-my-system-design-interview-that-you-shouldnt-41df477fae29
+- PracHub question bank (2026): *Design ticketing system with seat hold*; *Design a ticketing purchase system* (holds, spikes, wait queues, idempotent payments, refunds, anti-bot, real-time availability); *Design a High-Demand Ticketing System* (ambiguous PSP outcomes); *Design a ticket or hotel reservation system*. https://prachub.com/interview-questions/design-a-ticketing-purchase-system · https://prachub.com/interview-questions/design-a-high-demand-ticketing-system
+- Hello Interview, *Design a Ticket Booking Site Like Ticketmaster* (Feb 2026), and the community question on reserved seating, GA and virtual queues. https://www.hellointerview.com/learn/system-design/problem-breakdowns/ticketmaster
+- Educative, *BookMyShow System Design* (Feb 2026): refreshes, retries, abandoned checkout, late or duplicate PSP responses. https://www.educative.io/blog/bookmyshow-system-design
+- Ticketmaster, *How the Ticketmaster Queue Works* (2026): virtual line with bot detection. https://blog.ticketmaster.com/how-ticketmaster-queue-works/
+- Medium, *Online Movie Ticket Booking Platform* (May 2023): B2B theatre partners. https://medium.com/@prithwish.samanta/online-movie-ticket-booking-platform-system-design-e-g-bookmyshow-69048440901c
 - Times of India / Outlook Business / Times Now (Sept 2024): ~1.3 crore people tried for ~1.5 lakh Coldplay Mumbai tickets, sold out in ~30 minutes. https://www.outlookbusiness.com/explainers/coldplays-concert-demand-reveals-indias-growing-market-for-going-out-experiences
 - CNN (Oct 2024): resale at up to ₹9.6 lakh and suspected bots. https://www.cnn.com/2024/10/01/asia/coldplay-concert-ticket-india-scalping-intl-hnk/
 - Coldplay, *2025 Ahmedabad show announced*: BookMyShow virtual queue with randomised positions. https://www.coldplay.com/2025-ahmedabad-show-announced/

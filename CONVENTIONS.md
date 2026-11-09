@@ -314,6 +314,7 @@ This section governs `HLD/Problems/` and `HLD/Topics/12 - Mini Designs/`. It ove
 > - Indian engineering blogs and incident write-ups (JioHotstar, Razorpay, PhonePe, Flipkart, Swiggy, Zomato, Zepto, Dream11, IRCTC, BookMyShow, CRED) for real scale numbers and real failure stories.
 > - Regulators and official docs (RBI, NPCI, TRAI, DPDP Act, vendor docs) for any rule or number the design depends on.
 > - Record every source with its date in the note's `## Sources` section. Never invent a number. If a number is an estimate, say so.
+> - How the reports are tallied into ladder evidence and twist-card priority: `HLD/Problems/README.md`, *Researching and Prioritising a Problem*.
 
 ### Files
 

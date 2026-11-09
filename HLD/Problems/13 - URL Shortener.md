@@ -1,6 +1,7 @@
 ---
 tags: [hld/problems, status/draft]
 created: 2026-10-24
+updated: 2026-11-09
 ---
 # URL Shortener
 
@@ -11,7 +12,7 @@ created: 2026-10-24
 
 ## 1. Clarify Script
 
-The prompt is famous, so the interviewer is listening for whether you scope it or recite it. Ask these, state the default, and note which twist card fires if the answer differs.
+The prompt is famous, so the interviewer is listening for whether you scope it or recite it. Ask these, state the default, and note which twist card fires if the answer differs. Defaults are assumptions unless a source is given.
 
 | Question | Default assumption | If different |
 |---|---|---|
@@ -21,7 +22,7 @@ The prompt is famous, so the interviewer is listening for whether you scope it o
 | Analytics? | Click counts per link, per day, referrer, city, device; minutes of delay is fine | Billing-grade → T6 |
 | Can the destination be edited after creation? | Yes for business accounts | Forces 302 and short cache TTLs → T4 |
 | Same long URL twice → same code? | No, each create gets a new code | T5 |
-| Scale? | 10M creates/day, 1B redirects/day, 5-year retention | Numbers drive V1–V3 |
+| Scale? | *Assumed:* 10M creates/day, 1B redirects/day, 5-year retention (reports give "hundreds of millions of users", 3–5 years) | Numbers drive V1–V3 |
 | Regions? | India first; users abroad later | V4, T8 |
 
 ---
@@ -124,6 +125,9 @@ flowchart LR
 
 ### Code generation in V0
 
+> [!important] The most drilled component
+> Code generation and collisions come up in almost every report (Hotstar, Microsoft ×2, Postman, PracHub, Hello Interview). Expect the deep dive to land here first; T11 is the follow-up.
+
 - The app takes a block of 10,000 counter values from `code_ranges` in one `UPDATE … RETURNING` and issues codes from memory ([[MD-16 - Time-Sortable ID and Token Generator]]).
 - Each value goes through a bijective permutation mod 62^7 before encoding, so consecutive creates don't produce consecutive codes. No collision is possible, so there's no retry loop.
 
@@ -139,7 +143,8 @@ flowchart LR
 
 ### V1 — Cache the redirect path
 
-- **Trigger:** 10k redirects/s average, 50k/s at peak. Indexed point reads on one Postgres top out in the low tens of thousands per second, and the redirect p99 target leaves no room for queueing.
+- **Evidence:** read-heavy caching and "what a viral link does to your cache" are standard escalations (PracHub guide 2026; Hello Interview "fast redirects" deep dive; LeetCode "6 most asked" post). Confidence **strong**. Counter-case: a Shopify Senior+ interviewer called Redis overkill for their small-scale version, so tie the cache to the number, not to habit.
+- **Trigger:** 10k redirects/s average, 50k/s at peak. Indexed point reads on one Postgres top out in the low tens of thousands per second (*rough estimate*, hardware-dependent), and the redirect p99 target leaves no room for queueing.
 - **What breaks:** the primary's CPU and the redirect p99 at peak.
 - **Change:**
     + Split the **redirect service** from the **create service** so each scales on its own and a create-path bug can't take redirects down.
@@ -162,6 +167,7 @@ flowchart LR
 
 ### V2 — Click analytics off the hot path
 
+- **Evidence:** HackerRank SDE-2 (LC 6556472, "real-time analytics, monitoring"); usage tracking in the LC 6149386 prompt; Grokking lists analytics. Hello Interview leaves it out of scope. Confidence **medium**: asked at some companies, skipped at others, so confirm in the clarify script.
 - **Trigger:** 1B clicks/day ≈ 300 GB/day of raw events. A `clicks` table or a counter column in Postgres would be a write firehose and a hot row for viral links.
 - **What breaks:** writes on the links database, and redirect latency if the click is recorded synchronously.
 - **Change ([[MD-14 - Streaming Window Watermark and Top-K Pipeline]]):**
@@ -173,6 +179,7 @@ flowchart LR
 
 ### V3 — Shard the link store
 
+- **Evidence:** Hotstar SDE2 (LC 5650329, Jul 2024: sharding the database); Razorpay Senior SE (LC 6229095, Oct 2024: persist mappings 3–5 years); Hello Interview "scale to 1B URLs" deep dive. Confidence **strong**.
 - **Trigger:** ~9 TB of links (plus indexes) over five years, and creates up to ~1k/s at peak with growth. One primary still copes with the writes, but backups, vacuum and restore times degrade at this size, and growth continues.
 - **Change ([[MD-20 - Partitioning Shard Keys and Resharding]]):**
     + Shard key `(domain_id, code)`, hashed into 1,024 logical shards on 4 physical Postgres primaries to begin with. Every redirect and every alias uniqueness check is a single-shard point operation.
@@ -183,6 +190,7 @@ flowchart LR
 
 ### V4 — Two regions and the edge
 
+- **Evidence:** Microsoft SDE-2 L61/62 (LC 7545165: "deep dive on multi region deployments"). Confidence **medium** (one report).
 - **Trigger:** 99.99% redirect availability can't be met from one region, and users abroad see 150–200 ms extra per redirect from Mumbai.
 - **Change ([[MD-21 - Multi-Region Replication and Disaster Recovery]]):**
     + **Redirects active-active:** each region (Mumbai, Hyderabad) has redirect pods, a local Redis and async replicas of every link shard. A redirect is a read, so both regions serve it.
@@ -194,7 +202,39 @@ flowchart LR
 
 ## 7. Twist Cards
 
+Ids are kept from the first version so references elsewhere still work; the order is by evidence (see *Evidence*).
+
+### Most asked
+
+**T11 — "Generate codes with no coordinator at all."**
+- **Evidence:** collisions asked by Postman SWE2 (LC 6820759), PracHub guide (MD5 collisions); ID generation by Hotstar (LC 5650329), Microsoft (LC 7545165, GfG Set 64), Hello Interview. Confidence **strong**.
+- Random 7 characters and a conditional insert. At 18B used out of 3.5T, a collision happens about 0.5% of the time, so retry. Or use 8 characters (2.2 × 10^14) to make retries negligible.
+
+**T9 — "One link is 40% of all traffic right now (viral forward, IPL ad)."**
+- **Evidence:** PracHub guide 2026 ("what a single viral link does to your cache"). Confidence **medium**.
+- L1 in every pod, the key replicated across Redis shards, and a 5–30 s CDN cache of the 302 ([[MD-11 - Multi-Tier Hot-Key Shield]]). Postgres never sees it.
+
+**T3 — "Links should expire."**
+- **Evidence:** PracHub question bank (expiration and security), LC "Most asked System Design questions" (5806013), Hello Interview and Grokking requirements. Confidence **strong**.
+- Check `expires_at` on every redirect (return 410). Cache TTL = min(normal TTL, time left). A cleanup job deletes expired rows later. **Codes are never reused**: an old SMS must never start pointing to someone else's page.
+
+**T2 — "Custom aliases."**
+- **Evidence:** Hello Interview, Grokking and most guides list it as an optional requirement; no report shows it as a follow-up. Confidence **medium**.
+- Insert the alias as the code; the primary key on `(domain_id, code)` rejects duplicates with a 409. Block reserved words (`api`, `login`, `admin`) and profanity, cap aliases per free account, and keep generated codes and aliases in different shapes (aliases ≥ 4 chars with a hyphen allowed, generated codes exactly 7 chars) so they can never collide. After V3, the check is still single-shard because the alias is the shard key.
+
+**T7 — "Spammers use you for phishing."**
+- **Evidence:** PracHub question bank ("expiration and security"), DesignGurus (rate limiting). Confidence **medium**.
+- Limit creates per account, per IP and per new domain ([[MD-02 - Traffic Shaper Rate Limiter and Waiting Room]]).
+- Scan every destination asynchronously against threat feeds (for example Google Safe Browsing) and an internal reputation list. Links from new or low-reputation accounts show an interstitial warning until the scan passes.
+- Re-scan popular links periodically, because destinations change after creation.
+- Abuse reports feed the T4 takedown path.
+
+- Also asked, already answered in §4: **301 vs 302** (Postman SWE2, PracHub guide). Default 302; a 301 is cached by browsers forever, which breaks edits, takedowns and click counts.
+
+### Lower priority (recall / judgement)
+
 **T1 — "Banks and brands want to use this for SMS in India."**
+- **Evidence:** No interview report; Indian regulation (TRAI, Oct 2024) that changes the schema, so raise it yourself in an Indian round. Confidence **judgement**.
 - **Hits:** domain model, routing, compliance.
 - **Answer:** since 1 October 2024, Indian telcos block commercial SMS containing URLs that aren't whitelisted, and generic shorteners like bit.ly are not accepted; TRAI's rule is that a short URL must clearly relate to the sender. So the product needs **per-tenant branded domains** (`hdfc.co/abc`).
     + Domain verification by DNS TXT record, automatic TLS certificates (ACME), routing by `Host` header to `domain_id`.
@@ -202,43 +242,32 @@ flowchart LR
     + Tenants register their branded domain on the telcos' DLT portals; the shortener exposes the exact URL patterns so whitelisting matches.
 - **Attaches to:** V0 schema (already shaped for it).
 
-**T2 — "Custom aliases."**
-- Insert the alias as the code; the primary key on `(domain_id, code)` rejects duplicates with a 409. Block reserved words (`api`, `login`, `admin`) and profanity, cap aliases per free account, and keep generated codes and aliases in different shapes (aliases ≥ 4 chars with a hyphen allowed, generated codes exactly 7 chars) so they can never collide. After V3, the check is still single-shard because the alias is the shard key.
-
-**T3 — "Links should expire."**
-- Check `expires_at` on every redirect (return 410). Cache TTL = min(normal TTL, time left). A cleanup job deletes expired rows later. **Codes are never reused**: an old SMS must never start pointing to someone else's page.
-
 **T4 — "Owners can change where a link goes" / "Take down this phishing link now."**
+- **Evidence:** No report found; kept from design logic. Confidence **judgement**.
 - Update the row, delete the Redis key, and purge the CDN entry. L1 bounds staleness to 1–2 s. Takedowns also go to a small blocklist pushed to every redirect pod (a set refreshed every few seconds), which is checked before the cache, so a blocked link stops within seconds even if a purge lags.
 
 **T5 — "The same long URL should return the same code."**
+- **Evidence:** No report found; kept from design logic. Confidence **judgement**.
 - Per owner, not globally (a global mapping would leak that someone else shortened the same URL). Keep `dedupe(owner_id, sha256(normalised_url)) → code` with a unique constraint; create checks it first.
 
 **T6 — "Paid plans are billed on clicks."**
+- **Evidence:** No report found; kept from design logic. Confidence **judgement**.
 - The stream is now a preview. Daily batch recount over the raw log with deduplication by `event_id` and bot filtering produces the billable number ([[MD-14 - Streaming Window Watermark and Top-K Pipeline]]). Redirect pods stop dropping events when Kafka is down; they spill to local disk and replay.
 
-**T7 — "Spammers use you for phishing."**
-- Limit creates per account, per IP and per new domain ([[MD-02 - Traffic Shaper Rate Limiter and Waiting Room]]).
-- Scan every destination asynchronously against threat feeds (for example Google Safe Browsing) and an internal reputation list. Links from new or low-reputation accounts show an interstitial warning until the scan passes.
-- Re-scan popular links periodically, because destinations change after creation.
-- Abuse reports feed the T4 takedown path.
-
 **T8 — "Users in the US and Middle East complain it's slow."**
+- **Evidence:** No report found; kept from design logic. Confidence **judgement**.
 - V4: edge caching of hot redirects and redirect pods with read replicas in a region near them. Creates can stay in India.
 
-**T9 — "One link is 40% of all traffic right now (viral forward, IPL ad)."**
-- L1 in every pod, the key replicated across Redis shards, and a 5–30 s CDN cache of the 302 ([[MD-11 - Multi-Tier Hot-Key Shield]]). Postgres never sees it.
-
 **T10 — "Redis is down."**
+- **Evidence:** No report found; kept from design logic. Confidence **judgement**.
 - Postgres can't take 50k/s. Redirect pods serve from L1 and fall back to replicas with a per-pod concurrency limit; links not in L1 may see errors for the duration. Run Redis with replicas per shard and automatic failover so this is minutes, not hours.
 
-**T11 — "Generate codes with no coordinator at all."**
-- Random 7 characters and a conditional insert. At 18B used out of 3.5T, a collision happens about 0.5% of the time, so retry. Or use 8 characters (2.2 × 10^14) to make retries negligible.
-
 **T12 — "Cut storage cost."**
+- **Evidence:** No report found; kept from design logic. Confidence **judgement**.
 - Most links are never clicked after their first month. Move links with no clicks in 12 months to a cold store (compressed rows in object storage, fetched on a miss with a slower path), keep raw clicks 30–90 days and rollups forever.
 
 **T13 — "Is click data personal data?"**
+- **Evidence:** No report found; kept from design logic. Confidence **judgement**.
 - IP addresses and device data are personal data under India's DPDP Act. Store only a truncated IP or the derived city, set retention for raw events, and expose deletion for an owner's analytics.
 
 ---
@@ -272,8 +301,45 @@ flowchart LR
 
 ---
 
+## Evidence
+
+Reports and guides tallied in November 2026. Most LeetCode posts carry no date; dates are given where the post or report states one.
+
+| Follow-up | Reports | Count | Placed as | Deep dive? |
+|---|---|---|---|---|
+| Unique code generation, hashing vs counter, collisions | Hotstar SDE2 (Jul 2024); Microsoft SDE-2 L61/62; Microsoft SDE-2 (GfG Set 64); Postman SWE2; PracHub guide; Hello Interview | 6 | V0 + T11, **strong** | Yes, the most common |
+| Read-heavy caching, viral link | PracHub guide; Hello Interview; LC "6 most asked" | 3 | V1 + T9, **strong** / **medium** | Yes |
+| Database design, sharding, multi-year retention | Hotstar SDE2; Razorpay Senior SE (Oct 2024); HackerRank SDE-2 (schema focus); Hello Interview (1B URLs) | 4 | §4 + V3, **strong** | Yes (schema) |
+| Expiry | PracHub question bank; LC "Most asked"; Hello Interview; Grokking | 4 | T3, **strong** | No |
+| HTTP 301 vs 302 | Postman SWE2; PracHub guide | 2 | §4 API, **medium** | No |
+| Click analytics (real-time) | HackerRank SDE-2; LC 6149386 prompt; Grokking | 3 | V2, **medium** | Sometimes |
+| Multi-region deployment | Microsoft SDE-2 L61/62 | 1 | V4, **medium** | Yes, in that report |
+| Security, abuse, rate limiting | PracHub question bank; DesignGurus | 2 | T7, **medium** | No |
+| Custom alias | Hello Interview; Grokking; other guides | guides only | T2, **medium** | No |
+| Monitoring | HackerRank SDE-2 | 1 | §9, **medium** | No |
+| Scale at hundreds of millions of users | Coinbase phone screen (PracHub) | 1 | §3 assumptions | No |
+| Branded domains (TRAI), edits and takedowns, dedupe, billing, abroad latency, Redis down, cost, DPDP | none | 0 | T1, T4–T6, T8, T10, T12, T13, **judgement** | No |
+
+- **What the tally changed:** nothing in the ladder order (it already escalates by trigger number) or the V0. It added evidence and confidence to each step, moved the twist cards into *Most asked* and *Lower priority*, flagged code generation as the first deep dive, and marked the scale defaults as assumptions.
+- **Counter-evidence worth remembering:** at a Shopify Senior+ round for a small-scale version, the interviewer rejected Redis and a database as overengineering. Scale the design to the numbers you agreed in the clarify script.
+
 ## Sources
 
+- LeetCode Discuss, Hotstar SDE2 Remote India (post 5650329, Jul 2024, rejected): estimations, API, DB design, unique random codes, sharding. https://leetcode.com/discuss/post/5650329/
+- LeetCode Discuss, Microsoft SDE-2 L61/62 (post 7545165): deep dive on multi-region deployment and ID generation (Snowflake, ID service, Base62). https://leetcode.com/discuss/post/7545165/
+- LeetCode Discuss, Postman SWE2 (post 6820759): HTTP codes, collisions. https://leetcode.com/discuss/post/6820759/
+- LeetCode Discuss, HackerRank SDE-2 Backend (post 6556472): real-time analytics, monitoring, focus on DB schema. https://leetcode.com/discuss/post/6556472/
+- LeetCode Discuss, Razorpay Senior SE Bangalore (post 6229095, Oct 2024, offer): persist mappings for 3–5 years. https://leetcode.com/discuss/post/6229095/
+- LeetCode Discuss, *System Design: Design a URL Shortener* prompt (post 6149386, Dec 2024): creation, retrieval, usage tracking. https://leetcode.com/discuss/post/6149386/
+- LeetCode Discuss, *Most asked System Design questions* (post 5806013): unique generation, DB design, scale, expiration, load balancing. https://leetcode.com/discuss/post/5806013/
+- LeetCode Discuss, *The 6 most asked system design questions* (post 8584549): ID generation, collisions, read-heavy caching. https://leetcode.com/discuss/post/8584549/
+- GeeksforGeeks, *Microsoft Interview Experience Set 64 (SDE-2)*: hashing, scaling, server side. https://www.geeksforgeeks.org/interview-experiences/microsoft-interview-experience-set-64-for-sde-2/
+- PracHub, *URL Shortener System Design Interview: What Interviewers Actually Probe* (2026): collisions, 301 vs 302, viral link, nine company-tagged asks. https://prachub.com/resources/url-shortener-system-design
+- PracHub, *Design a scalable URL shortener with expiration and security* (question bank, 2026). https://prachub.com/interview-questions/design-a-scalable-url-shortener-with-expiration-and-security
+- PracHub, Coinbase phone screen (2026): scale to hundreds of millions of users. https://prachub.com/interview-experiences/coinbase-software-engineer-interview-experience-a-45-minute-phone-screen-building-a-url-shortener
+- PracHub, Shopify Senior+ (2026): Redis and a database rejected as overengineering. https://prachub.com/interview-experiences/shopify-seniorplus-software-engineer-interview-experience-building-a-tiny-url-shortener-with-ai-assisted-coding
+- Hello Interview, *Design a URL Shortener like Bit.ly* (Feb 2026): core requirements, optional alias and expiry, deep dives on unique codes, fast redirects and scale. https://www.hellointerview.com/learn/system-design/problem-breakdowns/bitly
+- DesignGurus, *Grokking the System Design Interview*, TinyURL: expiry, custom alias, analytics, rate limiting. https://designgurus.io/course-play/grokking-the-system-design-interview/doc/designing-a-url-shortening-service-like-tinyurl
 - TRAI press releases on URL/APK/OTT whitelisting and header/template rules, effective 1 October 2024. https://www.trai.gov.in/sites/default/files/2024-10/PR_No.60of2024.pdf · http://www.trai.gov.in/sites/default/files/2024-11/PR_No.80of2024.pdf
 - WebEngage docs, *TRAI's Mandate for CTA Whitelisting* (2025): shorteners only if the short URL clearly relates to the sender. https://docs.webengage.com/docs/sms-cta-whitelisting-guidelines-trai-mandate
 - Zoho community note (Sept 2024): generic shorteners such as bit.ly and tinyurl are not approved in templates. https://help.zoho.com/portal/zh/community/topic/stay-in-the-know-important-trai-mandate-on-url-whitelisting-for-indian-crm-customers

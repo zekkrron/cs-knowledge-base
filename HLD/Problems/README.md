@@ -44,7 +44,7 @@ All **12** stay.
 | 13 | [[13 - URL Shortener]] | Permuted counter ranges, cached 302s, clicks off the hot path · **new format** |
 
 > [!info] New format (October 2026)
-> [[13 - URL Shortener]] and [[06 - Seat Booking]] are the pilots of the new format: clarify script → requirements → estimates that drive V0 → V0 → scale ladder (V1–V4, each with its trigger number) → twist cards → break it → operations → close. Shared mechanics live in [[12 - Mini Designs]]. The rules are in `CONVENTIONS.md` under *HLD Problems and Mini Designs*, including the mandatory research step. The other notes here are in the older format until converted.
+> [[13 - URL Shortener]] and [[06 - Seat Booking]] are the pilots of the new format: clarify script → requirements → estimates that drive V0 → V0 → scale ladder (V1–V4, each with its trigger number) → twist cards → break it → operations → close. Shared mechanics live in [[12 - Mini Designs]]. The note template is in `CONVENTIONS.md` under *HLD Problems and Mini Designs*; how to research and prioritise the ladder and twists is in *Researching and Prioritising a Problem* below. The other notes here are in the older format until converted.
 
 ## How you walk any of them
 
@@ -55,6 +55,31 @@ All **12** stay.
 5. Climb the ladder: each step names the number that breaks the previous version and the mini design it uses
 6. Expect twists off the ladder: consistency, features, failures, cost, regions, compliance, abuse
 7. Break it: double-click / process death / cache lie
+
+---
+
+## Researching and Prioritising a Problem
+
+Applies to every problem note in the new format. The note structure (template in `CONVENTIONS.md`) and the mini designs do not change; this procedure decides **what goes on the ladder and in the twist cards, and in what priority**.
+
+### What research decides, and what it doesn't
+
+- **V0** is the functional core of the prompt as interviewers actually give it. It is usually stable; research confirms it rather than rebuilds it.
+- **The scale ladder (V1–Vn) is ordered by its trigger numbers**, not by how often a step is asked: you can't shard before the cache breaks. Research adds an **evidence line and a confidence** to each step and decides how much space it gets. A step nobody asks about stays if the logic needs it, kept short.
+- **Twist cards are ordered by evidence.** Cards supported by reports come first; cards from recall or judgement stay, in a lower-priority group, so nothing useful is lost.
+- **Mini designs are not touched** by this research. They are reusable mechanics; they only need sourced numbers.
+
+### Procedure
+
+1. **Collect 10–20 dated reports** of the question being asked: LeetCode Discuss, GeeksforGeeks, Blind, Glassdoor, PracHub, company prep guides; plus the major guides (Hello Interview, Grokking/DesignGurus) for what interviewers are told to probe. For each, record company, date, starting scope, the scale pushed, the component the interviewer drilled into, and every follow-up.
+2. **Tally.** Each ladder step and twist card gets a count and a confidence:
+    + `strong`: several independent reports.
+    + `medium`: one report, or consistent guide material.
+    + `judgement`: no report found; kept because the design or the Indian market needs it (regulation, Indian spikes).
+3. **Annotate in place.** Add `Evidence:` with sources and confidence to each ladder step; group twist cards into **Most asked** and **Lower priority (recall / judgement)**, keeping their ids so cross-references still work.
+4. **Add an `## Evidence` section** before `## Sources`: Follow-up | Reports | Count | Placed as (V0 / Vn / twist, with confidence) | Deep dive? (whether interviewers drill into it).
+5. **Label numbers.** A number is either sourced (with date) or marked *assumed*. Clarify-script defaults are assumptions.
+6. **Change little when the flow is right.** If the existing ladder is already a correct logical escalation and the evidence doesn't contradict it, keep its order and text; only add evidence, confidence and grouping. Rewrite a step only when the evidence shows it's wrong or missing.
 
 ## Related Notes
 
