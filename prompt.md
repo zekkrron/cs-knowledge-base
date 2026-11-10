@@ -1,1 +1,3 @@
-just before this I can see (LangChain) in the resume for the MCP Gateway which is not true and I had planned on removing this but had forgot so please just remove the (LangChain) from the resume and then please commit and push
+just for testing that the SPO runs will work properly please do a test run of the things you will do on the SOP run, mostly the job search from portals of the prospect companies etc.
+
+this won't lead to anything right now just need to be sure that all search is working
