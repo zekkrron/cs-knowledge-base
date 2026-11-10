@@ -12,7 +12,7 @@ created: 2026-09-20
 
 ## Resume line
 
-- Drag-and-drop on LangGraph, visual DAG → deterministic pipeline, durable resume. Migrated 20+ workflows. 124,000+ req/day. Orion ₹1.5/indent.
+- Drag-and-drop on LangGraph, visual DAG → deterministic pipeline, durable resume. Migrated 40+ workflows. 124,000+ req/day. Orion ₹1.5/indent.
 - Say **timeline** on the durable clause
     + July = first cut (compile/run)
     + Aug–Sep = harden pause
@@ -355,7 +355,7 @@ flowchart LR
 - **July** was that path
 - Production is `/trigger` → Kafka → `gateway_runs` → execute worker + the same `_execute_workflow`
 - If the DAG must wait on the world, that is pause — **05**, hardened after July
-- 20+ is the same business list that used to be agents
+- 40+ is the same business list that used to be agents
 - 124k is this platform
 - I will not invent run vs inner-tool split
 - Robustness = `BaseNode.run`: per-node timeout + optional retry + strategy. `execution_config` 300/50 is stored, unused. Don't retry a Tool POST. Depth: 14
@@ -365,7 +365,7 @@ flowchart LR
 ## Metrics
 
 - **124k/day** — workflows bullet. Not 72k (`/v2/trigger` agents). Don't add them.
-- **20+** — migrated from agents. Name two. Don't 20+20.
+- **40+** — migrated from agents. Name two. Don't 40+40.
 - **₹1.5/indent** — `cost_config` is real; rupees are business. Split vs `cost_handling` tokens.
 - `execution_config` 300s / 50 / `retry_on_failure` — on the version document. **Gateway ignores them.** Real knobs are per-node. 14
 
@@ -481,7 +481,7 @@ flowchart LR
 5. HITL
     + Pause event/timer — not this compile note
     + **05**
-6. 20+ vs agent bullet
+6. 40+ vs agent bullet
     + Same list, two eras
     + Calendar
 7. Context window

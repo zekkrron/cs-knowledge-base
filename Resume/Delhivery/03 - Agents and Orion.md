@@ -14,9 +14,9 @@ created: 2026-09-19
 
 ## Resume lines
 
-- Hierarchical LangGraph agents, event-driven, child agents, 20+ workflows.
+- Hierarchical LangGraph agents, event-driven, child agents, 40+ workflows.
 - Indent Creation Agent, 1,000+ indents/day, ₹28 → ₹4, enrichment subagent for dirty data.
-- Later the same 20+ automations moved onto the **workflow canvas** in **July**
+- Later the same 40+ automations moved onto the **workflow canvas** in **July**
     + cost cited as ₹1.5 on that bullet
     + Say the **timeline**: agents mid-May–June, then DAG in July
 
@@ -340,7 +340,7 @@ flowchart TD
 ## Metrics (Temple PDF — do not rewrite the tex)
 
 - **72k/day** — defend as **`/v2/trigger`**. PDF still has it on Catalog+Gateway — don't rewrite Temple. ~50 RPM. Not playground chat. Not Orion-only. Not 124k.
-- **20+** — business automations that ran as agents, later the same list on the canvas. Name two you touched. Don't add 20 + 20.
+- **40+** — business automations that ran as agents, later the same list on the canvas. Name two you touched. Don't add 40 + 40.
 - **1,000+ /day** and **₹28 → ₹4** (then ₹1.5 on workflows) — Orion indent **example**. `cost_handling` is tokens. The rupees are business. Split them if they press.
 - **124k** — workflows bullet. Not this sentence.
 
@@ -479,7 +479,7 @@ flowchart TD
     + Don't invent an eval set
     + Name it if you ran one
     + 02 parked
-18. 20+ vs canvas / 20+ workflows vs the workflow bullet?
+18. 40+ vs canvas / 40+ workflows vs the workflow bullet?
     + Same business list, two runtimes / two eras
     + Agents = May–June
     + Canvas = July

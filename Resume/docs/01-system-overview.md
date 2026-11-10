@@ -28,7 +28,7 @@ The Agentic Platform is composed of these services:
 
 The resume line "Delivered MCP servers ... coding 100+ tools" maps to `mcp_collection/*_MCP`.
 "Catalog Service API registry, expanding ecosystem to 600+ tools across 11+ business domains"
-maps to the Catalog Service. "MCP Gateway (LangChain) dynamically translating OpenAPI specs
+maps to the Catalog Service. "MCP Gateway dynamically translating OpenAPI specs
 into executable tools" maps to `mcp_collection/mcp-gateway`. "Multi-Agent Orchestration
 (LangGraph)" and "Workflow Automation Platform ... durable, resumable execution" map to the
 Catalog workflow authoring plane + Gateway workflow runtime + Event Scheduler.

@@ -1,7 +1,7 @@
 # 11 — v2 Agent Orchestration Engine
 
 Resume mapping: *"Spearheaded a hierarchical AI Agent framework (LangGraph) leveraging
-event-driven multi-step orchestration and child agents to automate 20+ business workflows."*
+event-driven multi-step orchestration and child agents to automate 40+ business workflows."*
 
 This is the deep-dive companion to `03-agents.md`. It documents **how the v2 agent runtime
 actually works** — the LangGraph `StateGraph`, its nodes, the shared state, routing (rule vs
@@ -282,7 +282,7 @@ Media inputs (files/images) are resolved by `v2/media_resolver.py`; cost-alert e
   §5 rule-based routing on request content/context + §7 iterative LLM tool-calling loop.
 - **Child agents** → §6 (deterministic, rule-matched) and §7 (LLM-invoked prompt agents),
   token usage accumulated up the tree.
-- **Automate 20+ business workflows** → these agents (later migrated to the workflow platform,
+- **Automate 40+ business workflows** → these agents (later migrated to the workflow platform,
   see `04-workflows.md`) run the business automations; bulk mode (§8) fans a single request into
   many parallel agent runs.
 

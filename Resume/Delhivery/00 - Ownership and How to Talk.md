@@ -80,7 +80,7 @@ Docs describe the **codebase**, not your PRs. Until this table is honest, do not
 | 600+ tools | Stated as catalog size, no query in the notes | "Registry of OpenAPI operations. I will not invent how we counted unless I re-run the list query." |
 | 72k /day | Temple PDF, Catalog+Gateway bullet. **Defend as production `POST .../v2/trigger`** (agent workers). Playground `v2/chat` is humans iterating — not this counter. ~50 RPM. | Do not move the number off the PDF. Do not say Catalog serves it. Do not say Orion 1k indents. 124k is workflows. |
 | 124k /day | Workflows bullet. | If 72k is agent `/trigger`, 124k cannot be the same counter. Split or drop one. Don't mix playground chat into 72k. |
-| 20+ workflows | Stated, then "migrated onto the canvas" | Name 2–3 you touched (Orion indent is one). |
+| 40+ workflows | Stated, then "migrated onto the canvas" | Name 2–3 you touched (Orion indent is one). |
 | 1,000+ indents/day | Stated | Orion team volume — source? |
 | ₹28 → ₹4 → ₹1.5 | `cost_handling.py` exists; **the rupees are not in code** | LLM/token cost accounting is real. The 28/4/1.5 are a **business number**. How computed? |
 | ~70% less search noise | Stated | What was the eval set? Before/after metric? |

@@ -27,6 +27,8 @@ The Gateway line says **LangChain**. Wrong name. Fix **on the same bullet** — 
 
 `Architected MCP Gateway (LangChain)` → `Architected MCP Gateway (LangGraph)` (or `FastMCP` + LangGraph if you want the tool path named honestly).
 
+**Done (Nov 2026):** "(LangChain)" removed; no framework named on this bullet.
+
 ## Related Notes
 
 - [[resume.tex]] — do not touch until this list is executed

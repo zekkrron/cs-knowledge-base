@@ -69,6 +69,16 @@
 \newcommand{\resumeItemListStart}{\begin{itemize}}
 \newcommand{\resumeItemListEnd}{\end{itemize}\vspace{-5pt}}
 
+%----------PER-APPLICATION OVERRIDES----------
+% Defaults = the general resume. A tailored build (Job Hunt/Resumes/build.ps1) sets
+% \OverrideFile, and that file \renewcommand's only the title and skill lines.
+\newcommand{\RoleTitle}{Software Development Engineer 1}
+\newcommand{\SkillsLanguages}{Python, Golang, Java, C++}
+\newcommand{\SkillsAI}{LangGraph, LangChain, FastMCP, AI Agents, MCP Servers, Cross-Encoder}
+\newcommand{\SkillsBackend}{Spring Boot, FastAPI, REST API Design, Microservices, Kafka, RabbitMQ}
+\newcommand{\SkillsCloud}{AWS, Kubernetes, Docker, Linux, PostgreSQL, MongoDB, Redis, MySQL}
+\ifdefined\OverrideFile \input{\OverrideFile}\fi
+
 %-------------------------------------------
 \begin{document}
 
@@ -86,23 +96,13 @@
 
 \vspace{-8pt}
 
-%-----------EDUCATION-----------
-\section{Education}
-\resumeSubHeadingListStart
-  \resumeSubheading
-    {Netaji Subhas University of Technology, Delhi}{Dec 2021 -- Jun 2025}
-    {B.Tech, Instrumentation and Control Engineering}{CGPA: 8.22}
-\resumeSubHeadingListEnd
-
-\vspace{-9pt}
-
 %-----------EXPERIENCE-----------
 \section{Experience}
 \resumeSubHeadingListStart
 
   \resumeSubheading
     {Delhivery}{October 2025 -- Present}
-    {Software Development Engineer 1}{Gurugram, India}
+    {\RoleTitle}{Gurugram, India}
     \vspace{-7pt}
     \resumeItemListStart
       % resume:narad
@@ -110,15 +110,15 @@
       % resume:mcp-servers
       \resumeItem{\textbf{AI Ecosystem \& MCP Architecture:} Delivered MCP servers within a microservices architecture (Python, FastMCP), coding \textbf{100+ tools} to bridge internal systems with the AI ecosystem.}
       % resume:catalog-gateway
-      \resumeItem{\textbf{Agentic Platform and MCP Gateway:} Shipped Catalog Service API registry, expanding ecosystem to \textbf{600+ tools} across \textbf{11+ business domains}. Architected MCP Gateway (LangChain) dynamically translating OpenAPI specs into executable tools for UI and chat, handling \textbf{72,000+ daily requests}.}
+      \resumeItem{\textbf{Agentic Platform and MCP Gateway:} Shipped Catalog Service API registry, expanding ecosystem to \textbf{600+ tools} across \textbf{11+ business domains}. Architected MCP Gateway dynamically translating OpenAPI specs into executable tools for UI and chat, handling \textbf{72,000+ daily requests}.}
       % resume:multi-agent
-      \resumeItem{\textbf{Multi-Agent Orchestration:} Spearheaded a hierarchical AI Agent framework (LangGraph) leveraging event-driven multi-step orchestration and child agents to automate 20+ business workflows.}
+      \resumeItem{\textbf{Multi-Agent Orchestration:} Spearheaded a hierarchical AI Agent framework (LangGraph) leveraging event-driven multi-step orchestration and child agents to automate 40+ business workflows.}
       % resume:ask-ai
-      \resumeItem{\textbf{Enterprise Search Optimization:} Re-architected the platform's hybrid tool-search engine utilizing character-count routing, kNN retrieval, and \textbf{Cross-Encoder} reranking with adaptive tail-distribution thresholding, reducing search noise by \textbf{$\sim$70\%} with zero relevant-result dropout across all query categories.}
+      \resumeItem{\textbf{Agentic RAG Search:} Re-architected the hybrid retrieval engine our agents use to find tools, utilizing character-count routing, kNN retrieval, and \textbf{Cross-Encoder} reranking with adaptive tail-distribution thresholding, reducing search noise by \textbf{$\sim$70\%} with zero relevant-result dropout across all query categories.}
       % resume:workflows
-      \resumeItem{\textbf{Workflow Automation Platform:} Built a drag-and-drop workflow automation tool on \textbf{LangGraph} that compiles visual DAGs into deterministic multi-step pipelines with durable, resumable execution. Migrated all \textbf{20+ business workflows} onto it, serving \textbf{3M+ requests/day}, and cut Orion indent cost to \textbf{₹1.5 per indent}.}
+      \resumeItem{\textbf{Workflow Automation Platform:} Built a drag-and-drop workflow automation tool on \textbf{LangGraph} that compiles visual DAGs into deterministic multi-step pipelines with durable, resumable execution. Migrated all \textbf{40+ business workflows} onto it, serving \textbf{3M+ requests/day} and slashing costs by up to \textbf{95\%} versus manual operations.}
       % resume:voice-agent
-      \resumeItem{\textbf{Voice AI Agent:} Shipped a self-hosted driver-calling agent (Pipecat, Gemini, Sarvam, Vobiz) with an automated LangGraph NSL/ETA workflow, now serving live routes at \textbf{₹2.5/call} (\textbf{$\sim$47\% lower} than Hunar).}
+      \resumeItem{\textbf{Voice AI Agent:} Shipped a self-hosted driver-calling agent (Pipecat, Gemini, Sarvam, Vobiz) with an automated LangGraph NSL/ETA workflow, now serving live routes at \textbf{₹2.5/call}, \textbf{$\sim$39\%} below the previous setup.}
     \resumeItemListEnd
 
   \resumeSubheading
@@ -145,14 +145,24 @@
 \section{Technical Skills}
 \begin{itemize}[leftmargin=0.15in, label={}]
   \small{\item{
-    \textbf{Languages}{: Python, Golang, Java, C++} \\
-    \textbf{GenAI \& LLMs}{: LangGraph, LangChain, FastMCP, AI Agents, MCP Servers, Cross-Encoder} \\
-    \textbf{Backend \& Distributed Systems}{: Spring Boot, FastAPI, REST API Design, Microservices, Kafka, RabbitMQ} \\
-    \textbf{Cloud, DevOps \& Databases}{: AWS, Kubernetes, Docker, Linux, PostgreSQL, MongoDB, Redis, MySQL} \\
+    \textbf{Languages}{: \SkillsLanguages} \\
+    \textbf{GenAI \& LLMs}{: \SkillsAI} \\
+    \textbf{Backend \& Distributed Systems}{: \SkillsBackend} \\
+    \textbf{Cloud, DevOps \& Databases}{: \SkillsCloud} \\
   }}
 \end{itemize}
 
 \vspace{-12pt}
+
+%-----------EDUCATION-----------
+\section{Education}
+\resumeSubHeadingListStart
+  \resumeSubheading
+    {Netaji Subhas University of Technology, Delhi}{Dec 2021 -- Jun 2025}
+    {B.Tech, Instrumentation and Control Engineering}{CGPA: 8.22}
+\resumeSubHeadingListEnd
+
+\vspace{-9pt}
 
 %-----------ACHIEVEMENTS-----------
 \section{Achievements}

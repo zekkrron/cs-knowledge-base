@@ -4,7 +4,7 @@ created: 2026-10-27
 ---
 # Voice Agent (Dograh)
 
-> [!abstract] Defence note for the `voice-agent` bullet: how the self-hosted driver-calling agent works end to end, how it was scaled, and where each resume number comes from (`₹2.5/call`, `~47%` vs Hunar, 8 workers, ~1 s latency cut).
+> [!abstract] Defence note for the `voice-agent` bullet: how the self-hosted driver-calling agent works end to end, how it was scaled, and where each resume number comes from (`₹2.5/call`, `~39%` vs Hunar, 8 workers, ~1 s latency cut).
 
 ## What it is
 
@@ -80,22 +80,17 @@ An in-house, self-hosted voice AI agent that calls truck drivers on non-GPS trip
 
 Breakdown for a full conversation: LLM ~₹1.7, TTS ~₹1.9, Vobiz ~₹1.2, STT ~₹0.6, workflow ₹0.6. Infra is USD 200/month and is tracked separately.
 
-**Compared with Hunar:** ~₹2.5 per call against ~₹4.7 per call on the earlier Hunar voice agent, a **~47% cost reduction**.
+**Compared with Hunar:** ~₹2.5 per call against ~₹4.1 per call on the earlier Hunar voice agent, a **~39% cost reduction** (2.5 / 4.1 ≈ 0.61). Resume wording: "~39% below the previous setup".
 
 ## Tech stack
 
 Python, Dograh (Pipecat), Gemini 3.5 Flash (Vertex AI), Sarvam STT/TTS, Vobiz SIP telephony, LangGraph workflow on MCP Gateway, FastAPI/uvicorn, nginx, Docker, PostgreSQL, Redis, MinIO, AWS EC2, Kubernetes CronJob (Devtron).
 
-## Resume pointer (drop-in for resume.tex, same format as the other Delhivery bullets)
+## Resume pointer (as in resume.tex)
 
 ```latex
-\resumeItem{\textbf{Self-Hosted Voice AI Agent:} Built an in-house driver-calling voice agent (Dograh/Pipecat, Gemini 3.5 Flash, Sarvam STT/TTS, Vobiz SIP) that captures live location, delay reason and ETA for non-GPS trips and auto-applies NSL and ETA in MTS through a LangGraph post-call workflow. Scaled it to \textbf{8 load-balanced workers}, cut reply latency by \textbf{$\sim$1s}, and brought cost down to \textbf{₹2.5 per call}, \textbf{$\sim$47\% lower} than the earlier Hunar voice agent.}
+\resumeItem{\textbf{Voice AI Agent:} Shipped a self-hosted driver-calling agent (Pipecat, Gemini, Sarvam, Vobiz) with an automated LangGraph NSL/ETA workflow, now serving live routes at \textbf{₹2.5/call}, \textbf{$\sim$39\%} below the previous setup.}
 ```
 
-It goes in the Delhivery block of `resume.tex`, after the **Workflow Automation Platform** bullet (line 114), since the post-call workflow runs on that platform.
-
-Shorter variant (if space is tight):
-
-```latex
-\resumeItem{\textbf{Voice AI Agent:} Shipped a self-hosted driver-calling agent (Pipecat, Gemini, Sarvam, Vobiz) with an automated LangGraph NSL/ETA workflow, now serving live routes at \textbf{₹2.5/call} (\textbf{$\sim$47\% lower} than Hunar).}
-```
+- **₹2.5/call:** per call placed, from the cost model above.
+- **~39% below the previous setup:** the earlier Hunar voice agent cost ~₹4.1 per call. Say "the previous calling setup" or name Hunar only if asked.

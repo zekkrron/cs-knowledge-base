@@ -2,7 +2,7 @@
 
 Resume mapping: *"Built a drag-and-drop workflow automation tool on LangGraph that compiles
 visual DAGs into deterministic multi-step pipelines with durable, resumable execution.
-Migrated all 20+ business workflows onto it, serving 124,000+ requests/day, and cut Orion
+Migrated all 40+ business workflows onto it, serving 124,000+ requests/day, and cut Orion
 indent cost to ₹1.5 per indent."*
 
 This document covers the full workflow platform except the pause/resume mechanics, which have
@@ -328,7 +328,7 @@ HTTP 200 with `status ∈ {succeeded, failed, paused}`, plus `run_id`, `memory_s
 `version`, `outputs`, `error`, `metadata`. Errors (400/404) cover invalid JSON, non-object
 `input_variables`, invalid UUID4 `memory_session_id`, validation failure, workflow not found.
 
-This platform serves **124,000+ requests/day** and hosts the migrated 20+ business workflows,
+This platform serves **124,000+ requests/day** and hosts the migrated 40+ business workflows,
 including Orion freight automation (indent cost cut to ₹1.5/indent).
 
 ---
@@ -429,7 +429,7 @@ and any change to the contract must land in both repos together.
   resume.
 - **Durable, resumable execution** → §7 pause branch + the entire `05-pause-resume.md`
   (LangGraph checkpointer, S3 snapshots, Catalog metadata, Event Scheduler resume delivery).
-- **Migrated all 20+ business workflows** → the same automations previously built as LangGraph
+- **Migrated all 40+ business workflows** → the same automations previously built as LangGraph
   agents (`03-agents.md`) re-expressed as canvas/SOP workflows.
 - **124,000+ requests/day** → aggregate run volume across the migrated workflows on the gateway
   run endpoints (§7).

@@ -54,13 +54,13 @@ print(len(enc.encode("Refund order ORD-1234 for ₹499")))   # count before you 
 
 ### Sampling parameters
 
-| Parameter | What it does | Typical use |
-|---|---|---|
-| **Temperature** | Scales logits before softmax: low = sharper (likely tokens dominate), high = flatter (more variety). `0` ≈ greedy | 0–0.3 for extraction, classification, tool calls; 0.7–1.0 for creative text |
-| **Top-p (nucleus)** | Sample only from the smallest set of tokens whose probability sums to p | Usually tune temperature *or* top-p, not both |
-| **Top-k** | Sample only from the k most likely tokens | Less common in hosted APIs |
-| **Stop sequences** | End generation when a string appears | Cut off after a delimiter |
-| **Seed** | Request reproducible sampling where supported | Best-effort only |
+| Parameter           | What it does                                                                                                      | Typical use                                                                 |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| **Temperature**     | Scales logits before softmax: low = sharper (likely tokens dominate), high = flatter (more variety). `0` ≈ greedy | 0–0.3 for extraction, classification, tool calls; 0.7–1.0 for creative text |
+| **Top-p (nucleus)** | Sample only from the smallest set of tokens whose probability sums to p                                           | Usually tune temperature *or* top-p, not both                               |
+| **Top-k**           | Sample only from the k most likely tokens                                                                         | Less common in hosted APIs                                                  |
+| **Stop sequences**  | End generation when a string appears                                                                              | Cut off after a delimiter                                                   |
+| **Seed**            | Request reproducible sampling where supported                                                                     | Best-effort only                                                            |
 
 > [!warning] Temperature 0 is not deterministic
 > Even greedy decoding can vary between runs: requests are **batched** with other users' requests on the GPU, floating-point operations aren't associative, and kernels differ by batch shape, so tiny numeric differences can flip a near-tie between two tokens. Design for variation: validate outputs, use evals with multiple samples, and never assume a byte-identical replay.
@@ -71,6 +71,9 @@ print(len(enc.encode("Refund order ORD-1234 for ₹499")))   # count before you 
 
 - Some models first generate hidden or summarised **reasoning tokens** ("thinking") before the visible answer. They're much better at multi-step problems (planning, math, code) but you **pay for and wait on** the reasoning tokens, often many times the answer's length. Many APIs expose an effort or thinking-budget setting.
 - Rule: route hard, rare decisions (planning, complex tool selection) to a reasoning model; keep simple, high-volume steps on a fast non-reasoning model ([[12 - LLM Cost and Latency Economics]]).
+- **Thinking tokens are ordinary output tokens.** The model is trained to write a scratchpad first, usually between markers such as `<think>` … `</think>`, and it generates that scratchpad the same way as any text: **one token at a time**, each new token appended to the context and the whole sequence fed back for the next one. It "knows" it is thinking because the context shows an open `<think>` block; when it predicts the closing marker, it switches to writing the visible answer. So the "talking to itself" is just autoregression over its own scratchpad, not a separate loop.
+- **Why the UI shows thinking in chunks:** the GPU still produces one token at a time, but the API streams tokens in batched network events (Server-Sent Events) and the UI renders each batch at once. Many providers also show a *summary* of the thinking, written in blocks, rather than the raw tokens. Both make a thought look like it arrived whole.
+- **Why thinking pauses and then resumes:** that's agentic orchestration, outside the model. When the model emits a tool call (search, run code), generation **stops**; the orchestration layer runs the tool, appends the result to the context, and starts a **new inference call**. The model reads the updated context and continues thinking or answers. Each "pause, act, think again" cycle is one more model call, which is where agent cost and latency multiply ([[02 - Execution Loops and Control Topologies]]).
 
 ---
 

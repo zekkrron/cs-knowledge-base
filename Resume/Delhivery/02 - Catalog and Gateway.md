@@ -15,7 +15,7 @@ created: 2026-09-19
 
 Catalog API registry, 600+ tools, 11+ domains. Gateway translates OpenAPI → executable tools for UI and chat. 72,000+ daily requests.
 
-> [!warning] PDF says **"MCP Gateway (LangChain)"**. Runtime is FastAPI + FastMCP + LangGraph (`langchain-core` for LLM bits). Say FastMCP/LangGraph. Do not defend "we built it in LangChain."
+> [!note] "(LangChain)" was removed from this bullet in Nov 2026. Older PDFs may still say it. Runtime is FastAPI + FastMCP + LangGraph (`langchain-core` for LLM bits). Say FastMCP/LangGraph if asked.
 
 ---
 

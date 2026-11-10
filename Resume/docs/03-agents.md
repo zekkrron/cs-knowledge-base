@@ -1,7 +1,7 @@
 # 03 — Agents
 
 Resume mapping: *"Spearheaded a hierarchical AI Agent framework (LangGraph) leveraging
-event-driven multi-step orchestration and child agents to automate 20+ business workflows"*
+event-driven multi-step orchestration and child agents to automate 40+ business workflows"*
 and *"Orion & Freight Automation: Automated freight procurement via an Indent Creation Agent
 ... Integrated a Subagent for enrichment ..."*.
 
@@ -142,10 +142,10 @@ migration, as workflows.
 
 ---
 
-## 4. "20+ business workflows" and event-driven orchestration
+## 4. "40+ business workflows" and event-driven orchestration
 
-- The agent framework automates 20+ business workflows; these were later **migrated onto the
-  workflow automation platform** (resume: "Migrated all 20+ business workflows onto it"). So an
+- The agent framework automates 40+ business workflows; these were later **migrated onto the
+  workflow automation platform** (resume: "Migrated all 40+ business workflows onto it"). So an
   "agent workflow" and a "platform workflow" describe the same business automations at two
   points in the evolution — first as LangGraph agents, then as compiled DAG workflows.
 - **Event-driven**: automations are triggered by events and can suspend waiting for external

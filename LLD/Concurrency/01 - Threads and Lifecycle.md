@@ -22,25 +22,68 @@ created: 2026-10-11
 
 ## Giving a Thread Work
 
-| Way | Returns a value? | Throws checked exceptions? | Use when |
-|---|---|---|---|
-| **`Runnable`** (`void run()`) | No | No | Fire-and-forget work |
-| **`Callable<V>`** (`V call() throws Exception`) | Yes, via a `Future<V>` | Yes | You need a result or the failure |
-| **Subclass `Thread`** and override `run()` | No | No | Almost never; mixes "the work" with "the worker" |
+Two separate things are involved:
+
+- **The task**: the code you want to run, written as an object with one method.
+- **The worker**: a thread that runs that method.
+
+Java gives you two task types, and two ways to get a worker to run them.
+
+### The two task types
+
+**`Runnable`** is a task that does something and returns nothing. Its one method is `void run()`, and it can't throw checked exceptions.
 
 ```java
-Runnable task = () -> System.out.println("hello from " + Thread.currentThread().getName());
-Thread t = new Thread(task, "worker-1");   // name your threads: it shows up in dumps and logs
-t.start();                                  // creates a NEW thread that calls task.run()
-
-Callable<Integer> job = () -> 6 * 7;        // returns a value, may throw
-ExecutorService pool = Executors.newFixedThreadPool(2);
-Future<Integer> f = pool.submit(job);
-int answer = f.get();                       // blocks until done; rethrows failure as ExecutionException
-pool.shutdown();
+Runnable sendEmail = () -> System.out.println("sending email");
 ```
 
-- Prefer **`Runnable`/`Callable` + an executor** over `new Thread(...)` in real code. Separating the task from the thread that runs it is what lets you pool, schedule and cancel work.
+**`Callable<V>`** is a task that produces a value of type `V`. Its one method is `V call()`, and it may throw any exception.
+
+```java
+Callable<Integer> countOrders = () -> 42;    // pretend this queries a database
+```
+
+Both are usually written as lambdas, as above. Writing a task doesn't run it; you still need a thread.
+
+### Running a task: your own thread
+
+Wrap a `Runnable` in a `Thread` and call `start()`. That creates a new thread, and the new thread calls `run()`.
+
+```java
+Thread t = new Thread(sendEmail, "email-worker");   // the name shows up in logs and thread dumps
+t.start();                                           // returns at once; the email is sent on the new thread
+```
+
+`Thread` only accepts a `Runnable`, so there is no way to get a value back this way.
+
+### Running a task: a thread pool (what real code does)
+
+An `ExecutorService` keeps a few threads alive and runs every task you submit on one of them. You never create threads yourself.
+
+```java
+ExecutorService pool = Executors.newFixedThreadPool(2);   // 2 threads, reused for every task
+
+pool.submit(sendEmail);                                    // Runnable: runs on a pool thread
+
+Future<Integer> pending = pool.submit(countOrders);        // Callable: you get a Future back at once
+int orders = pending.get();                                // waits until the task has finished, then gives 42
+
+pool.shutdown();                                           // no new tasks; threads exit when the queue is empty
+```
+
+- A **`Future`** is a receipt for a result that isn't ready yet. `get()` waits for it.
+- If the task threw, `get()` throws `ExecutionException`, and the original exception is its cause. That's how a failure on the pool thread reaches you.
+- Prefer the pool in real code: creating threads is costly, and a pool also lets you limit, schedule and cancel work ([[08 - Executors and Thread Pools]]).
+
+### The third way, and why to avoid it
+
+You can also subclass `Thread` and override `run()`. That glues the task to one specific thread, so the task can't be handed to a pool or reused. You'll see it in old code and interview questions; don't write it.
+
+| | Returns a value | Can throw checked exceptions | Runs on |
+|---|---|---|---|
+| `Runnable` | No | No | `new Thread(task)` or a pool |
+| `Callable<V>` | Yes, through a `Future<V>` | Yes | A pool only |
+| Subclass of `Thread` | No | No | Itself only |
 
 ### `start()` vs `run()`
 

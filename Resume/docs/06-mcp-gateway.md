@@ -1,6 +1,6 @@
 # 06 — MCP Gateway
 
-Resume mapping: *"Architected MCP Gateway (LangChain) dynamically translating OpenAPI specs
+Resume mapping: *"Architected MCP Gateway dynamically translating OpenAPI specs
 into executable tools for UI and chat, handling 72,000+ daily requests."*
 
 The gateway (`mcp_collection/mcp-gateway/`) is the data-plane runtime. Instead of hand-writing
