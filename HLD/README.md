@@ -54,3 +54,41 @@ High Level Design notes.
 | Note | Purpose |
 |---|---|
 | [[Netflix HLD]] | Full streaming case study — stretch, not SDE-1 default |
+
+## Audio Overview Prompts
+
+Upload one note as the NotebookLM source, then Studio → Audio Overview → customise, paste the matching prompt, generate. Use **Interactive mode → Join** to ask questions by voice.
+
+**Topic notes and mini designs** (`Topics/`, `12 - Mini Designs/`):
+
+````text
+Explain this system-design note to someone preparing for an SDE-3 interview at an Indian product company, following the note's own order, section by section. Do not reorder, skip or jump ahead.
+
+1. Start with the abstract and "why it exists": the problem at scale that forces this building block into a design.
+2. Then each section in order. For each mechanism, describe the request or data flow step by step (client, services, stores, queues), then why it works that way.
+3. For every comparison or decision table, explain each option, the trade-off and when to pick it.
+4. Keep every number the note gives (throughput per node, latency, storage) and say what decision each number drives.
+5. If it is a mini design: walk its evolution ladder in order, for each step the trigger number, what breaks and the change.
+6. Cover the Failure Modes: what fails, how you detect it and the fix.
+7. End with the Interview Lines and two or three follow-up questions an interviewer would push, with short answers from the note.
+
+Use only the uploaded source. Conversational, but precise.
+````
+
+**Problem notes** (`Problems/`):
+
+````text
+Walk through this system-design interview problem exactly as the round would go, following the note's order. Do not jump to the final architecture early.
+
+1. The problem and the hard part.
+2. The clarify script: each question, the default assumption and which twist it triggers.
+3. Functional and non-functional requirements, then out of scope.
+4. The estimates, and for each number the design decision it forces.
+5. The API and schema.
+6. V0, the simplest design that works, as a request flow, and what V0 cannot handle.
+7. The scale ladder in order (V1, V2, ...): for each step the trigger number, what breaks, the change and its trade-off. Mention the evidence line where the note gives one.
+8. The twist cards, most-asked first, each as "the interviewer says..." then the answer.
+9. Break it, operations and cost, then the one-minute close.
+
+Use only the uploaded source. Conversational, but precise.
+````

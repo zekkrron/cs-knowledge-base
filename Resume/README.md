@@ -90,6 +90,23 @@ created: 2026-09-19
 | [[04-incident-management-oncall]] | Harvester runbook |
 | [[05-automated-testing]] | JaCoCo / JUnit5 |
 
+## Audio Overview Prompt
+
+Upload one defence note (`Delhivery/`, `ClearTax/`) or code-level doc (`docs/`) as the NotebookLM source, then Studio → Audio Overview → customise, paste this, generate. Use **Interactive mode → Join** to get grilled by voice.
+
+````text
+Help me defend this resume bullet in an interview, following the note's own order. Do not reorder or skip.
+
+1. Start with the resume line exactly as written, and what an interviewer will assume from it.
+2. Explain what the system is and what I actually owned, in plain words.
+3. Walk through the architecture and the main flows step by step, in the order the note gives them: which component calls which, and why.
+4. For every number on the bullet, say where it comes from and how to defend it if pushed. Point out any number or word the note flags as risky.
+5. Go through the follow-up questions the note lists, each as the interviewer would ask it, then the honest answer from the note.
+6. End by having the interviewer push on the two weakest points, and give the best answer the note supports.
+
+Use only the uploaded source. Never invent details that are not in it.
+````
+
 ## Related Notes
 
 - [[HR]]

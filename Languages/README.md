@@ -202,6 +202,24 @@ Languages/
 
 Java → Spring Boot → Python → FastAPI → Python for AI → Go → Gin → Cross-Language.
 
+## Audio Overview Prompt
+
+Upload one note as the NotebookLM source, then Studio → Audio Overview → customise, paste this, generate. Use **Interactive mode → Join** to ask questions by voice.
+
+````text
+Explain this programming-language note to a backend engineer preparing for interviews, following the note's own order, section by section. Do not reorder, skip or jump ahead.
+
+1. Start with the abstract and "why it matters": what goes wrong in a real service if you don't understand this.
+2. Then each section in order. For each internal (runtime, memory, GC, scheduler, framework lifecycle), describe what actually happens step by step at run time, then why it is designed that way.
+3. Walk through every code example in plain words, line by line, and say what it shows.
+4. Mention the version that introduced each feature where the note gives it, and what changed.
+5. For every comparison table (between versions, frameworks or languages), explain each option and when to pick it.
+6. Cover the Failure Modes: the production symptom, the cause and the fix.
+7. End with the Interview Lines and two or three follow-up questions an interviewer would ask, with short answers from the note.
+
+Use only the uploaded source. Conversational, but precise.
+````
+
 ## Related Notes
 
 - [[LLD/Concurrency/README]] · [[LLD/Foundations/README]] · [[HLD/Topics/README]] · [[Agentic/README]]

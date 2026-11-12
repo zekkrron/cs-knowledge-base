@@ -1,10 +1,13 @@
-few edits I need in the LLD problems : the requirements should be like Functional and Non Functional not named "Constraints" etc. it is a lil confusing
+okay so I really liked the audio overview approach and I am actually going to use this for studying every file in the repo where there is theory
 
-Also then in the parking lot get rid of the paise long and introduce the rupee with double rather
+so I want you to write a prompt similar to the prompt for the LLD bundle audio overview but in other cases we won't obviously be using any bundles but only the very file since there is not code in a separate folder
 
-make these changes across wherever these changes require the changes
+the prompt will go into the readme and would be separate for every folder like HLD or Agentic etc. etc.
 
-in the readme please also give a copyable prompt to give while generating the audio overview which will result in a audio overview where they explin it step by step... like first explain the problem then the functional and non functional requirements then the v0 and then get into the code of v0 and then the extensions and then after all extensions are over then to the final code
+The main goal is to have a prompt that ask gemini to generate audio in a logical or chronological flow of the notes (md file) so that we are essentially understanding exactly how the file intended for us to understand
 
-make these changes then commit and push to main but do not check all the changes to verify just commit and push
+now idk if this will be needed for the DSA folder so we can skip that for now for the prompt generation but you get the point
 
+and each folder needs a separate prompt for only the very reason that these things are usually important to emphasize specific to the topic
+
+after making these prompts please commit and puch all the changes so far

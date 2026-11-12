@@ -74,6 +74,24 @@ created: 2026-10-11
 
 00 → 01 → 02–05 → 06–08 → 09–12 → 13–15 → Practice Designs → Problem to Solution Map. Each topic leans on the ones before it; the map is for revision.
 
+## Audio Overview Prompt
+
+Upload one note as the NotebookLM source, then Studio → Audio Overview → customise, paste this, generate. Use **Interactive mode → Join** to ask questions by voice.
+
+````text
+Explain this AI-engineering note to someone preparing for an SDE-3 interview, following the note's own order, section by section. Do not reorder, skip or jump ahead.
+
+1. Start with the abstract: what this topic is and the problem in real AI systems that makes it necessary.
+2. Then each section in the order it appears. For each mechanism, explain what happens step by step at run time (what the model, the orchestrator, the tools or the GPU actually do), then why it is designed that way.
+3. For every comparison table, explain each option, when to pick it and what it costs, using the note's "pick when" guidance.
+4. Walk through any code in plain words, line by line, and say which mechanism it demonstrates.
+5. Keep the numbers the note gives (latency, cost, token counts, VRAM). Say which are measured and which the note marks as heuristics.
+6. Cover the Failure Modes: what breaks in production and the fix.
+7. End with the Interview Lines, then two or three follow-up questions an interviewer would ask about this topic, with short answers from the note.
+
+Use only the uploaded source. Conversational, but precise.
+````
+
 ## Related Notes
 
 - [[HLD/Topics/README]] · [[LLD/README]]

@@ -28,6 +28,21 @@ When resume notes exist: pick **one primary story** per question family, reuse a
 
 Skip brain-teasers ("what animal are you"). They waste prep and almost never show up in a serious backend loop.
 
+## Audio Overview Prompt
+
+Upload one note as the NotebookLM source, then Studio → Audio Overview → customise, paste this, generate. Use **Interactive mode → Join** to practise answering out loud.
+
+````text
+Go through this HR and behavioural interview note in its own order, question by question. Do not skip any question.
+
+1. For each question: say it the way an interviewer would ask it, then what the interviewer is really checking.
+2. If the note has an answer or a STAR story for it, explain the story in order (situation, task, action, result) and why it fits that question. If the note has no answer yet, say what kind of story would fit and what to avoid.
+3. Point out the traps: answers that sound bad, numbers that can't be defended, and when to keep it short.
+4. After every few questions, pause and invite the listener to answer one out loud.
+
+Use only the uploaded source. Conversational and encouraging.
+````
+
 ## Related Notes
 
 - [[Resume/README]] — `resume.tex` + Delhivery `docs/`; STAR facts go there first
