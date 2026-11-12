@@ -75,20 +75,4 @@ Explain this system-design note to someone preparing for an SDE-3 interview at a
 Use only the uploaded source. Conversational, but precise.
 ````
 
-**Problem notes** (`Problems/`):
-
-````text
-Walk through this system-design interview problem exactly as the round would go, following the note's order. Do not jump to the final architecture early.
-
-1. The problem and the hard part.
-2. The clarify script: each question, the default assumption and which twist it triggers.
-3. Functional and non-functional requirements, then out of scope.
-4. The estimates, and for each number the design decision it forces.
-5. The API and schema.
-6. V0, the simplest design that works, as a request flow, and what V0 cannot handle.
-7. The scale ladder in order (V1, V2, ...): for each step the trigger number, what breaks, the change and its trade-off. Mention the evidence line where the note gives one.
-8. The twist cards, most-asked first, each as "the interviewer says..." then the answer.
-9. Break it, operations and cost, then the one-minute close.
-
-Use only the uploaded source. Conversational, but precise.
-````
+**Problem notes** (`Problems/`): these use a **bundle** (the problem note plus the mini designs it links), built on request, and their own prompt. See [[HLD/Problems/README]] → *NotebookLM bundle*.

@@ -81,6 +81,44 @@ Applies to every problem note in the new format. The note structure (template in
 5. **Label numbers.** A number is either sourced (with date) or marked *assumed*. Clarify-script defaults are assumptions.
 6. **Change little when the flow is right.** If the existing ladder is already a correct logical escalation and the evidence doesn't contradict it, keep its order and text; only add evidence, confidence and grouping. Rewrite a step only when the evidence shows it's wrong or missing.
 
+---
+
+## NotebookLM Bundle (made only on request)
+
+A problem note leans on mini designs in separate files, so for NotebookLM it is uploaded as **one Markdown bundle**: the problem note plus the mini designs it uses. The narration stays on the problem; the mini designs are context. Bundles live in `HLD/bundles/` (gitignored) and are rebuilt whenever asked.
+
+**Recipe** (the agent follows this when Akash says "make the NotebookLM bundle for <problem>"):
+
+1. File: `HLD/bundles/<NN> - <Problem>.md`, overwriting any old one.
+2. Header: problem name, date built, and one line: "Main source: the problem note. The mini designs after it are reference material for the problem's [[MD-..]] links."
+3. The problem note, `HLD/Problems/<NN> - <Problem>.md`, copied whole.
+4. Each mini design the problem links, from `HLD/Topics/12 - Mini Designs/`, in the order the problem first uses them (the abstract's MD chain gives this order). Each under a heading `## Reference: MD-NN <Name> (used in <where the problem first uses it, e.g. V1 cache>)`, then the MD copied whole.
+5. Not included: HLD topic notes (Caching, Databases...). Add one only if the problem leans on it heavily and Akash asks.
+6. Check the size: one NotebookLM source holds up to 500,000 words; a problem plus its mini designs is a few tens of thousands.
+
+**Using it:** new notebook → Add source → upload the bundle. Studio → Audio Overview → customise, paste the prompt below, generate. Then **Interactive mode → Join** to ask questions by voice.
+
+**Audio Overview prompt** (copy everything inside the box):
+
+````text
+This source is a system-design interview problem note, followed by reference sections for the mini designs it links to. Narrate the PROBLEM NOTE ONLY, in its own order, exactly as the interview round would go. Do not narrate the reference sections on their own.
+
+Whenever the problem uses a mini design (written as MD-NN), briefly explain just the part of that mini design the problem needs, using its reference section: the mechanism in plain words and the settings this problem chooses (key, TTL, thresholds, numbers). Then return to the problem. Never give a full tour of a mini design.
+
+Order:
+1. The problem and the hard part.
+2. The clarify script: each question, the default assumption and which twist it triggers.
+3. Functional and non-functional requirements, then out of scope.
+4. The estimates, and for each number the design decision it forces.
+5. The API and schema.
+6. V0, the simplest design that works, as a request flow, and what V0 cannot handle.
+7. The scale ladder in order (V1, V2, ...): for each step the trigger number, what breaks, the change and its trade-off, with the evidence line where the note gives one.
+8. The twist cards, most-asked first, each as "the interviewer says..." then the answer.
+9. Break it, operations and cost, then the one-minute close.
+
+Do not jump to the final architecture early. Use only the uploaded source. Conversational, but precise.
+````
+
 ## Related Notes
 
 - [[HLD]]
