@@ -19,7 +19,7 @@ public final class Demo {
     public static void main(String[] args) {
         ManualClock clock = new ManualClock(Instant.parse("2026-10-27T10:00:00Z"));
         ParkingLotService service = new ParkingLotService(
-                new ParkingLot("PR1234", 2, 6), new LowestFloorFirstStrategy(), new HourlyPricing(30_00), clock);
+                new ParkingLot("PR1234", 2, 6), new LowestFloorFirstStrategy(), new HourlyPricing(30.0), clock);
 
         Ticket car = service.park(new Vehicle(VehicleType.CAR, "KA-01-DB-1234", "black"));
         System.out.println("Parked car, ticket " + car.id());
@@ -29,7 +29,7 @@ public final class Demo {
         clock.advance(Duration.ofMinutes(125));
         Receipt receipt = service.unpark(car.id());
         System.out.println("Unparked " + receipt.ticket().vehicle().registrationNumber()
-                + " after " + receipt.duration().toMinutes() + " min, fee " + receipt.feeRupees());
+                + " after " + receipt.duration().toMinutes() + " min, fee " + receipt.formattedFee());
 
         try {
             service.unpark(car.id());

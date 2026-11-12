@@ -56,7 +56,7 @@ public final class ParkingLotService {
         }
         lot.floor(ticket.floor()).slot(ticket.slot()).vacate();
         Instant exit = clock.instant();
-        return new Receipt(ticket, exit, pricing.feePaise(ticket, exit));
+        return new Receipt(ticket, exit, pricing.feeRupees(ticket, exit));
     }
 
     public Map<Integer, List<Integer>> freeSlots(VehicleType type) {

@@ -44,9 +44,9 @@ class ParkingLotServiceFullTest {
     private ParkingLotService service(int floors, int slots) {
         return new ParkingLotService(new ParkingLot("PR1234", floors, slots), CompatibilityRules.defaults(),
                 new LowestFloorFirstStrategy(),
-                Map.of(VehicleType.BIKE, new HourlyPricing(10_00),
-                        VehicleType.CAR, new FirstHourFlatPricing(40_00, 30_00),
-                        VehicleType.TRUCK, new FirstHourFlatPricing(100_00, 80_00)),
+                Map.of(VehicleType.BIKE, new HourlyPricing(10.0),
+                        VehicleType.CAR, new FirstHourFlatPricing(40.0, 30.0),
+                        VehicleType.TRUCK, new FirstHourFlatPricing(100.0, 80.0)),
                 clock);
     }
 
@@ -58,8 +58,8 @@ class ParkingLotServiceFullTest {
         Ticket car = s.park(car("C1"));
         Ticket bike = s.park(bike("B1"));
         clock.advance(Duration.ofMinutes(125));
-        assertEquals(40_00 + 2 * 30_00, s.unpark(car.id()).feePaise());
-        assertEquals(3 * 10_00, s.unpark(bike.id()).feePaise());
+        assertEquals(40.0 + 2 * 30.0, s.unpark(car.id()).feeRupees(), 1e-9);
+        assertEquals(3 * 10.0, s.unpark(bike.id()).feeRupees(), 1e-9);
     }
 
     // ---------- E2: concurrent gates ----------

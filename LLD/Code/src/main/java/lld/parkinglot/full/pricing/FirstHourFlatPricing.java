@@ -7,17 +7,17 @@ import lld.parkinglot.full.model.Ticket;
 /** E1: common Indian mall scheme, a flat charge for the first hour, then a rate per started hour. */
 public final class FirstHourFlatPricing implements PricingStrategy {
 
-    private final long firstHourPaise;
-    private final long perExtraHourPaise;
+    private final double firstHourRupees;
+    private final double perExtraHourRupees;
 
-    public FirstHourFlatPricing(long firstHourPaise, long perExtraHourPaise) {
-        this.firstHourPaise = firstHourPaise;
-        this.perExtraHourPaise = perExtraHourPaise;
+    public FirstHourFlatPricing(double firstHourRupees, double perExtraHourRupees) {
+        this.firstHourRupees = firstHourRupees;
+        this.perExtraHourRupees = perExtraHourRupees;
     }
 
     @Override
-    public long feePaise(Ticket ticket, Instant exitTime) {
+    public double feeRupees(Ticket ticket, Instant exitTime) {
         long hours = PricingStrategy.billableHours(ticket.entryTime(), exitTime);
-        return firstHourPaise + (hours - 1) * perExtraHourPaise;
+        return firstHourRupees + (hours - 1) * perExtraHourRupees;
     }
 }

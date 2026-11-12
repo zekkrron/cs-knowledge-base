@@ -98,7 +98,7 @@ public final class ParkingLotService {
         ticketByRegistration.remove(reg);
         parkedRegistrations.remove(reg); // last, so a re-entry can't race the cleanup above
         Instant exit = clock.instant();
-        return new Receipt(ticket, exit, pricing.get(ticket.vehicle().type()).feePaise(ticket, exit));
+        return new Receipt(ticket, exit, pricing.get(ticket.vehicle().type()).feeRupees(ticket, exit));
     }
 
     /** E4: lost ticket, find the car by its plate. */

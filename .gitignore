@@ -13,6 +13,7 @@
 # convert to markdown, keep the original in OneDrive. Force one in with `git add -f`.
 *.pdf
 Resume/build/
+LLD/bundles/
 
 # Obsidian's soft-delete folder
 .trash/

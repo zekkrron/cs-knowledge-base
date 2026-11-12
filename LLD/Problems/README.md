@@ -58,7 +58,7 @@ Order of the rest: the ranked list in [[Problem Catalog]].
 ## 3. Code rules (`LLD/Code`)
 
 - **Plain Java only.** Machine-coding rounds forbid databases and frameworks and expect in-memory code. Solution code imports only `java.*`. Maven exists only to compile and run JUnit in the vault.
-- **Java 21** (`maven.compiler.release`), no preview features, `-Xlint:all` clean. Money in paise (`long`), never `double`.
+- **Java 21** (`maven.compiler.release`), no preview features, `-Xlint:all` clean. Money in rupees as `double`, formatted to two decimals for output; in review, say that production code would use `BigDecimal` or paise in a `long` to avoid rounding errors.
 - **Two snapshots per problem:** `lld.<problem>.v0` (exactly what you'd submit at minute 90) and `lld.<problem>.full` (V0 + every ladder extension). Javadoc on each class or method says which extension introduced it.
 - **Self-contained snapshots.** No shared library, no imports between `v0` and `full`, none between problems. The small boilerplate (exceptions, clock, driver) is duplicated on purpose, because in the round you type it yourself.
 - **Folder layout inside each snapshot** (same names everywhere; omit folders a problem doesn't need):
@@ -107,7 +107,8 @@ Code links (v0, full, tests). Snapshots are self-contained.
 ## 1. Clarify Script
 Questions, default assumption, which extension fires if the answer differs. Include "command-line input or demo main?" when unclear.
 ## 2. Requirements
-Functional, constraints, out of scope.
+Functional (always stated as service operations, never as CLI commands), Non-functional (concurrency, time source, in-memory, error handling), Out of scope.
+If the reported prompt is a command-line version: an "Optional CLI driver" table, command → service call → output.
 ## 3. Entities and Responsibilities
 Who owns which rule (data rules in the owning entity, workflow in the orchestrator).
 ## 4. Class Design
@@ -135,6 +136,37 @@ Off-ladder questions (SOLID, complexity, validation, testing, "how would this sc
 ```
 
 ---
+
+## NotebookLM bundle (made only on request)
+
+NotebookLM can't read `.java` files, so a problem is uploaded as **one Markdown file** holding the note and the code. Bundles are build output, not notes: they live in `LLD/bundles/` (gitignored) and are rebuilt from the sources whenever asked.
+
+**Recipe** (the agent follows this when Akash says "make the NotebookLM bundle for <problem>"):
+
+1. File: `LLD/bundles/<NN> - <Problem>.md`, overwriting any old one.
+2. Header: problem name, date built, and one line: "Note first, then V0 code, then full code, then tests. Each file starts with its path."
+3. The problem note, `LLD/Problems/<NN> - <Problem>.md`, copied whole.
+4. Every file under `LLD/Code/src/main/java/lld/<problem>/v0/`, then `.../full/`, in folder order (`model/`, feature folders, `service/`, `exception/`, `demo/`, `cli/`). Each one as a `### <path from LLD/Code/>` heading followed by its code in a ```java block.
+5. The tests under `LLD/Code/src/test/java/lld/<problem>/`, same format.
+6. Check the size: one NotebookLM source holds up to 500,000 words, far more than one problem needs.
+
+**Using it:** new notebook → Add source → upload the bundle. Studio → Audio Overview → customise, paste the prompt below, generate. Then choose **Interactive mode → Join** to interrupt and ask questions by voice.
+
+**Audio Overview prompt** (copy everything inside the box):
+
+````text
+Explain this low-level design problem step by step, in this exact order, as if teaching someone preparing for an SDE interview:
+
+1. The problem: what we are designing and what makes it hard.
+2. The functional requirements, then the non-functional requirements, then what is out of scope.
+3. The V0 design: the entities, which class owns which rule, and the class diagram, in plain words.
+4. The V0 code: go through the files in order (model, then the strategy and pricing folders, then the service, then exceptions, then the demo). For each important class say what it does, then walk through its key methods line by line in plain words. Finish with a trace of one scenario through the code.
+5. The extensions, one at a time (E1, E2, E3, E4). For each: the follow-up as an interviewer would ask it, why interviewers ask it, which classes are added and which are edited, and the code that changes.
+6. Only after all extensions: the final full code, how all the pieces fit together, and how it differs from V0.
+7. End with the most likely interview follow-up questions and short answers.
+
+Use only the uploaded source. Keep it conversational, but do not skip steps or jump ahead to the final code early.
+````
 
 ## 6. How to study a problem
 

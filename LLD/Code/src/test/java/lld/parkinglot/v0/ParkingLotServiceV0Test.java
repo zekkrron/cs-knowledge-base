@@ -27,7 +27,7 @@ class ParkingLotServiceV0Test {
 
     private final ManualClock clock = new ManualClock(Instant.parse("2026-10-27T10:00:00Z"));
     private final ParkingLotService service = new ParkingLotService(
-            new ParkingLot("PR1234", 2, 6), new LowestFloorFirstStrategy(), new HourlyPricing(30_00), clock);
+            new ParkingLot("PR1234", 2, 6), new LowestFloorFirstStrategy(), new HourlyPricing(30.0), clock);
 
     @Test
     void parksInLowestFloorThenLowestSlotOfMatchingType() {
@@ -52,8 +52,8 @@ class ParkingLotServiceV0Test {
         Ticket t = service.park(car("KA-01"));
         clock.advance(Duration.ofMinutes(125));
         Receipt r = service.unpark(t.id());
-        assertEquals(3 * 30_00, r.feePaise());
-        assertEquals("Rs 90.00", r.feeRupees());
+        assertEquals(3 * 30.0, r.feeRupees(), 1e-9);
+        assertEquals("Rs 90.00", r.formattedFee());
         assertEquals(List.of(4, 5, 6), service.freeSlots(VehicleType.CAR).get(1));
         assertThrows(NotFoundException.class, () -> service.unpark(t.id()));
     }
@@ -61,7 +61,7 @@ class ParkingLotServiceV0Test {
     @Test
     void zeroMinutesStillPaysOneHour() {
         Ticket t = service.park(car("KA-01"));
-        assertEquals(30_00, service.unpark(t.id()).feePaise());
+        assertEquals(30.0, service.unpark(t.id()).feeRupees(), 1e-9);
     }
 
     @Test

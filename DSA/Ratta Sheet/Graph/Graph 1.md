@@ -315,3 +315,298 @@ public:
     }
 };
 ```
+
+## Clone Graph LC: 133 (Grind 75, Graph, BFS/DFS)
+
+**Problem Statement:** Given a reference of a node in a connected undirected graph, return a deep copy (clone) of the graph. The input node contains an integer val and a list of neighbors (a vector of node pointers).
+
+### Brute (Breadth-First Search)
+
+**Intuition:** We can traverse the original graph level by level using a queue while building the new graph. To prevent infinite loops caused by cycles, we use a hash map to link the original nodes to their cloned counterparts, ensuring each node is copied only once.
+
+**Complexity:** **Time:** O(V + E) — every vertex and edge is processed exactly once by the queue | **Space:** O(V) — the queue and hash map store at most V nodes
+
+**Code:**
+```cpp
+#include <vector>
+#include <unordered_map>
+#include <queue>
+
+using namespace std;
+
+// Definition for a Node.
+class Node {
+public:
+    int val;
+    vector<Node*> neighbors;
+    Node() {
+        val = 0;
+        neighbors = vector<Node*>();
+    }
+    Node(int _val) {
+        val = _val;
+        neighbors = vector<Node*>();
+    }
+    Node(int _val, vector<Node*> _neighbors) {
+        val = _val;
+        neighbors = _neighbors;
+    }
+};
+
+class Solution {
+public:
+    Node* cloneGraph(Node* node) {
+        if (!node) return nullptr;
+        
+        unordered_map<Node*, Node*> visited;
+        queue<Node*> q;
+        
+        Node* clone = new Node(node->val);
+        visited[node] = clone;
+        q.push(node);
+        
+        while (!q.empty()) {
+            Node* curr = q.front();
+            q.pop();
+            
+            for (Node* neighbor : curr->neighbors) {
+                if (visited.find(neighbor) == visited.end()) {
+                    visited[neighbor] = new Node(neighbor->val);
+                    q.push(neighbor);
+                }
+                visited[curr]->neighbors.push_back(visited[neighbor]);
+            }
+        }
+        return clone;
+    }
+};
+```
+
+### Better
+
+Same as Optimal / not applicable. There is no intermediate approach because any graph cloning algorithm must visit all vertices and edges, which standard BFS/DFS already accomplish in optimal linear time.
+
+### Optimal (Depth-First Search)
+
+**Intuition:** A recursive DFS is generally cleaner and more intuitive to write for this problem. As we dive deep into the graph, we instantly cache each newly created clone in a hash map; this instantly resolves undirected cycles and lets us seamlessly build the neighbors array as the recursion unwinds.
+
+**Explanation:**
+
+1. Base Case: If the input node is nullptr, return nullptr.
+2. Hash Map Check: Check if node is already in our visited map. If it is, return the cached cloned node immediately to avoid infinite recursion on cycles.
+3. Clone the Node: Create a new cloned node using node->val. Crucially, store it in the visited map before iterating through its neighbors.
+4. Traverse Neighbors: Iterate through the neighbors array of the original node. For each neighbor, recursively call the DFS function and append the returned clone to the current clone's neighbors list.
+5. Return: Pass back the fully constructed cloned node.
+
+**Dry Run:** Consider a graph 1 -- 2. Start with node = 1, visited = {}.
+
+1. DFS(1): Clone 1, set visited[1] = clone1. Neighbors of 1 are [2].
+2. DFS(2): Clone 2, set visited[2] = clone2. Neighbors of 2 are [1].
+3. DFS(1) called from 2: 1 is in visited. Return clone1.
+4. clone2's neighbors become [clone1]. Return clone2.
+5. clone1's neighbors become [clone2]. Return clone1.
+
+**Complexity:** **Time:** O(V + E) — recursively visits every vertex and explores every edge exactly once | **Space:** O(V) — the recursion call stack and hash map take up to V space
+
+**Code:**
+```cpp
+#include <vector>
+#include <unordered_map>
+
+using namespace std;
+
+// Definition for a Node is identical to above, omitted here for brevity 
+// but assumed to be present in the LeetCode environment.
+
+class Solution {
+    // Hash map to map original nodes to their cloned counterparts
+    unordered_map<Node*, Node*> visited;
+    
+public:
+    Node* cloneGraph(Node* node) {
+        // Step 1: Base case for empty graph
+        if (!node) return nullptr;
+        
+        // Step 2: If the node is already cloned, return the clone to avoid cycles
+        if (visited.find(node) != visited.end()) {
+            return visited[node];
+        }
+        
+        // Step 3: Clone the current node and save it in the map immediately
+        Node* clone = new Node(node->val);
+        visited[node] = clone;
+        
+        // Step 4: Traverse neighbors and recursively clone them
+        for (Node* neighbor : node->neighbors) {
+            clone->neighbors.push_back(cloneGraph(neighbor));
+        }
+        
+        // Step 5: Return the fully constructed clone
+        return clone;
+    }
+};
+```
+
+## Most stones removed with same row or column (Striver A2Z, Graph, DSU)
+
+**Problem Statement:** Given a 2D array of stones where stones[i] = [x_i, y_i], a stone can be removed if it shares either the same row or the same column as another stone that has not been removed. Return the maximum number of stones that can be removed.
+
+### Brute (Adjacency List & DFS/BFS)
+
+**Intuition:** We can treat each stone as a node. Two nodes share an edge if they have the same x or y coordinate. If a connected group has K stones, we can systematically remove K - 1 stones, leaving exactly 1 behind. Therefore, the answer is Total Stones - Total Connected Components. We can find the components by building a full graph and using DFS or BFS to traverse it.
+
+**Complexity:** **Time:** O(N^2) — comparing every pair of stones to build the graph and traversing it | **Space:** O(N^2) — storing the dense adjacency list for up to N nodes
+
+**Code:**
+```cpp
+#include <vector>
+
+using namespace std;
+
+class Solution {
+public:
+    void dfs(int node, vector<vector<int>>& adj, vector<bool>& visited) {
+        visited[node] = true;
+        for(int neighbor : adj[node]) {
+            if(!visited[neighbor]) {
+                dfs(neighbor, adj, visited);
+            }
+        }
+    }
+    
+    int removeStones(vector<vector<int>>& stones) {
+        int n = stones.size();
+        vector<vector<int>> adj(n);
+        
+        // Build the graph: O(N^2) time complexity
+        for(int i = 0; i < n; i++) {
+            for(int j = i + 1; j < n; j++) {
+                if(stones[i][0] == stones[j][0] || stones[i][1] == stones[j][1]) {
+                    adj[i].push_back(j);
+                    adj[j].push_back(i);
+                }
+            }
+        }
+        
+        int components = 0;
+        vector<bool> visited(n, false);
+        
+        // Count connected components
+        for(int i = 0; i < n; i++) {
+            if(!visited[i]) {
+                components++;
+                dfs(i, adj, visited);
+            }
+        }
+        
+        return n - components;
+    }
+};
+```
+
+### Better
+
+Same as Optimal / not applicable. Building the $O(N^2)$ graph is the fundamental bottleneck here; the only way to improve the time is to completely change our perspective on what the "nodes" actually are, jumping straight to the Optimal approach.
+
+### Optimal (Disjoint Set Union)
+
+**Intuition:** Instead of treating the stones as nodes (which forces an $O(N^2)$ comparison), we treat the rows and columns as the nodes. A stone at (r, c) simply acts as an edge uniting row r and column c. By using a Disjoint Set Union (DSU), we instantly group these coordinates. As we discussed previously, standard BFS goes wide via a queue and DFS plunges deep via recursion—but DSU elegantly bypasses manual graph traversal entirely, determining components solely through parent pointers!
+
+**Explanation:**
+
+1. Identify the Nodes: Treat rows and columns as distinct entities. To avoid index collisions (since a row can be 0 and a col can also be 0), shift all column indices by maxRow + 1.
+2. Setup DSU: Initialize a Disjoint Set structure with enough space to hold maxRow + maxCol + 1 nodes.
+3. Unite Coords: Iterate through each stone (r, c). Perform a DSU union operation connecting node r and node c + maxRow + 1.
+4. Track Active Nodes: Use a hash map to remember which specific rows and columns actually have stones placed on them.
+5. Count Components: Iterate through the hash map. If a node is its own parent (i.e., ds.findUPar(node) == node), it is the ultimate root of a connected component. Tally these up.
+6. Result: The maximum stones we can remove is Total Stones - Number of Components.
+
+**Dry Run:** Stones: [[0,0], [0,1], [1,0]]. maxRow is 1. Shift columns by 1 + 1 = 2.
+
+1. Stone 1 [0,0]: Union row 0 and col 2. Component {0, 2}.
+2. Stone 2 [0,1]: Union row 0 and col 3. Component {0, 2, 3}.
+3. Stone 3 [1,0]: Union row 1 and col 2. Component {1, 0, 2, 3}.
+4. Active nodes: 0, 1, 2, 3. They all trace back to the same ultimate parent.
+5. Components = 1. Answer = 3 (stones) - 1 = 2.
+
+**Complexity:** **Time:** O(N * α(M)) — where M is the maximum coordinate value, iterating over stones and doing near O(1) union-find operations | **Space:** O(M) — where M is the max matrix dimensions for the parent and size arrays in DSU
+
+**Code:**
+```cpp
+#include <vector>
+#include <unordered_map>
+#include <algorithm>
+
+using namespace std;
+
+class DisjointSet {
+    vector<int> parent, size;
+public:
+    DisjointSet(int n) {
+        parent.resize(n + 1);
+        size.resize(n + 1, 1);
+        for (int i = 0; i <= n; i++) {
+            parent[i] = i;
+        }
+    }
+    
+    int findUPar(int node) {
+        if (node == parent[node]) return node;
+        return parent[node] = findUPar(parent[node]); // Path compression
+    }
+    
+    void unionBySize(int u, int v) {
+        int ulp_u = findUPar(u);
+        int ulp_v = findUPar(v);
+        
+        if (ulp_u == ulp_v) return;
+        
+        if (size[ulp_u] < size[ulp_v]) {
+            parent[ulp_u] = ulp_v;
+            size[ulp_v] += size[ulp_u];
+        } else {
+            parent[ulp_v] = ulp_u;
+            size[ulp_u] += size[ulp_v];
+        }
+    }
+};
+
+class Solution {
+public:
+    int removeStones(vector<vector<int>>& stones) {
+        int maxRow = 0;
+        int maxCol = 0;
+        
+        // Find the boundary to shift column indices safely
+        for (auto it : stones) {
+            maxRow = max(maxRow, it[0]);
+            maxCol = max(maxCol, it[1]);
+        }
+        
+        DisjointSet ds(maxRow + maxCol + 1);
+        unordered_map<int, int> stoneNodes;
+        
+        // Connect rows and columns based on stone placements
+        for (auto it : stones) {
+            int nodeRow = it[0];
+            int nodeCol = it[1] + maxRow + 1;
+            
+            ds.unionBySize(nodeRow, nodeCol);
+            
+            // Mark these coordinates as containing a stone
+            stoneNodes[nodeRow] = 1;
+            stoneNodes[nodeCol] = 1;
+        }
+        
+        int components = 0;
+        // Count ultimate parents to find number of disjoint sets
+        for (auto it : stoneNodes) {
+            if (ds.findUPar(it.first) == it.first) {
+                components++;
+            }
+        }
+        
+        return stones.size() - components;
+    }
+};
+```

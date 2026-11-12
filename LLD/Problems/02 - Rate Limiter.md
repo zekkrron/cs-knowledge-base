@@ -39,7 +39,7 @@ The reported prompt is short: "allow X requests in Y seconds per client, configu
 - At most `maxRequests` per `window` per client; windows aligned to multiples of the window length.
 - Default limit; `configure(clientId, limit)` per client.
 
-### Constraints
+### Non-functional (V0)
 
 - Thread-safe; different clients don't block each other.
 - Time from an injected `Clock`; no background thread per client.

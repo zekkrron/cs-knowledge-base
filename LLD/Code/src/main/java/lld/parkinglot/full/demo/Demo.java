@@ -24,9 +24,9 @@ public final class Demo {
         ManualClock clock = new ManualClock(Instant.parse("2026-10-27T10:00:00Z"));
         ParkingLotService service = new ParkingLotService(
                 new ParkingLot("PR1234", 1, 4), CompatibilityRules.defaults(), new LowestFloorFirstStrategy(),
-                Map.of(VehicleType.BIKE, new HourlyPricing(10_00),
-                        VehicleType.CAR, new FirstHourFlatPricing(40_00, 30_00),
-                        VehicleType.TRUCK, new FirstHourFlatPricing(100_00, 80_00)),
+                Map.of(VehicleType.BIKE, new HourlyPricing(10.0),
+                        VehicleType.CAR, new FirstHourFlatPricing(40.0, 30.0),
+                        VehicleType.TRUCK, new FirstHourFlatPricing(100.0, 80.0)),
                 clock);
 
         // E3: bike slots 2-3 fill, the third bike falls back to car slot 4
@@ -53,7 +53,7 @@ public final class Demo {
         // E1: car pays Rs 40 for the first hour and Rs 30 for each started hour after
         clock.advance(Duration.ofMinutes(125));
         Receipt receipt = service.unpark(car.id());
-        System.out.println("Car fee after " + receipt.duration().toMinutes() + " min: " + receipt.feeRupees());
+        System.out.println("Car fee after " + receipt.duration().toMinutes() + " min: " + receipt.formattedFee());
         System.out.println("Occupied car slots: " + service.occupiedSlots(SlotType.CAR));
     }
 }

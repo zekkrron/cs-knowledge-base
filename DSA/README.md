@@ -26,7 +26,7 @@ This is the single source of truth for how a Ratta Sheet answer is written. The 
 ### Prompt for Gemini (copy everything inside the box)
 
 ````text
-Answer the DSA question at the end in EXACTLY this Markdown format. Use C++ for all code.
+Answer the DSA question at the end in this Markdown format. Keep this formatting (not format) really clean and readable. Use C++ for all code.
 
 ## [Exact Question Name as pasted] ([Source, e.g. Striver A2Z, Array, Medium])
 

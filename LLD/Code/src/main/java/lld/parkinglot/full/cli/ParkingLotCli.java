@@ -71,9 +71,9 @@ public final class ParkingLotCli {
         int slots = number(a[2], "slotsPerFloor");
         service = new ParkingLotService(new ParkingLot(a[0], floors, slots), CompatibilityRules.defaults(),
                 new LowestFloorFirstStrategy(),
-                Map.of(VehicleType.BIKE, new HourlyPricing(10_00),
-                        VehicleType.CAR, new FirstHourFlatPricing(40_00, 30_00),
-                        VehicleType.TRUCK, new FirstHourFlatPricing(100_00, 80_00)),
+                Map.of(VehicleType.BIKE, new HourlyPricing(10.0),
+                        VehicleType.CAR, new FirstHourFlatPricing(40.0, 30.0),
+                        VehicleType.TRUCK, new FirstHourFlatPricing(100.0, 80.0)),
                 clock);
         return "Created parking lot with " + floors + " floors and " + slots + " slots per floor";
     }
@@ -89,7 +89,7 @@ public final class ParkingLotCli {
         Receipt r = requireService().unpark(a[0]);
         Vehicle v = r.ticket().vehicle();
         return "Unparked vehicle with Registration Number: " + v.registrationNumber() + " and Color: " + v.color()
-                + System.lineSeparator() + "Fee: " + r.feeRupees();
+                + System.lineSeparator() + "Fee: " + r.formattedFee();
     }
 
     private String display(String[] a) {

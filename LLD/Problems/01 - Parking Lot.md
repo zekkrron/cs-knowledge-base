@@ -5,7 +5,7 @@ updated: 2026-11-08
 ---
 # Parking Lot
 
-> [!abstract] Catalog #1 (P0) · archetype §2 Pluggable Policy · patterns: Strategy (allocation, pricing per vehicle type), rules table for compatibility, CAS for concurrent gates · driver: **CLI plus a Demo**, because the reported machine-coding prompts (workat.tech, Swiggy) define commands and exact output strings.
+> [!abstract] Catalog #1 (P0) · archetype §2 Pluggable Policy · patterns: Strategy (allocation, pricing per vehicle type), rules table for compatibility, CAS for concurrent gates · driver: a plain **Demo**, plus an **optional CLI** layered on top for the command-line version of the prompt (workat.tech, Swiggy).
 > The hard part: keep the slot rule in the slot, the workflow in the service and every variation behind an interface, so each follow-up adds a class; then make two gates racing for the last slot unable to double-allocate.
 
 Code: v0 [lld/parkinglot/v0](../Code/src/main/java/lld/parkinglot/v0/) · full [lld/parkinglot/full](../Code/src/main/java/lld/parkinglot/full/) · tests [v0](../Code/src/test/java/lld/parkinglot/v0/ParkingLotServiceV0Test.java), [full](../Code/src/test/java/lld/parkinglot/full/ParkingLotServiceFullTest.java). Snapshots are self-contained: no imports between them.
@@ -16,7 +16,7 @@ Code: v0 [lld/parkinglot/v0](../Code/src/main/java/lld/parkinglot/v0/) · full [
 
 | Question | Default (most reported prompts) | If different |
 |---|---|---|
-| Command-line input or demo `main`? | Commands with exact output (workat.tech, Swiggy) | Demo only: drop `cli/` |
+| Command-line input or demo `main`? | Demo `main` calling the service | Commands with exact output (workat.tech, Swiggy): add the `cli/` driver, no other change |
 | Vehicle types? | BIKE, CAR, TRUCK | More types: one enum value plus one compatibility line (**E3**) |
 | Floor layout? | Same per floor: slot 1 truck, 2–3 bike, rest car | Custom layouts: also asked |
 | Who picks the slot? | System: lowest floor, then lowest slot number | Spread or nearest: also asked |
@@ -32,15 +32,29 @@ Code: v0 [lld/parkinglot/v0](../Code/src/main/java/lld/parkinglot/v0/) · full [
 
 ### Functional (V0)
 
-- `create_parking_lot <id> <floors> <slotsPerFloor>`
-- `park_vehicle <type> <regNo> <color>` → `Parked vehicle. Ticket ID: PR1234_1_4`, or `Parking Lot Full`.
-- `unpark_vehicle <ticketId>` → `Unparked vehicle with Registration Number: … and Color: …` then `Fee: Rs 30.00`, or `Invalid Ticket`.
-- `display free_count|free_slots|occupied_slots <type>` → one line per floor.
-- Fee: Rs 30 per started hour, minimum one hour.
+Stated as operations on `ParkingLotService`; any driver (a `Demo` main, tests, or the optional CLI) calls these.
 
-### Constraints
+- **Create a lot:** `new ParkingLot(id, floors, slotsPerFloor)`, each floor laid out the same way.
+- **Park:** `park(Vehicle)` → a `Ticket` (id `PR1234_1_4`, floor, slot, entry time) for the lowest free slot of the vehicle's type; `ConflictException("Parking Lot Full")` if none is free.
+- **Unpark:** `unpark(ticketId)` → a `Receipt` (the ticket, so the vehicle's plate and colour, plus exit time and fee); `NotFoundException("Invalid Ticket")` for an unknown or already-used ticket.
+- **Availability:** `freeSlots(type)` and `occupiedSlots(type)` → slot numbers per floor (a free count is the list's size).
+- **Fee:** Rs 30 per started hour, minimum one hour.
 
-- Plain Java, in memory, exact output strings, clean messages for bad input, time from an injected `Clock`.
+### Non-functional (V0)
+
+- Plain Java, in memory, clean domain errors for bad input, time from an injected `Clock`.
+- The service never reads input or prints; drivers format the results.
+
+### Optional CLI driver (when the prompt is the command-line version)
+
+The workat.tech and Swiggy machine-coding prompts give the same operations as commands with exact output strings. `cli/ParkingLotCli` maps them onto the service and adds nothing else:
+
+| Command | Service call | Output |
+|---|---|---|
+| `create_parking_lot PR1234 2 6` | `new ParkingLot(...)` + service | `Created parking lot with 2 floors and 6 slots per floor` |
+| `park_vehicle CAR KA-01-DB-1234 black` | `park(...)` | `Parked vehicle. Ticket ID: PR1234_1_4` or `Parking Lot Full` |
+| `unpark_vehicle PR1234_1_4` | `unpark(...)` | `Unparked vehicle with Registration Number: … and Color: …` then `Fee: Rs 30.00`, or `Invalid Ticket` |
+| `display free_count\|free_slots\|occupied_slots CAR` | `freeSlots` / `occupiedSlots` | one line per floor |
 
 ### Out of scope
 
@@ -61,7 +75,7 @@ A rule lives with the state it's about; workflow lives in the orchestrator.
 | `PricingStrategy` | fee for a ticket at an exit time | slots |
 | `Ticket`, `Receipt` (records) | where a vehicle is and since when; what it paid | — |
 | `ParkingLotService` | the workflow: choose, claim, issue; unpark and bill; queries | parsing, printing |
-| `ParkingLotCli`, `Demo` | parsing commands and formatting output | business rules |
+| `Demo` (and the optional `ParkingLotCli`) | calling the service and formatting output | business rules |
 
 ---
 
@@ -87,10 +101,10 @@ classDiagram
     class LowestFloorFirstStrategy
     class PricingStrategy {
         <<interface>>
-        +feePaise(Ticket, Instant exit) long
+        +feeRupees(Ticket, Instant exit) double
         +billableHours(Instant, Instant)$ long
     }
-    class HourlyPricing { -long perHourPaise }
+    class HourlyPricing { -double perHourRupees }
     class ParkingLot { +floors() List~Floor~ }
     class Floor { +slots() List~Slot~ }
     class Slot {
@@ -100,7 +114,7 @@ classDiagram
         +vacate() Vehicle
     }
     class Ticket { <<record>> id, vehicle, floor, slot, entryTime }
-    class Receipt { <<record>> ticket, exitTime, feePaise }
+    class Receipt { <<record>> ticket, exitTime, feeRupees }
     class Vehicle { <<record>> type, registrationNumber, color }
     ParkingLotService --> ParkingLot
     ParkingLotService --> SlotAllocationStrategy
@@ -126,10 +140,10 @@ lld/parkinglot/v0/
   service/     ParkingLotService
   exception/   DomainException, ValidationException, NotFoundException, ConflictException
   demo/        Demo, ManualClock
-  cli/         CommandLineDriver, ParkingLotCli
+  cli/         CommandLineDriver, ParkingLotCli    (optional: only for the command-line prompt)
 ```
 
-**Type first (10 minutes):** the four exceptions (`ValidationException.require(cond, msg)` keeps guards to one line), `ManualClock` (a `Clock` with `advance(Duration)`), and `CommandLineDriver` (~60 lines: command word → handler, prints a `DomainException` message instead of a stack trace).
+**Type first (10 minutes):** the four exceptions (`ValidationException.require(cond, msg)` keeps guards to one line) and `ManualClock` (a `Clock` with `advance(Duration)`). Only for the command-line prompt, add `CommandLineDriver` last (~60 lines: command word → handler, prints a `DomainException` message instead of a stack trace).
 
 **Slot owns its rule:**
 
@@ -156,7 +170,7 @@ public Receipt unpark(String ticketId) {
     if (ticket == null) throw new NotFoundException("Invalid Ticket");
     lot.floor(ticket.floor()).slot(ticket.slot()).vacate();
     Instant exit = clock.instant();
-    return new Receipt(ticket, exit, pricing.feePaise(ticket, exit));
+    return new Receipt(ticket, exit, pricing.feeRupees(ticket, exit));
 }
 ```
 
@@ -170,24 +184,24 @@ static long billableHours(Instant entry, Instant exit) {          // 0 min -> 1 
 - **Why fee is in V0:** most reported starting prompts include a charge on exit (Hello Interview, PracHub, DesignGurus, Uber). Only the per-type schemes are a follow-up.
 - **Why two interfaces already:** allocation order and pricing are the first things reviewers change. Each interface costs two minutes and turns E1 into "add classes".
 - **Errors:** `ValidationException` (unknown type, blank plate, non-numeric args), `ConflictException` (`Parking Lot Full`, no lot yet), `NotFoundException` (`Invalid Ticket`).
-- **Driver:** `ParkingLotCli` because the prompt's commands are the spec; `Demo` shows the same flow as plain method calls. Both only call the service.
-- **Single-threaded on purpose:** one CLI user. Say so; E2 is ready.
+- **Driver:** `Demo` builds the service and calls it directly. If the prompt is the command-line version, `ParkingLotCli` is added on top: it parses commands, calls the same methods and prints the prompt's strings. Nothing in `model/`, `service/` or the strategies changes.
+- **Single-threaded on purpose:** one caller. Say so; E2 is ready.
 
 ---
 
 ## 6. Trace
 
-`create_parking_lot PR1234 2 6` → each floor: slot 1 TRUCK, 2–3 BIKE, 4–6 CAR.
+`new ParkingLot("PR1234", 2, 6)` → each floor: slot 1 TRUCK, 2–3 BIKE, 4–6 CAR. (CLI equivalents in §2.)
 
-| Command | State change | Output |
+| Call | State change | Result |
 |---|---|---|
-| `park_vehicle CAR KA-01-DB-1234 black` | floor 1: slots 1–3 reject CAR, slot 4 accepts | `Parked vehicle. Ticket ID: PR1234_1_4` |
-| `park_vehicle TRUCK KA-02 white` | floor 1 slot 1 | `… PR1234_1_1` |
-| `park_vehicle TRUCK KA-03 white` | floor 1 slot 1 taken → floor 2 slot 1 | `… PR1234_2_1` |
-| `park_vehicle TRUCK KA-04 white` | no truck slot free | `Parking Lot Full` |
-| `advance_minutes 125` | clock +125 min | — |
-| `unpark_vehicle PR1234_1_4` | ticket removed, slot freed, 3 started hours | `Unparked … KA-01-DB-1234 …` / `Fee: Rs 90.00` |
-| `unpark_vehicle PR1234_1_4` | not active | `Invalid Ticket` |
+| `park(car KA-01-DB-1234)` | floor 1: slots 1–3 reject CAR, slot 4 accepts | `Ticket PR1234_1_4` |
+| `park(truck KA-02)` | floor 1 slot 1 | `Ticket PR1234_1_1` |
+| `park(truck KA-03)` | floor 1 slot 1 taken → floor 2 slot 1 | `Ticket PR1234_2_1` |
+| `park(truck KA-04)` | no truck slot free | `ConflictException("Parking Lot Full")` |
+| `clock.advance(125 min)` | clock +125 min | — |
+| `unpark("PR1234_1_4")` | ticket removed, slot freed, 3 started hours | `Receipt` for KA-01-DB-1234, fee Rs 90.00 |
+| `unpark("PR1234_1_4")` again | not active | `NotFoundException("Invalid Ticket")` |
 
 ---
 
@@ -197,7 +211,7 @@ static long billableHours(Instant entry, Instant exit) {          // 0 min -> 1 
 |---|---|---|---|
 | Multi-floor, typed slots, park/unpark, ticket | workat.tech; Uber SDE2 (LC 5938462, 7896720); Hello Interview; PracHub; DesignGurus; Microsoft SDE2 | 7+ | V0 |
 | Fee on exit | Hello Interview; PracHub; DesignGurus (pay at exit panel); Uber L4 Blind (2026) | 4+ | V0 |
-| Command format with exact output | workat.tech; Swiggy SDE4 machine coding (LC 1422797) | 2 | V0 driver (CLI) |
+| Command format with exact output | workat.tech; Swiggy SDE4 machine coding (LC 1422797) | 2 | optional CLI driver on top of V0 |
 | Different pricing per vehicle type / scheme | Hello Interview; PracHub; DesignGurus; Microsoft L61 (Strategy) | 4 | **E1** strong |
 | Concurrent gates, two cars race for one spot | Hello Interview (concurrency intro); PracHub (two-gate race); Microsoft SDE2; Uber SDE2 (full capacity) | 4 | **E2** strong |
 | Small vehicle in a bigger slot; 4 bikes in a car slot when busy | Uber SDE2 (LC 5938462); PracHub (spot sizes, compatibility); DesignGurus (spot sizes) | 3 | **E3** medium |
@@ -218,7 +232,7 @@ All four are in [lld/parkinglot/full](../Code/src/main/java/lld/parkinglot/full/
 - **Evidence:** Hello Interview, PracHub, DesignGurus, Microsoft L61. Confidence **strong**.
 - **Added:** `FirstHourFlatPricing`.
 - **Edited:** the service takes `Map<VehicleType, PricingStrategy>` instead of one strategy and checks the type has a price **before** claiming a slot, so it never parks a vehicle it can't bill.
-- **Pattern:** Strategy chosen by key. A new scheme is a class plus a map entry. Money in paise.
+- **Pattern:** Strategy chosen by key. A new scheme is a class plus a map entry. Money in rupees as `double`.
 - **No delta diagram:** E1 only adds one implementation of an interface already in V0.
 - **Tested:** car 125 min = ₹40 + 2 × ₹30 = ₹100; bike 125 min = 3 × ₹10.
 
@@ -341,7 +355,7 @@ classDiagram
 ### E4 — "Find a car by registration (the customer lost the ticket). List cars of a colour. Reject a plate that is already inside."
 
 - **Evidence:** Swiggy SDE4 machine coding (LC 1422797, Gojek-style registration and colour queries), PracHub (lost ticket). Confidence **medium**.
-- **Added:** `ticketForRegistration(reg)` (`NotFoundException("Vehicle not found")`), `ticketsWithColor(color)` (case-insensitive, ordered by floor and slot); CLI `find_vehicle`, `registrations_by_color`, `slots_by_color`.
+- **Added:** `ticketForRegistration(reg)` (`NotFoundException("Vehicle not found")`), `ticketsWithColor(color)` (case-insensitive, ordered by floor and slot). The optional CLI exposes them as `find_vehicle`, `registrations_by_color`, `slots_by_color`.
 - **Edited:** the service keeps `ticketByRegistration` and `parkedRegistrations` alongside `activeTickets`, and clears them on unpark (the set last, so a re-entry can't race the cleanup).
 - **Pattern:** secondary index maintained by the orchestrator. No new domain class.
 - **No delta diagram:** only service methods and maps are added.
@@ -475,7 +489,7 @@ Run: `.\mvnw.cmd test` in `LLD/Code`.
 
 ## 13. One-Minute Pitch
 
-> "Slots own the rule about what they hold, floors own the layout, the service owns the workflow and active tickets, and two strategies decide which slot to use and what to charge, from an injected clock, money in paise. Per-type pricing is a map of strategies. For many gates, a slot is claimed with a compare-and-set and the strategy returns candidates so the loser tries the next; unpark is a `ConcurrentHashMap.remove`, so one exit wins; ids carry a sequence. Compatibility is a rules table: smaller vehicles may use bigger slots, and in busy mode four bikes share a car slot. A registration index gives lost-ticket lookup and blocks a plate from entering twice."
+> "Slots own the rule about what they hold, floors own the layout, the service owns the workflow and active tickets, and two strategies decide which slot to use and what to charge, from an injected clock, money in rupees. Per-type pricing is a map of strategies. For many gates, a slot is claimed with a compare-and-set and the strategy returns candidates so the loser tries the next; unpark is a `ConcurrentHashMap.remove`, so one exit wins; ids carry a sequence. Compatibility is a rules table: smaller vehicles may use bigger slots, and in busy mode four bikes share a car slot. A registration index gives lost-ticket lookup and blocks a plate from entering twice."
 
 ---
 
