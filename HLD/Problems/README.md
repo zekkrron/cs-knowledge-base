@@ -101,22 +101,28 @@ A problem note leans on mini designs in separate files, so for NotebookLM it is 
 **Audio Overview prompt** (copy everything inside the box):
 
 ````text
-This source is a system-design interview problem note, followed by reference sections for the mini designs it links to. Narrate the PROBLEM NOTE ONLY, in its own order, exactly as the interview round would go. Do not narrate the reference sections on their own.
+You are teaching one system-design interview problem to an engineer preparing for an SDE-3 round.
 
-Whenever the problem uses a mini design (written as MD-NN), briefly explain just the part of that mini design the problem needs, using its reference section: the mechanism in plain words and the settings this problem chooses (key, TTL, thresholds, numbers). Then return to the problem. Never give a full tour of a mini design.
+HOW THE SOURCE IS BUILT
+- Part 1, before the first "## Reference:" heading, is the PROBLEM NOTE. It is the only thing you narrate.
+- Part 2, every "## Reference: MD-NN ..." section, is background on a reusable mini design. It is a lookup, not content to cover.
 
-Order:
-1. The problem and the hard part.
-2. The clarify script: each question, the default assumption and which twist it triggers.
-3. Functional and non-functional requirements, then out of scope.
-4. The estimates, and for each number the design decision it forces.
-5. The API and schema.
-6. V0, the simplest design that works, as a request flow, and what V0 cannot handle.
-7. The scale ladder in order (V1, V2, ...): for each step the trigger number, what breaks, the change and its trade-off, with the evidence line where the note gives one.
-8. The twist cards, most-asked first, each as "the interviewer says..." then the answer.
-9. Break it, operations and cost, then the one-minute close.
+RULE 1: STAY ON THE PROBLEM NOTE, IN ITS OWN ORDER
+Narrate the problem note from its first section to its last, in the order the sections appear. Do not skip, merge or reorder sections, and cover every section the note has, including any you would not expect. For each section, explain what it says and why it matters for the design, keeping the reasoning the note gives (the number that triggers a change, the trade-off, how often interviewers ask for it). Never describe a later design before the note reaches it.
 
-Do not jump to the final architecture early. Use only the uploaded source. Conversational, but precise.
+RULE 2: MINI DESIGNS ARE SHORT ASIDES
+When the problem note mentions a mini design (written MD-NN or by name), pause for six to seven sentences, using its reference section:
+- One or two sentences: what problem that mini design solves, and why this problem needs it at this exact point.
+- Three to four sentences: how it works inside, as an overview the listener can picture. Name the main components and data structures, and walk through the core flow step by step (what is stored where, what happens on a request, what keeps it correct or fast).
+- One sentence: the setting this problem picks, only if the problem note states it (for example a TTL or a block size).
+Then say "back to the problem" and continue exactly where you stopped.
+Stay at overview level: do not cover the mini design's evolution ladder, its alternatives, its failure modes or its twist cards. If the same mini design comes up again later, refer back to it in one sentence; do not re-explain it.
+
+RULE 3: WHAT TO LEAVE OUT
+Skip the "Evidence" table and the "Sources" list at the end of the problem note; mention evidence only through each ladder step's Evidence line. Skip all Related Notes lists.
+
+STYLE
+Conversational and precise. Keep every number exactly as written. Use only the uploaded source. Close with: "That's the full walk-through; ask me to go deeper on any step."
 ````
 
 ## Related Notes
