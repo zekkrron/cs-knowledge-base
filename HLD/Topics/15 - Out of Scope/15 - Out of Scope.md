@@ -29,7 +29,7 @@ These are either proof-level theory or internals of a specific tool. Each has a 
 | Poison-message frameworks beyond a DLQ | "Retry with backoff, then park in a DLQ with the error, and alert on DLQ depth." | [[07 - Async Messaging]] |
 | Kubernetes internals (controllers, scheduler, operators) | "Controllers loop until actual state matches desired state." | [[19 - Deployment and Infrastructure]] |
 | ML recommenders and ranking models | "Candidate generation, then ranking, served from precomputed features." | A future ML note |
-| Netflix / YouTube end to end | Stretch reading: [[Netflix HLD]] | [[HLD/Problems/README]] |
+| Netflix / YouTube end to end | Stretch reading: [[MD-18 - Media Transcoding DAG and Adaptive Bitrate Edge Pipeline|MD-18]] | [[HLD/Problems/README]] |
 
 LLD and machine-coding rounds are a different round entirely: [[LLD/README]].
 

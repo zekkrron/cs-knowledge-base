@@ -68,15 +68,13 @@ Read **aloud**. Silent reading does not survive a whiteboard. Each step ends wit
 
 ## Quick Revision Before an Interview
 
-When there are hours rather than days, these four give the most back.
+When there are hours rather than days, these three give the most back.
 
 1. [[16 - Estimation and Decision Cheat Sheet]]: the arithmetic and the "at this number, pick that" tables.
-2. [[HLD/Problems/00 - Speed Run]]: all twelve walks on one page, read aloud.
-3. One full deep dive: [[02 - Task Scheduler]], and [[03 - Wearable Device]] if there is time.
-4. [[01 - How the Round Works]]: the script, five minutes before you walk in.
+2. One full problem walk: [[06 - Seat Booking]] or [[13 - URL Shortener]], read aloud from V0 up the ladder.
+3. [[01 - How the Round Works]]: the script, five minutes before you walk in.
 
 ## Related Notes
 
 - [[HLD/README]]
 - [[HLD/Problems/README]]
-- [[Netflix HLD]]

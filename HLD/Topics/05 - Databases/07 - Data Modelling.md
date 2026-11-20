@@ -142,5 +142,4 @@ Many "the DB is slow" complaints are really modelling mistakes.
 - [[05 - Databases]]
 - [[10 - Engine Choice]]
 - [[09 - Sharding]]
-- [[01 - Splitwise]] — pair-balance denormalise in the same txn
 - [[11 - Interview Questions]]

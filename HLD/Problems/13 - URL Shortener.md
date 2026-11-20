@@ -177,6 +177,21 @@ flowchart LR
     + Raw events land in object storage (Parquet) for recounts and longer history.
 - **Trade-off:** dashboards are about a minute behind; a few clicks can be lost during a Kafka outage (stated as acceptable for free analytics; see T6 for paid).
 
+```mermaid
+flowchart LR
+    C[Client] --> LB[LB]
+    LB --> R[Redirect svc + L1]
+    LB --> W[Create svc]
+    R --> RC[(Redis)]
+    RC -->|miss| RP[(PG replica)]
+    W --> PG[(PG primary)]
+    PG -.-> RP
+    R -->|"after 302, buffer ~100 ms"| K[[Kafka, key code]]
+    K --> F[Flink: enrich, per-minute windows, HLL]
+    F --> CH[(ClickHouse)]
+    K --> OS[(Object storage, Parquet)]
+```
+
 ### V3 — Shard the link store
 
 - **Evidence:** Hotstar SDE2 (LC 5650329, Jul 2024: sharding the database); Razorpay Senior SE (LC 6229095, Oct 2024: persist mappings 3–5 years); Hello Interview "scale to 1B URLs" deep dive. Confidence **strong**.
@@ -188,6 +203,22 @@ flowchart LR
 - **Alternative to say out loud:** the access pattern is a pure key lookup, so DynamoDB or Cassandra fits naturally, with a conditional put for alias uniqueness. Postgres with logical shards is chosen here for operational familiarity; either is defensible.
 - **Trade-off:** cross-shard queries ("all links containing domain X") go to the analytics store, not the link shards.
 
+```mermaid
+flowchart LR
+    LB[LB] --> R[Redirect svc + L1]
+    LB --> W[Create svc]
+    R --> RC[(Redis)]
+    RC -->|miss| SR[Shard router: hash domain_id, code]
+    W --> SR
+    W --> CR[(code_ranges)]
+    SR --> P1[(Primary 1)]
+    SR --> P2[(Primary 2)]
+    SR --> P3[(Primary 3)]
+    SR --> P4[(Primary 4)]
+    P1 & P2 & P3 & P4 -.->|CDC| ML[(My links, by owner_id)]
+    R --> K[[Kafka → Flink → ClickHouse]]
+```
+
 ### V4 — Two regions and the edge
 
 - **Evidence:** Microsoft SDE-2 L61/62 (LC 7545165: "deep dive on multi region deployments"). Confidence **medium** (one report).
@@ -197,6 +228,25 @@ flowchart LR
     + **Creates:** each region owns a separate counter range space (region bit in the range allocator), so both regions can create without coordination. Custom aliases go to the shard's home region, because uniqueness needs one writer.
     + **Edge:** for the hottest codes, the CDN caches the `302` for 5–30 s. Click counts for those then come from CDN logs streamed into the same pipeline.
 - **Trade-off:** a link created in one region may 404 in the other for a second or two (replication lag). Fix with a fallback: on a miss in region B, ask region A before returning 404.
+
+```mermaid
+flowchart LR
+    C[Client] --> CDN["CDN: hot 302s, 5–30 s"]
+    CDN --> GR[Geo routing]
+    subgraph M [Mumbai]
+        RM[Redirect + Create] --> RCM[(Redis)]
+        RM --> SM[(Shards homed here + replicas)]
+    end
+    subgraph H [Hyderabad]
+        RH[Redirect + Create] --> RCH[(Redis)]
+        RH --> SH[(Shards homed here + replicas)]
+    end
+    GR --> RM
+    GR --> RH
+    SM <-.->|async replication| SH
+    RH -.->|"miss: ask other region before 404"| RM
+    CDN -.->|logs| K[[Click pipeline]]
+```
 
 ---
 

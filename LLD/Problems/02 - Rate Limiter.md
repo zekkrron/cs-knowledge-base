@@ -274,7 +274,38 @@ if (cost <= (permits - used) + credits) {
 }
 ```
 
-- **No delta diagram:** one more implementation of `ClientLimiter`.
+**E2 delta** (green = added):
+
+```mermaid
+classDiagram
+    class LimitPolicy {
+        <<record>>
+        algorithm, permits, window, maxCredits
+        +withCredits(int, Duration, int)$ LimitPolicy
+    }
+    class LimiterFactory {
+        +create(LimitPolicy, long now)$ ClientLimiter
+    }
+    class ClientLimiter {
+        <<interface>>
+        +tryAcquire(long now, int cost) Decision
+    }
+    class FixedWindowLimiter
+    class CreditFixedWindowLimiter {
+        -int permits
+        -int maxCredits
+        -long windowStart
+        -long used
+        -long credits
+    }
+    LimiterFactory ..> ClientLimiter : creates
+    LimiterFactory ..> LimitPolicy : reads algorithm
+    ClientLimiter <|.. FixedWindowLimiter
+    ClientLimiter <|.. CreditFixedWindowLimiter
+    cssClass "CreditFixedWindowLimiter" added
+    classDef added fill:#d4f7d4,stroke:#2e7d32
+```
+
 - **Tested:** 5 per 10 s, use 2 → next window allows 8; after two idle windows, credits cap at 7 → 12 allowed; `remaining` includes credits.
 
 ### E3 — "Change a client's limit while it has traffic. And memory grows with millions of clients."
@@ -348,8 +379,38 @@ sequenceDiagram
 - **Added:** `Decision(allowed, remaining, retryAfter)`; `tryAcquire(client, cost)`.
 - **Edited:** every limiter computes its own retry hint: fixed window = time to window end; sliding log = when enough of the oldest entries expire; counter = when the previous window's weight has decayed enough; token bucket = `ceil((cost − tokens) / rate)`.
 - A cost above the whole limit can never pass, so it's a `ValidationException`, not a 429.
-- **No delta diagram:** `Decision` was already drawn with E1 (introduced once there to avoid changing the interface twice).
+- `Decision` already appears in E1's signatures (introduced once there to avoid changing the interface twice); E4 fills in what it carries.
 - **Tested:** token bucket 100/min: cost 60 leaves 40; cost 50 refused, retry in 6 s; cost 101 invalid. Fixed window: retry = time to window end.
+
+**E4 delta** (green = what E4 gives meaning to):
+
+```mermaid
+classDiagram
+    class RateLimiterService {
+        +tryAcquire(String client, int cost) Decision
+    }
+    class ClientLimiter {
+        <<interface>>
+        +tryAcquire(long now, int cost) Decision
+    }
+    class Decision {
+        <<record>>
+        boolean allowed
+        long remaining
+        Duration retryAfter
+        +allow(long)$ Decision
+    }
+    class TokenBucketLimiter
+    class FixedWindowLimiter
+    RateLimiterService ..> ClientLimiter
+    ClientLimiter ..> Decision : returns
+    ClientLimiter <|.. TokenBucketLimiter
+    ClientLimiter <|.. FixedWindowLimiter
+    cssClass "Decision" added
+    classDef added fill:#d4f7d4,stroke:#2e7d32
+```
+
+- Edited, not added: every limiter (its own retry-after calculation), `RateLimiterService` (rejects a cost above the whole limit as `ValidationException`).
 
 ### Concurrency, across all extensions
 

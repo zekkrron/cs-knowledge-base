@@ -233,8 +233,6 @@ expiry:    a sweeper voids pendings past their deadline
 ## Related Notes
 
 - [[12 - Mini Designs]]
-- [[07 - Wallet and Ledger]]
-- [[01 - Splitwise]]
 - [[MD-06 - Distributed Saga and Compensating State Machine]]
 - [[MD-20 - Partitioning Shard Keys and Resharding]]
 - [[14 - Coordination and Concurrency]]

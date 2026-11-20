@@ -20,7 +20,7 @@ Defaults are assumptions unless a source is given.
 | Who owns the inventory?                                                                          | We do                                                                                                                    | Cinema chain's own ticketing system → T5 |
 | Hold duration?                                                                                   | 10 min to pay                                                                                                            | UPI collect / slow banks → T2            |
 | Seats per booking?                                                                               | Up to 10, all-or-nothing                                                                                                 | Adjacent seats → T4                      |
-| Payment?                                                                                         | Third-party PSP (Razorpay-like), UPI and cards                                                                           | Wallet → [[07 - Wallet and Ledger]]      |
+| Payment?                                                                                         | Third-party PSP (Razorpay-like), UPI and cards                                                                           | Own wallet → [[MD-05 - Immutable Double-Entry Ledger and Reconciliation Loop\|MD-05]] |
 | Scale?                                                                                           | *Assumed* ~1M tickets/day normally (from BookMyShow's ~29M record month); mega sales with 1 crore+ users (Coldplay 2024) | Drives V1 and V3                         |
 | Anti-scalping requirements?                                                                      | Yes, per-user caps and bot defence                                                                                       | T1                                       |
 | Box office / offline sales on the same inventory?                                                | Yes, at venues                                                                                                           | T6                                       |
@@ -173,6 +173,20 @@ stateDiagram-v2
     + Holds, confirms and "my bookings right after paying" stay on the primary.
 - **Trade-off:** a user can click a seat that was taken a few seconds ago and get "just taken". That's UX, not a correctness problem.
 
+```mermaid
+flowchart LR
+    C[App] --> CDN[CDN: listings]
+    CDN --> RR[(Read replica)]
+    C --> B[Booking svc + L1]
+    B -->|seat map| RS[(Redis seat map)]
+    B -->|hold, confirm| PG[(Postgres primary)]
+    PG -.->|replication| RR
+    PG -.->|CDC| RS
+    B --> PSP[PSP]
+    PSP -->|webhook| B
+    SW[Sweeper] --> PG
+```
+
 ### V2 — Make confirm, ticket and notify a saga
 
 - **Evidence:** payment edge cases and idempotent retries come up in most reports (SDE-2 BookMyShow, Quora; MakeMyTrip, LC 5916765; PracHub "ticketing purchase system" and "High-Demand Ticketing"; Educative 2026). Confidence **strong**.
@@ -184,6 +198,21 @@ stateDiagram-v2
     + **Reconciler:** for bookings in `PAYMENT_PENDING` past a few minutes, poll the PSP's status API with backoff and a cap per booking. Never flood it: NPCI's root cause for the April 2025 UPI outage was banks flooding a status-check API.
     + Daily reconciliation against the PSP settlement file.
 - **Trade-off:** a few extra writes per booking and a Kafka dependency, in exchange for never losing a paid booking.
+
+```mermaid
+flowchart LR
+    C[App] --> B[Booking svc]
+    B -->|state + outbox, one txn| PG[(Postgres)]
+    PSP[PSP] -->|webhook| B
+    B --> PSP
+    PG --> RL[Outbox relay]
+    RL --> K[[Kafka, key booking_id]]
+    K --> T[Ticketing]
+    K --> N[Notifications]
+    REC[Reconciler] -->|status poll, backoff| PSP
+    REC --> PG
+    SW[Sweeper] --> PG
+```
 
 ### V3 — Mega-event mode: waiting room and allocation
 
@@ -202,6 +231,18 @@ stateDiagram-v2
     + General-admission sections are **counters**, not rows: `UPDATE sections SET available = available - :n WHERE id = :sec AND available >= :n`. If one section's counter becomes hot, split it into bucket rows or gate it with a Redis Lua counter reconciled to the DB.
 - **Prep:** pre-scale every tier before the published sale time and pre-warm caches; reactive autoscaling arrives too late for a step spike.
 
+```mermaid
+flowchart LR
+    U[Crowd] --> WR[Edge waiting room]
+    WR -->|"position poll, 15–30 s"| U
+    WR -->|admission token, at hold capacity| B[Booking svc]
+    BOT[Direct API call, no token] -.->|rejected| B
+    B -->|"seat rows: SKIP LOCKED, GA: counters"| PG[(Postgres)]
+    B --> PSP[PSP]
+    PG --> RL[Outbox relay]
+    RL --> K[[Kafka]]
+```
+
 ### V4 — Shard by show, then two regions
 
 - **Evidence:** no report found that pushes sharding or regions for this problem; kept because the growth logic needs it. Confidence **judgement**. Keep it short in the round.
@@ -209,6 +250,27 @@ stateDiagram-v2
 - **Change:**
     + **Shard key `show_id`** (or `event_id` for multi-show events), hashed into logical shards on a few physical primaries ([[MD-20 - Partitioning Shard Keys and Resharding]]). A hold touches one show, so it stays a single-shard transaction. "My bookings" becomes a separate table sharded by `user_id`, fed by CDC.
     + **Two Indian regions** ([[MD-21 - Multi-Region Replication and Disaster Recovery]]): each shard has a home region and an async replica in the other. Browse is served in both regions; holds and confirms go to the shard's home region. Failover is a fenced promotion; RPO is a few seconds of holds, which expire anyway, while confirmed bookings are reconciled from PSP records. Payment data stays in India under RBI's localisation rule.
+
+```mermaid
+flowchart LR
+    C[App] --> GR[Geo routing]
+    subgraph RA [Region A]
+        BA[Booking svc] --> SA[(Shards homed in A)]
+        SB2[(Replicas of B's shards)]
+    end
+    subgraph RB [Region B]
+        BB[Booking svc] --> SB[(Shards homed in B)]
+        SA2[(Replicas of A's shards)]
+    end
+    GR --> BA
+    GR --> BB
+    BA -->|holds for B's shows| SB
+    BB -->|holds for A's shows| SA
+    SA -.->|async| SA2
+    SB -.->|async| SB2
+    SA -.->|CDC| MB[(My bookings, by user_id)]
+    SB -.->|CDC| MB
+```
 
 ---
 
@@ -362,7 +424,4 @@ Reports and guides tallied in November 2026. Most LeetCode posts carry no date; 
 - [[MD-19 - Baseline Scaling Path]]
 - [[MD-20 - Partitioning Shard Keys and Resharding]]
 - [[MD-21 - Multi-Region Replication and Disaster Recovery]]
-- [[09 - Inventory and Flash Sale]] — quantity, not unique seat
-- [[07 - Wallet and Ledger]]
-- [[12 - E-commerce Checkout]]
 - [[14 - Coordination and Concurrency]]

@@ -4,17 +4,17 @@ import java.time.Instant;
 
 import lld.parkinglot.full.model.Ticket;
 
-/** One rate for every started hour, in rupees. */
+/** One rate for every started hour. Money in paise. */
 public final class HourlyPricing implements PricingStrategy {
 
-    private final double perHourRupees;
+    private final long perHourPaise;
 
-    public HourlyPricing(double perHourRupees) {
-        this.perHourRupees = perHourRupees;
+    public HourlyPricing(long perHourPaise) {
+        this.perHourPaise = perHourPaise;
     }
 
     @Override
-    public double feeRupees(Ticket ticket, Instant exitTime) {
-        return PricingStrategy.billableHours(ticket.entryTime(), exitTime) * perHourRupees;
+    public long feePaise(Ticket ticket, Instant exitTime) {
+        return PricingStrategy.billableHours(ticket.entryTime(), exitTime) * perHourPaise;
     }
 }

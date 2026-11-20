@@ -30,7 +30,7 @@ created: 2026-11-17
 **HLD**
 - [ ] 4 · Chat / Messaging (WhatsApp, Slack)
 - [ ] 5 · News Feed
-- [ ] 6 · Payment System / Payment Gateway (older related note: [[07 - Wallet and Ledger]])
+- [ ] 6 · Payment System / Payment Gateway
 
 ## Week 3 · 7–13 Dec
 
@@ -41,7 +41,7 @@ created: 2026-11-17
 
 **HLD**
 - [ ] 7 · Ride Hailing (Uber / Ola)
-- [ ] 8 · Food Delivery / Order Management + Live Tracking (older related note: [[10 - Order Management]])
+- [ ] 8 · Food Delivery / Order Management + Live Tracking
 - [ ] 9 · [[13 - URL Shortener]]
 
 ## Week 4 · 14–20 Dec
@@ -52,7 +52,7 @@ created: 2026-11-17
 - [ ] 12 · Inventory Management (reserve, release, no oversell)
 
 **HLD**
-- [ ] 10 · E-commerce Inventory and Flash Sale ([[09 - Inventory and Flash Sale]], older format)
+- [ ] 10 · E-commerce Inventory and Flash Sale
 - [ ] 11 · Typeahead / Autocomplete
 - [ ] 12 · Product Search and Catalog Browsing
 
@@ -66,7 +66,7 @@ created: 2026-11-17
 **HLD**
 - [ ] 13 · Video Streaming (YouTube, Netflix, JioHotstar)
 - [ ] 14 · Distributed Cache (Redis-like)
-- [ ] 15 · File Storage and Sync (older related note: [[04 - Multipart Upload]])
+- [ ] 15 · File Storage and Sync
 
 ## Related Notes
 

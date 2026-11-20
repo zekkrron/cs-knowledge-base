@@ -58,7 +58,7 @@ Order of the rest: the ranked list in [[Problem Catalog]].
 ## 3. Code rules (`LLD/Code`)
 
 - **Plain Java only.** Machine-coding rounds forbid databases and frameworks and expect in-memory code. Solution code imports only `java.*`. Maven exists only to compile and run JUnit in the vault.
-- **Java 21** (`maven.compiler.release`), no preview features, `-Xlint:all` clean. Money in rupees as `double`, formatted to two decimals for output; in review, say that production code would use `BigDecimal` or paise in a `long` to avoid rounding errors.
+- **Java 21** (`maven.compiler.release`), no preview features, `-Xlint:all` clean. Money in paise as `long` (₹30 = `30_00`), never `double`; format as `Rs 30.00` only in the receipt or driver.
 - **Two snapshots per problem:** `lld.<problem>.v0` (exactly what you'd submit at minute 90) and `lld.<problem>.full` (V0 + every ladder extension). Javadoc on each class or method says which extension introduced it.
 - **Self-contained snapshots.** No shared library, no imports between `v0` and `full`, none between problems. The small boilerplate (exceptions, clock, driver) is duplicated on purpose, because in the round you type it yourself.
 - **Folder layout inside each snapshot** (same names everywhere; omit folders a problem doesn't need):
@@ -84,9 +84,11 @@ lld/<problem>/<v0|full>/
 
 ## 4. Diagrams
 
+**Every version gets a Mermaid diagram: V0, each extension E1–E4, and the full version.** No extension is left without one.
+
 - One **V0 class diagram**.
-- A **delta diagram per extension that changes structure**: only the classes involved, with added classes highlighted (`cssClass "A,B" added` + `classDef added fill:#d4f7d4,stroke:#2e7d32`) and a line listing what was edited rather than added. Skip it for extensions that only add one implementation of an interface already drawn.
-- A **sequence diagram** instead of a class diagram for concurrency or multi-step behaviour (races, refunds, retries).
+- A **delta diagram for every extension**: only the classes involved, with added classes highlighted (`cssClass "A,B" added` + `classDef added fill:#d4f7d4,stroke:#2e7d32`) and a line listing what was edited rather than added. An extension that only adds one implementation still gets a small one: the interface, the existing implementation and the new class highlighted, or the service with its new methods and fields.
+- A **sequence diagram** for concurrency or multi-step behaviour (races, refunds, retries), in addition to the delta diagram when the structure also changes.
 - One **full-version class diagram** after the ladder.
 
 ---

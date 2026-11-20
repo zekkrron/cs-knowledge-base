@@ -197,5 +197,4 @@ index on (subject_type, subject_id) for reverse lookups
 
 - [[12 - Mini Designs]]
 - [[18 - Security]]
-- [[08 - Resource Sharing ACL]]
 - [[MD-12 - CDC-to-Inverted-Index and Real-Time Sidecar Merger]]

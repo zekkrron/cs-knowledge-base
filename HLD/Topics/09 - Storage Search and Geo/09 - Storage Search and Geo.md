@@ -71,7 +71,7 @@ sequenceDiagram
 
 ### Large files and dedup
 
-**Multipart / chunking** splits big files into parts, so each part can be retried on its own and parts can upload in parallel. See [[04 - Multipart Upload]] for a full design.
+**Multipart / chunking** splits big files into parts, so each part can be retried on its own and parts can upload in parallel. See [[MD-03 - Presigned Direct-to-Blob Multipart and Chunk Sync Engine|MD-03]] for a full design.
 
 **Dedup** hashes the content, so the same blob is stored once under one key (Dropbox-lite).
 

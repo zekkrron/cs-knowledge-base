@@ -208,7 +208,6 @@ standard HLS: ~10–30 s behind live; LL-HLS with ~0.5 s parts: ~2–5 s
 ## Related Notes
 
 - [[12 - Mini Designs]]
-- [[Netflix HLD]]
 - [[04 - Load Balancing CDN and Gateway]]
 - [[MD-03 - Presigned Direct-to-Blob Multipart and Chunk Sync Engine]]
 - [[MD-10 - Partitioned Time-Bucket Job Scheduler and Leased Worker Pool]]

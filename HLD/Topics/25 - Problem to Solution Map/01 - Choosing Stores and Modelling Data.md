@@ -57,7 +57,7 @@ The rule underneath every entry here: **one Postgres is the default** until a sp
 | ~~Cassandra LWT / LWW store~~ | Paxos per partition, LWW otherwise | Slow, and LWW silently drops writes | Never as the basis of a ledger |
 
 - **Default:** "Ledger rows plus balance in one Postgres transaction, integers not floats, one writer region."
-- **Depth:** [[10 - Engine Choice]], [[24 - Cassandra and DynamoDB]], [[07 - Wallet and Ledger]]
+- **Depth:** [[10 - Engine Choice]], [[24 - Cassandra and DynamoDB]], [[MD-05 - Immutable Double-Entry Ledger and Reconciliation Loop|MD-05]]
 
 ### Redis vs Memcached
 

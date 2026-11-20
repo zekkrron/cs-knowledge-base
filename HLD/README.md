@@ -2,7 +2,7 @@
 
 High Level Design notes.
 
-> [!tip] **Interview tomorrow, few hours?** Read [[16 - Estimation and Decision Cheat Sheet]] then [[00 - Speed Run]] out loud. Deep dives: [[02 - Task Scheduler]], [[03 - Wearable Device]], [[04 - Multipart Upload]].
+> [!tip] **Interview tomorrow, few hours?** Read [[16 - Estimation and Decision Cheat Sheet]], then walk [[06 - Seat Booking]] or [[13 - URL Shortener]] out loud.
 
 ## Topics (building blocks)
 
@@ -30,30 +30,14 @@ High Level Design notes.
 
 ## Problems (interview walks)
 
-[[HLD/Problems/README]] — twelve designs, full script.
+[[HLD/Problems/README]] — the procedure and the list. Order of work: [[Interview Question Priority]]; this sprint's schedule: [[LLD and HLD Tracker]].
 
 | # | Note |
 |---|---|
-| 0 | [[00 - Speed Run]] — **all twelve, one page** |
-| 1 | [[01 - Splitwise]] |
-| 2 | [[02 - Task Scheduler]] |
-| 3 | [[03 - Wearable Device]] |
-| 4 | [[04 - Multipart Upload]] |
-| 5 | [[05 - Jira]] |
 | 6 | [[06 - Seat Booking]] |
-| 7 | [[07 - Wallet and Ledger]] |
-| 8 | [[08 - Resource Sharing ACL]] |
-| 9 | [[09 - Inventory and Flash Sale]] |
-| 10 | [[10 - Order Management]] |
-| 11 | [[11 - Collaborative Workspace]] |
-| 12 | [[12 - E-commerce Checkout]] |
 | 13 | [[13 - URL Shortener]] |
 
-## Other
-
-| Note | Purpose |
-|---|---|
-| [[Netflix HLD]] | Full streaming case study — stretch, not SDE-1 default |
+New problems are added only after the research in [[HLD/Problems/README]] → *Researching and Prioritising a Problem*.
 
 ## Audio Overview Prompts
 

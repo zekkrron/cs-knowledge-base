@@ -95,7 +95,7 @@ Once you know who the caller is, you decide whether they can do *this action on 
 | **ABAC** (attribute-based) | Attributes of user, resource and context | "Managers can approve expenses under their cost centre, during business hours" | Rules get hard to reason about and audit | Rules depend on data like department, region, amount, or time |
 | **ReBAC** (relationship-based) | A graph of relationships between users and objects | "You can edit this doc because you're in a group that owns the folder it's in" | Needs a dedicated service to store and query the graph fast | Sharing models: docs, folders, repos, anything with "share with" |
 
-**ReBAC** is the idea behind Google's **Zanzibar** paper, which describes the system behind Drive and YouTube permissions. Permissions are stored as tuples like `doc:42#editor@user:alice` and `folder:7#owner@group:eng`, and a check walks the graph. Open-source systems built on the same idea include **SpiceDB** and **OpenFGA**. [[08 - Resource Sharing ACL]] is a worked design.
+**ReBAC** is the idea behind Google's **Zanzibar** paper, which describes the system behind Drive and YouTube permissions. Permissions are stored as tuples like `doc:42#editor@user:alice` and `folder:7#owner@group:eng`, and a check walks the graph. Open-source systems built on the same idea include **SpiceDB** and **OpenFGA**. [[MD-17 - ReBAC Authorisation Graph and Consistent Cache|MD-17]] is a worked design.
 
 ### Where checks live
 
@@ -264,4 +264,3 @@ Regulations like GDPR, HIPAA and PCI DSS show up in design rounds as **constrain
 - [[04 - Load Balancing CDN and Gateway]]
 - [[08 - Reliability]]
 - [[11 - Services and Observability]]
-- [[08 - Resource Sharing ACL]]

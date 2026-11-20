@@ -236,6 +236,5 @@ loop:
 - [[07 - Async Messaging]]
 - [[14 - Coordination and Concurrency]]
 - [[08 - Reliability]]
-- [[07 - Wallet and Ledger]]
 - [[MD-04 - High-Contention Reservation and TTL Lease Sweeper]]
 - [[MD-20 - Partitioning Shard Keys and Resharding]]

@@ -220,7 +220,7 @@ These come up often as follow-ups even though they're rarely the opening questio
 | Auto vs manual commit? | Manual **after** success = at-least-once (crash → replay). Auto on a timer can commit **before** the work → you **lose** it. | [[05 - Consumer Mechanics and Scalability]] |
 | `max.in.flight` without idempotence? | A retry can **land before** an earlier batch, so records in that partition **reorder**. Idempotence keeps `max.in.flight` in a safe range. | [[04 - Producer Mechanics and Delivery Guarantees]] |
 | Tombstone? | A compacted delete: produce `key=X, value=null`. After compaction, X disappears. | [[02 - Low-Level Storage and Performance IO]] |
-| Delayed job for 10 minutes? | Not Kafka's job. Sleeping in a consumer blocks the partition. Use a scheduler, with Kafka as dispatch if you want a log. | [[02 - Task Scheduler]] |
+| Delayed job for 10 minutes? | Not Kafka's job. Sleeping in a consumer blocks the partition. Use a scheduler, with Kafka as dispatch if you want a log. | [[MD-10 - Partitioned Time-Bucket Job Scheduler and Leased Worker Pool|MD-10]] |
 
 ---
 
@@ -246,4 +246,3 @@ These come up often as follow-ups even though they're rarely the opening questio
 - [[05 - Consumer Mechanics and Scalability]]
 - [[06 - Ecosystem Resilience and Design Patterns]]
 - [[07 - Event-Driven Architecture and System Trade-offs]]
-- [[02 - Task Scheduler]]

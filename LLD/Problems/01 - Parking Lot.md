@@ -101,10 +101,10 @@ classDiagram
     class LowestFloorFirstStrategy
     class PricingStrategy {
         <<interface>>
-        +feeRupees(Ticket, Instant exit) double
+        +feePaise(Ticket, Instant exit) long
         +billableHours(Instant, Instant)$ long
     }
-    class HourlyPricing { -double perHourRupees }
+    class HourlyPricing { -long perHourPaise }
     class ParkingLot { +floors() List~Floor~ }
     class Floor { +slots() List~Slot~ }
     class Slot {
@@ -114,7 +114,7 @@ classDiagram
         +vacate() Vehicle
     }
     class Ticket { <<record>> id, vehicle, floor, slot, entryTime }
-    class Receipt { <<record>> ticket, exitTime, feeRupees }
+    class Receipt { <<record>> ticket, exitTime, feePaise }
     class Vehicle { <<record>> type, registrationNumber, color }
     ParkingLotService --> ParkingLot
     ParkingLotService --> SlotAllocationStrategy
@@ -170,7 +170,7 @@ public Receipt unpark(String ticketId) {
     if (ticket == null) throw new NotFoundException("Invalid Ticket");
     lot.floor(ticket.floor()).slot(ticket.slot()).vacate();
     Instant exit = clock.instant();
-    return new Receipt(ticket, exit, pricing.feeRupees(ticket, exit));
+    return new Receipt(ticket, exit, pricing.feePaise(ticket, exit));
 }
 ```
 
@@ -232,9 +232,35 @@ All four are in [lld/parkinglot/full](../Code/src/main/java/lld/parkinglot/full/
 - **Evidence:** Hello Interview, PracHub, DesignGurus, Microsoft L61. Confidence **strong**.
 - **Added:** `FirstHourFlatPricing`.
 - **Edited:** the service takes `Map<VehicleType, PricingStrategy>` instead of one strategy and checks the type has a price **before** claiming a slot, so it never parks a vehicle it can't bill.
-- **Pattern:** Strategy chosen by key. A new scheme is a class plus a map entry. Money in rupees as `double`.
-- **No delta diagram:** E1 only adds one implementation of an interface already in V0.
+- **Pattern:** Strategy chosen by key. A new scheme is a class plus a map entry. Money in paise as `long` (₹40 = `40_00`), never `double`.
 - **Tested:** car 125 min = ₹40 + 2 × ₹30 = ₹100; bike 125 min = 3 × ₹10.
+
+**E1 delta** (green = added):
+
+```mermaid
+classDiagram
+    class ParkingLotService {
+        -Map~VehicleType,PricingStrategy~ pricing
+        +park(Vehicle) Ticket
+        +unpark(String) Receipt
+    }
+    class PricingStrategy {
+        <<interface>>
+        +feePaise(Ticket, Instant exit) long
+    }
+    class HourlyPricing { -long perHourPaise }
+    class FirstHourFlatPricing {
+        -long firstHourPaise
+        -long perExtraHourPaise
+    }
+    ParkingLotService --> PricingStrategy : one per vehicle type
+    PricingStrategy <|.. HourlyPricing
+    PricingStrategy <|.. FirstHourFlatPricing
+    cssClass "FirstHourFlatPricing" added
+    classDef added fill:#d4f7d4,stroke:#2e7d32
+```
+
+- Edited, not added: `ParkingLotService` (one strategy becomes a map keyed by vehicle type, checked before a slot is claimed).
 
 ### E2 — "There are several entry and exit gates working at the same time."
 
@@ -268,6 +294,32 @@ throw new ConflictException("Parking Lot Full");
 
 - **Why not `synchronized park()`:** correct, but every gate waits on one lock. Per-slot CAS lets gates that want different slots never wait. Name both and pick CAS.
 - **Tested:** 400 cars from 16 threads into a 10 × 20 lot (cars fit 17 car + 1 truck slot per floor = 180) → exactly 180 parked, 220 `Parking Lot Full`, no slot twice; 8 threads unparking one ticket → one success; 8 gates with one plate → one ticket.
+
+**E2 delta** (no class added; the edited members are shown):
+
+```mermaid
+classDiagram
+    class ParkingLotService {
+        -ConcurrentHashMap~String,Ticket~ activeTickets
+        -Set~String~ parkedRegistrations
+        -AtomicLong sequence
+        +park(Vehicle) Ticket
+        +unpark(String) Receipt
+    }
+    class SlotAllocationStrategy {
+        <<interface>>
+        +candidates(ParkingLot, Vehicle) List~Slot~
+    }
+    class Slot {
+        -AtomicReference~List~Vehicle~~ occupants
+        +tryOccupy(Vehicle, int capacity) boolean
+        +vacate(Vehicle) boolean
+    }
+    class Ticket { <<record>> id lot_floor_slot_seq }
+    ParkingLotService ..> SlotAllocationStrategy : ordered candidates
+    ParkingLotService ..> Slot : CAS per candidate
+    ParkingLotService --> Ticket
+```
 
 **E2: two gates racing for the same slot**
 
@@ -358,8 +410,22 @@ classDiagram
 - **Added:** `ticketForRegistration(reg)` (`NotFoundException("Vehicle not found")`), `ticketsWithColor(color)` (case-insensitive, ordered by floor and slot). The optional CLI exposes them as `find_vehicle`, `registrations_by_color`, `slots_by_color`.
 - **Edited:** the service keeps `ticketByRegistration` and `parkedRegistrations` alongside `activeTickets`, and clears them on unpark (the set last, so a re-entry can't race the cleanup).
 - **Pattern:** secondary index maintained by the orchestrator. No new domain class.
-- **No delta diagram:** only service methods and maps are added.
 - **Tested:** lookups by plate and colour; duplicate plate rejected; the car can come back after leaving.
+
+**E4 delta** (no class added; new members of the service):
+
+```mermaid
+classDiagram
+    class ParkingLotService {
+        -Map~String,Ticket~ activeTickets
+        -Map~String,Ticket~ ticketByRegistration
+        -Set~String~ parkedRegistrations
+        +ticketForRegistration(String) Ticket
+        +ticketsWithColor(String) List~Ticket~
+    }
+    class Ticket { <<record>> id, vehicle, floor, slot, slotType, entryTime }
+    ParkingLotService --> Ticket : indexed by id and by plate
+```
 
 ### Full version (green = added after V0)
 
@@ -489,7 +555,7 @@ Run: `.\mvnw.cmd test` in `LLD/Code`.
 
 ## 13. One-Minute Pitch
 
-> "Slots own the rule about what they hold, floors own the layout, the service owns the workflow and active tickets, and two strategies decide which slot to use and what to charge, from an injected clock, money in rupees. Per-type pricing is a map of strategies. For many gates, a slot is claimed with a compare-and-set and the strategy returns candidates so the loser tries the next; unpark is a `ConcurrentHashMap.remove`, so one exit wins; ids carry a sequence. Compatibility is a rules table: smaller vehicles may use bigger slots, and in busy mode four bikes share a car slot. A registration index gives lost-ticket lookup and blocks a plate from entering twice."
+> "Slots own the rule about what they hold, floors own the layout, the service owns the workflow and active tickets, and two strategies decide which slot to use and what to charge, from an injected clock, money in paise. Per-type pricing is a map of strategies. For many gates, a slot is claimed with a compare-and-set and the strategy returns candidates so the loser tries the next; unpark is a `ConcurrentHashMap.remove`, so one exit wins; ids carry a sequence. Compatibility is a rules table: smaller vehicles may use bigger slots, and in busy mode four bikes share a car slot. A registration index gives lost-ticket lookup and blocks a plate from entering twice."
 
 ---
 

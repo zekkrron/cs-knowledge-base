@@ -196,4 +196,3 @@ loop:
 - [[14 - Coordination and Concurrency]]
 - [[MD-05 - Immutable Double-Entry Ledger and Reconciliation Loop]]
 - [[MD-15 - Partitioned Append-Only Log and LSM Storage Engine]]
-- [[11 - Collaborative Workspace]]

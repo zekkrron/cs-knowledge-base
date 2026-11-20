@@ -99,7 +99,7 @@ Raw size  = 2.9e9 × 32 B ≈ 90 GB/day   → 2.7 TB/month
 **This is the number that kills OLTP.**
 
 - **Pick:** metadata in PG, samples in a time-series store, **1-min rollups** for charts, raw dropped at 7–30 days.
-- **Full walk:** [[03 - Wearable Device]]. Rollups and retention: [[20 - Data Processing and Analytics]].
+- **Rollups and retention:** [[20 - Data Processing and Analytics]].
 
 > [!warning] The mistake is doing the maths and then ignoring it. If you computed 90 GB/day and still said "a `samples` table in Postgres," you failed the section you just did correctly.
 
@@ -238,7 +238,7 @@ Pick the lightest tool that the contention level allows. Details and code in [[1
 | One hot row, > ~500 writes/s | Redis `DECR` as the gate + async reconcile, or sharded counters |
 | Across services | **No 2PC.** Saga + compensation + idempotency keys |
 
-Two rules on top of the ladder. Avoid deadlocks by **locking rows in a fixed order** (sort ids), the transfer trick in [[07 - Wallet and Ledger]]. And correctness belongs in a **DB constraint**, not an `if` in the app.
+Two rules on top of the ladder. Avoid deadlocks by **locking rows in a fixed order** (sort ids), the transfer trick in [[MD-05 - Immutable Double-Entry Ledger and Reconciliation Loop|MD-05]]. And correctness belongs in a **DB constraint**, not an `if` in the app.
 
 ### Search, geo, IDs, files
 
@@ -252,7 +252,7 @@ These are quick lookups: a condition and the pick that goes with it.
 | IDs | Sortable + distributed | **Snowflake** |
 | IDs | Unguessable in a URL | UUIDv4 / ULID |
 | IDs | Auto-increment across shards | Don't |
-| Files / video / any payload > a few MB | Always | **Presigned direct to S3**. Bytes never cross the app ([[04 - Multipart Upload]]) |
+| Files / video / any payload > a few MB | Always | **Presigned direct to S3**. Bytes never cross the app ([[MD-03 - Presigned Direct-to-Blob Multipart and Chunk Sync Engine|MD-03]]) |
 
 The search index is **eventually consistent**. Say "a couple of seconds stale" before they ask.
 
@@ -287,8 +287,8 @@ When they say the left thing, the right thing is the expected answer. Learn this
 |---|---|---|
 | "User double-clicks / client retries" | `Idempotency-Key` with a **unique constraint**; return the first result | [[08 - Reliability]] |
 | "Two users grab the same seat" | Unique row + `free → held → sold` CAS. DB decides, not the app | [[06 - Seat Booking]] |
-| "Payment webhook fires twice" | `event_id` dedupe table + short-circuit if already terminal | [[07 - Wallet and Ledger]] |
-| "Money" | Append-only **ledger** + balance in the **same** transaction. Never floats | [[07 - Wallet and Ledger]] |
+| "Payment webhook fires twice" | `event_id` dedupe table + short-circuit if already terminal | [[MD-05 - Immutable Double-Entry Ledger and Reconciliation Loop|MD-05]] |
+| "Money" | Append-only **ledger** + balance in the **same** transaction. Never floats | [[MD-05 - Immutable Double-Entry Ledger and Reconciliation Loop|MD-05]] |
 | "We must never lose the write" | Write to the DB first, then publish: **outbox** / `SKIP LOCKED` relay | [[07 - Async Messaging]] |
 | "Cross-service transaction" | Saga with compensations. Not 2PC | [[14 - Coordination and Concurrency]] |
 | "Exactly once" | At-least-once + idempotent consumer. Say the phrase | [[07 - Async Messaging]] |
@@ -296,8 +296,8 @@ When they say the left thing, the right thing is the expected answer. Learn this
 | "Cache expired and everything hit the DB" | Stampede → singleflight + jittered TTL + serve stale | [[06 - Caching]] |
 | "Cache and DB disagree" | Invalidate on write, TTL as safety net, name the stale window | [[06 - Caching]] |
 | "This takes 30 seconds" | **202 + job id**, poll or webhook. Don't hold the request | [[07 - Async Messaging]] |
-| "We need to wait 6 hours" | Durable timer **row** + poller (`SKIP LOCKED`) → wake. Never `sleep` in a pod | [[02 - Task Scheduler]] |
-| "Upload a 2 GB video" | Presigned multipart straight to S3 | [[04 - Multipart Upload]] |
+| "We need to wait 6 hours" | Durable timer **row** + poller (`SKIP LOCKED`) → wake. Never `sleep` in a pod | [[MD-10 - Partitioned Time-Bucket Job Scheduler and Leased Worker Pool|MD-10]] |
+| "Upload a 2 GB video" | Presigned multipart straight to S3 | [[MD-03 - Presigned Direct-to-Blob Multipart and Chunk Sync Engine|MD-03]] |
 | "Search by text" | Separate index, eventual, reindex from the SoR | [[09 - Storage Search and Geo]] |
 | "Analytics / reports" | Separate OLAP store or replica. Never on the OLTP primary | [[20 - Data Processing and Analytics]] |
 | "Counter / likes / views" | Redis `INCR`, flush periodically; or sharded counters. Exactness not required | [[06 - Caching]] |
@@ -335,7 +335,6 @@ Most lost rounds aren't a missing fact. They're one of these habits, each of whi
 
 - [[01 - How the Round Works]] — the script
 - [[02 - Fundamentals]] — latency table, nines, CAP
-- [[HLD/Problems/00 - Speed Run]] — all twelve in one page
 - [[06 - Caching]] · [[07 - Async Messaging]] · [[14 - Coordination and Concurrency]]
 - [[05 - Databases]] — engine choice depth
 - [[17 - Consistency Time and Consensus]] · [[18 - Security]] · [[19 - Deployment and Infrastructure]] · [[20 - Data Processing and Analytics]]

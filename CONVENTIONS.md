@@ -240,7 +240,7 @@ Cross-links from accumulators back to a module should point to the specific file
 
 ### HLD topic note
 
-Gold standard: [[HLD/Topics/06 - Caching/06 - Caching]] and [[Netflix HLD]]. Written to **teach on
+Gold standard: [[HLD/Topics/06 - Caching/06 - Caching]]. Written to **teach on
 a cold read**, not to cram: full sentences, one idea per section, `---` between major sections.
 Terse crib material goes in the *Interview Lines* section at the end, not in the body.
 
@@ -391,12 +391,12 @@ Only the numbers that pick something.
 ## 4. Entities, API, Schema
 
 ## 5. V0 — Simplest Design That Works
-Diagram, core flows, and what V0 can't handle.
+Mermaid diagram of V0, core flows, and what V0 can't handle.
 
 ## 6. Scale Ladder
 ### V1 — <name>
-Trigger (the number and the maths) → what breaks → the change → the diagram delta → the trade-off → MD link.
-(V2, V3, V4...)
+Trigger (the number and the maths) → what breaks → the change → the trade-off → MD link → Mermaid diagram of the whole system after this step.
+(V2, V3, V4..., each ending with its own diagram)
 
 ## 7. Twist Cards
 Problem-specific follow-ups across consistency, features, failures, cost, multi-region, compliance, abuse and Indian-scale spikes.
@@ -418,13 +418,14 @@ Each card: what the interviewer says → what it hits → the answer → which v
 - Follow the HLD topic note rules above (prose opens every section, "pick when" columns, Mermaid for mechanisms).
 - A problem note never re-explains MD mechanics. It states the problem-specific choice and the numbers, then links the MD.
 - An MD never carries one problem's numbers as if they were universal. Problem-specific numbers belong in the problem note; the MD gives ranges.
+- **One Mermaid diagram per version, V0 and every ladder step.** Each ladder diagram shows the whole system as it stands after that step (not only the new boxes), so V0 → V1 → … reads as the board you'd redraw in the round. Keep earlier boxes and add the new ones.
 - In a 45-minute round you reach V0 plus one or two ladder steps or twist cards. The rest of the note exists so that whichever way the interviewer turns, the answer is already written.
 
 ---
 
 ## LLD Problems
 
-The complete procedure for LLD / machine-coding problems (ideology, V0 and extension ladder, research steps, code layout and driver rules, diagrams, note template, study order) lives in one place: `LLD/Problems/README.md`. Read it before writing or changing any LLD problem.
+The complete procedure for LLD / machine-coding problems (ideology, V0 and extension ladder, research steps, code layout and driver rules, diagrams, note template, study order) lives in one place: `LLD/Problems/README.md`. Read it before writing or changing any LLD problem. As in HLD, every version gets a Mermaid diagram: V0 and each extension (E1–E4), plus the full version (rules in its §4).
 
 ---
 

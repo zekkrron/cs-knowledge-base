@@ -24,7 +24,6 @@ created: 2026-10-24
 | Dropbox / Drive sync (#15) | Chunked, content-addressed, delta sync, conflict handling |
 | Instagram (#18) | Presigned upload, async processing, CDN delivery |
 | Object Storage (#32) | The storage side of the same contract |
-| Vault problem [[04 - Multipart Upload]] | Presign, ETag ack, CompleteMultipartUpload |
 
 ---
 
@@ -191,7 +190,6 @@ chunks(hash PK, size, storage_key, refcount)
 ## Related Notes
 
 - [[12 - Mini Designs]]
-- [[04 - Multipart Upload]]
 - [[09 - Storage Search and Geo]]
 - [[04 - Load Balancing CDN and Gateway]]
 - [[MD-18 - Media Transcoding DAG and Adaptive Bitrate Edge Pipeline]]

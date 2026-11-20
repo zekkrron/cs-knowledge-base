@@ -217,7 +217,6 @@ stateDiagram-v2
 ## Related Notes
 
 - [[12 - Mini Designs]]
-- [[02 - Task Scheduler]]
 - [[14 - Coordination and Concurrency]]
 - [[MD-06 - Distributed Saga and Compensating State Machine]]
 - [[MD-09 - Multi-Lane Priority Queue Retry and Vendor Failover Hub]]

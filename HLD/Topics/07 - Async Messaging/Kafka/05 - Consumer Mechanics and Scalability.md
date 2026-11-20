@@ -204,7 +204,7 @@ flowchart TD
 | Pause / resume partition | Yes, per partition | Consumer memory + committed offset | Order matters and jobs are occasional |
 | Raise `max.poll.interval.ms` | Yes | Consumer | Work is only slightly too slow |
 
-Don't fake a delay by sleeping in the consumer either. Scheduled work belongs in a scheduler; see [[02 - Task Scheduler]].
+Don't fake a delay by sleeping in the consumer either. Scheduled work belongs in a scheduler; see [[MD-10 - Partitioned Time-Bucket Job Scheduler and Leased Worker Pool|MD-10]].
 
 ---
 
@@ -240,5 +240,4 @@ Don't fake a delay by sleeping in the consumer either. Scheduled work belongs in
 - [[02 - Low-Level Storage and Performance IO]]
 - [[04 - Producer Mechanics and Delivery Guarantees]]
 - [[08 - Interview Questions]]
-- [[02 - Task Scheduler]] — don't fake a delay by sleeping in the consumer
 - [[RabbitMQ and SQS]]

@@ -95,7 +95,7 @@ These are about what happens when a dependency misbehaves, and about who is allo
 | Timeouts and retries with jitter. What should you not retry? | Always set timeouts, retry with backoff and jitter; don't retry non-idempotent writes or 4xx errors. | [[08 - Reliability]] |
 | Circuit breaker. | Stop calling a failing dependency for a while so it can recover and you fail fast. | [[08 - Reliability]] |
 | Rate limit algorithm. Why Redis. 429. | Token bucket; Redis because the counter must be shared across nodes; reply 429 + `Retry-After`. | [[MD-02 - Traffic Shaper Rate Limiter and Waiting Room\|Rate limiter]] · [[08 - Reliability]] |
-| Idempotency-Key on payments. | The client sends a key; a unique constraint makes a retry return the first result. | [[08 - Reliability]] · [[07 - Wallet and Ledger]] |
+| Idempotency-Key on payments. | The client sends a key; a unique constraint makes a retry return the first result. | [[08 - Reliability]] · [[MD-05 - Immutable Double-Entry Ledger and Reconciliation Loop|MD-05]] |
 | Optimistic version vs `SELECT FOR UPDATE`. When is a Redis lock the wrong answer? | Optimistic for low contention, `FOR UPDATE` for high; a Redis lock is wrong when correctness must survive Redis failover. | [[14 - Coordination and Concurrency]] |
 | `SKIP LOCKED` for workers. What if the lock TTL expires while you still hold the work? | Workers claim different rows without blocking; an expired lease means another worker can start, so writes need a fencing check. | [[14 - Coordination and Concurrency]] |
 | Unique constraint as mutual exclusion. Fencing token in one sentence. | The DB rejects the second insert; a fencing token is an increasing number the storage checks so a stale lock holder is refused. | [[14 - Coordination and Concurrency]] |
@@ -107,7 +107,7 @@ These separate "where the bytes go" from "where the metadata goes."
 | Question | One-line answer | Where it's explained |
 |---|---|---|
 | Why not put videos in Postgres? | Large blobs bloat the DB, backups and replication; put bytes in object storage and metadata in the DB. | [[09 - Storage Search and Geo]] |
-| Presigned URL flow. | App signs a short-lived URL, client uploads straight to S3, then tells the app to save metadata. | [[09 - Storage Search and Geo]] · [[04 - Multipart Upload]] |
+| Presigned URL flow. | App signs a short-lived URL, client uploads straight to S3, then tells the app to save metadata. | [[09 - Storage Search and Geo]] · [[MD-03 - Presigned Direct-to-Blob Multipart and Chunk Sync Engine|MD-03]] |
 | Why Elasticsearch, why not `LIKE`. | `LIKE '%term%'` can't use a normal index and has no ranking; ES has an inverted index and relevance. | [[09 - Storage Search and Geo]] |
 | How do you query "near me"? | Geohash / S2 cells or Redis GEO, then rank by distance. | [[09 - Storage Search and Geo]] |
 
@@ -134,13 +134,13 @@ These dominate intern, entry-level, and "light HLD" loops.
 | # | Design | Full walk |
 |---|---|---|
 | 6 | News feed / Twitter-lite | |
-| 7 | File storage / share link | [[04 - Multipart Upload]] |
+| 7 | File storage / share link | [[MD-03 - Presigned Direct-to-Blob Multipart and Chunk Sync Engine|MD-03]] |
 | 8 | Pastebin | |
 | 9 | Unique ID generator | Often inside #1 |
 | 10 | Autocomplete | |
-| 11 | E-commerce: cart / checkout / inventory | [[12 - E-commerce Checkout]] · [[09 - Inventory and Flash Sale]] |
+| 11 | E-commerce: cart / checkout / inventory | [[MD-06 - Distributed Saga and Compensating State Machine|MD-06]] · [[MD-04 - High-Contention Reservation and TTL Lease Sweeper|MD-04]] |
 | 12 | Ticket booking / BookMyShow-lite | [[06 - Seat Booking]] |
-| 13 | Payments backend | State + idempotency, not PCI. [[07 - Wallet and Ledger]] |
+| 13 | Payments backend | State + idempotency, not PCI. [[MD-05 - Immutable Double-Entry Ledger and Reconciliation Loop|MD-05]] |
 
 ### Tier 3 — know the shape, 10-minute sketch
 
@@ -194,7 +194,7 @@ Run these against whatever you drew. They're where a good design shows it was ac
 | 4 | Worker processes the same Kafka message twice. | [[07 - Async Messaging]] |
 | 5 | One user is 10% of traffic (hot key / hot shard). | [[06 - Caching]] · [[05 - Databases]] |
 | 6 | Queue lag grows for 40 minutes. | [[07 - Async Messaging]] |
-| 7 | Payment succeeds, your DB write fails (or the inverse). | [[07 - Wallet and Ledger]] |
+| 7 | Payment succeeds, your DB write fails (or the inverse). | [[MD-05 - Immutable Double-Entry Ledger and Reconciliation Loop|MD-05]] |
 | 8 | Deploy: cache flush. | [[06 - Caching]] · [[19 - Deployment and Infrastructure]] |
 | 9 | Clock skew on two rate-limiter nodes. | [[MD-02 - Traffic Shaper Rate Limiter and Waiting Room\|Rate limiter]] · [[17 - Consistency Time and Consensus]] |
 | 10 | Search index is 2 minutes stale. Is that OK? | [[09 - Storage Search and Geo]] |
