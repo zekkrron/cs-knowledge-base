@@ -1,5 +1,8 @@
 {
   "enabledCssSnippets": [
     "print-fit"
-  ]
+  ],
+  "cssTheme": "",
+  "accentColor": "",
+  "theme": "moonstone"
 }

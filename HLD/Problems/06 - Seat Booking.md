@@ -14,16 +14,16 @@ updated: 2026-11-09
 
 Defaults are assumptions unless a source is given.
 
-| Question | Default assumption | If different |
-|---|---|---|
-| Movies (assigned seats, many small shows) or live events (stadium, sections, general admission)? | Both: movies daily, a few mega events a month | GA sections → T3 |
-| Who owns the inventory? | We do | Cinema chain's own ticketing system → T5 |
-| Hold duration? | 10 min to pay | UPI collect / slow banks → T2 |
-| Seats per booking? | Up to 10, all-or-nothing | Adjacent seats → T4 |
-| Payment? | Third-party PSP (Razorpay-like), UPI and cards | Wallet → [[07 - Wallet and Ledger]] |
-| Scale? | *Assumed* ~1M tickets/day normally (from BookMyShow's ~29M record month); mega sales with 1 crore+ users (Coldplay 2024) | Drives V1 and V3 |
-| Anti-scalping requirements? | Yes, per-user caps and bot defence | T1 |
-| Box office / offline sales on the same inventory? | Yes, at venues | T6 |
+| Question                                                                                         | Default assumption                                                                                                       | If different                             |
+| ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------- |
+| Movies (assigned seats, many small shows) or live events (stadium, sections, general admission)? | Both: movies daily, a few mega events a month                                                                            | GA sections → T3                         |
+| Who owns the inventory?                                                                          | We do                                                                                                                    | Cinema chain's own ticketing system → T5 |
+| Hold duration?                                                                                   | 10 min to pay                                                                                                            | UPI collect / slow banks → T2            |
+| Seats per booking?                                                                               | Up to 10, all-or-nothing                                                                                                 | Adjacent seats → T4                      |
+| Payment?                                                                                         | Third-party PSP (Razorpay-like), UPI and cards                                                                           | Wallet → [[07 - Wallet and Ledger]]      |
+| Scale?                                                                                           | *Assumed* ~1M tickets/day normally (from BookMyShow's ~29M record month); mega sales with 1 crore+ users (Coldplay 2024) | Drives V1 and V3                         |
+| Anti-scalping requirements?                                                                      | Yes, per-user caps and bot defence                                                                                       | T1                                       |
+| Box office / offline sales on the same inventory?                                                | Yes, at venues                                                                                                           | T6                                       |
 
 ---
 
@@ -143,11 +143,13 @@ stateDiagram-v2
 
 > [!important] The most drilled component
 > Two users, one seat: the hold and its locking come up in nearly every report (Amazon L5, WEX SDE3, Junglee Games, Meesho, an SDE-2 BookMyShow round, Hello Interview, PracHub). Expect "pessimistic or optimistic locking?" and "what if payment takes longer than the hold?" first. The answers are this section and T2.
+>
+> **Verdict:** optimistic-style: the hold is one conditional `UPDATE … WHERE status = 'free'` (the status column is the version check, 0 rows = someone else won, return 409), so the row lock lasts only milliseconds and no pessimistic lock is ever held across payment.
 
 ### Why not the obvious alternatives
 
-- **`SELECT … FOR UPDATE` for 10 minutes:** a lock held across a human paying. Connections pile up, deadlocks multiply, a crashed pod holds locks until timeout. The hold is **state plus a clock** instead. `FOR UPDATE` is fine only inside a millisecond transaction that reads then branches, with IDs locked in sorted order.
-- **Redis `SET NX` per seat as the source of truth:** a Redis failover can lose recent writes, and a TTL racing a late payment can double-sell. The status column is already the mutex.
+- **`SELECT … FOR UPDATE` for 10 minutes:** a lock held across a human paying. Holding a lock means holding a database connection. People take time to find their credit cards and get distracted by text messages even. During that time, connections pile up, deadlocks multiply, a crashed pod holds locks until timeout. The hold is **state plus a clock** instead. `FOR UPDATE` is fine only inside a millisecond transaction that reads then branches, with IDs locked in sorted order.
+- **Redis `SET NX` per seat as the source of truth:**  Redis is usually configured for asynchronous replication from master nodes to replica nodes and thus a Redis failover can lose recent writes, and a TTL racing a late payment can double-sell. The status column is already the mutex.
 
 ### What V0 can't handle
 
