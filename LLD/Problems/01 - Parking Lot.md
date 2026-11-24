@@ -187,6 +187,23 @@ static long billableHours(Instant entry, Instant exit) {          // 0 min -> 1 
 - **Driver:** `Demo` builds the service and calls it directly. If the prompt is the command-line version, `ParkingLotCli` is added on top: it parses commands, calls the same methods and prints the prompt's strings. Nothing in `model/`, `service/` or the strategies changes.
 - **Single-threaded on purpose:** one caller. Say so; E2 is ready.
 
+### 50-Minute Cut
+
+For a 45–60 minute LLD discussion round (Amazon, Atlassian, Uber style) instead of a 90-minute machine-coding round. Same design as V0; you type a subset of it and say the rest.
+
+- **Type, in this order** (files from `v0/`):
+    1. `VehicleType`, `Vehicle`, `Ticket`, `Receipt` (records and the enum, ~30 lines)
+    2. `Slot` (`accepts`, `park`, `vacate`; skip the `vehicle()` getter), `Floor`, `ParkingLot` (skip the constructor validation)
+    3. `SlotAllocationStrategy` + `LowestFloorFirstStrategy`, `PricingStrategy` + `HourlyPricing`
+    4. `ParkingLotService`: fields, constructor, `park`, `unpark` only
+    5. One `DomainException` (unchecked) for "Parking Lot Full" and "Invalid Ticket"
+- **Say instead of typing:**
+    + "Errors are a small hierarchy: validation, not found, conflict. I'm using one base type here."
+    + "Input is validated at the edges: blank plate, non-positive floors."
+    + "`freeSlots` / `occupiedSlots` are a filter over floors by type and free state."
+    + "A `Demo` main, or a CLI if the prompt has commands, only calls the service; the service never prints."
+- **Size and time:** about 160–180 lines, ~20 minutes of typing while explaining. That leaves 10–15 minutes for E1 (per-type pricing, one new class) or E2 (concurrent gates, the most likely follow-up), talked through with the key CAS loop typed.
+
 ---
 
 ## 6. Trace

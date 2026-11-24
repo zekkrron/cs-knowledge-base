@@ -140,6 +140,72 @@ You will be asked to design this. A rate limiter caps how many requests a caller
 | **Sliding window counter** | Weighted mix of previous and current window counts | Approximate | Good compromise at scale |
 | **Token bucket** | Tokens refill at rate R, burst up to B | Two parameters to tune | **The default answer** |
 | **Leaky bucket** | Requests drain at a constant rate | Smooths, but may delay requests | Protecting a downstream that needs a steady rate |
+
+### The Six Algorithms in Redis
+
+#### 1. Fixed Window Counter
+
+Simple idea: Chop time into fixed blocks (like 10:00, 10:01) and count requests in each block. Once the counter hits 100, block everything until the next minute starts.
+
+Redis key & orchestration: `rl:fw:user42:1732285200` (String, where the number is the current minute's timestamp). On each request, run `INCR`. If the result is 1, set `EXPIRE` to 60 seconds. If the count exceeds 100, reject. Run `INCR` and `EXPIRE` together in one Lua script (or `MULTI`), otherwise a crash between the two leaves a key that never expires and blocks the user for good.
+
+Behaviour: Hard, instant quota reset at the start of every new window.
+
+Problem: The 2x boundary spike. A user can send 100 requests at 10:00:59 and another 100 at 10:01:01, pushing 200 requests through in 2 seconds despite a 100/min limit.
+
+#### 2. Sliding Window Log
+
+Simple idea: Write down the exact timestamp of every single request. When a new one arrives, erase timestamps older than 60 seconds and check how many are left.
+
+Redis key & orchestration: `rl:swl:user42` (Sorted Set / ZSET). Inside Lua: `ZREMRANGEBYSCORE` deletes timestamps older than `now - 60s`, `ZCARD` counts the rest, and if the count is under 100, `ZADD` stores the new timestamp (with a unique member ID) and refreshes `EXPIRE`. A rejected request is not added, otherwise a client that keeps retrying would never get back under the limit.
+
+Behaviour: Strictly enforces the limit across any rolling 60-second span, with zero boundary spikes.
+
+Problem: High memory use. Storing an entry per request gets expensive fast if your limits are high (e.g., 10,000 req/min across millions of users).
+
+#### 3. Sliding Window Counter
+
+Simple idea: A practical middle ground. Keep just two fixed-window counts (previous minute and current minute) and blend them using a weighted average based on how far you are into the current minute.
+
+Redis key & orchestration: Two String keys using hash tags so Redis Cluster keeps them on the same shard, named by minute so they roll over on their own: `rl:swc:{user42}:1732285140` (previous minute) and `rl:swc:{user42}:1732285200` (current minute), each with a TTL of 120 seconds. Inside Lua: if you are 30% into the current minute, estimate load as `(prev_count * 0.70) + curr_count`. If under 100, `INCR` the current key.
+
+Behaviour: Smooths traffic across window edges almost as well as Sliding Window Log, with tiny memory overhead.
+
+Problem: Slight approximation. It assumes last minute's requests were spread evenly, so it is not 100% mathematically exact (though close enough for most production APIs).
+
+#### 4. Token Bucket
+
+Simple idea: Picture a bucket that holds up to N tokens and refills at a steady rate (e.g., 10 tokens every 6 seconds). Each request spends 1 token; an empty bucket means rejected.
+
+Redis key & orchestration: `rl:tb:user42` (Hash with two fields: `tokens` and `ts`, the last refill time). Inside Lua ([[MD-02 - Traffic Shaper Rate Limiter and Waiting Room|MD-02]] has the script): read both with `HMGET` (a new key starts with a full bucket), add newly earned tokens as `(now - ts) × rate`, capped at bucket size, allow if at least `cost` tokens exist and subtract `cost`, save both back with `HSET`, and `PEXPIRE` the key after twice the time a full refill takes. `cost` is 1 for a normal request and more for heavy ones (LLM tokens, bulk APIs).
+
+Behaviour: Allows controlled short bursts (up to full bucket size) while enforcing a steady long-term average rate.
+
+Problem: Downstream bursts & tuning. If a quiet user suddenly drains a full bucket at once, your backend still takes a sudden mini-spike; picking the right burst capacity vs. refill rate also needs tuning.
+
+#### 5. GCRA (Generic Cell Rate Algorithm)
+
+Simple idea: Does the exact same job as Token Bucket, but without tracking token counts. Instead, it stores one single future timestamp called TAT (Theoretical Arrival Time), essentially "when will the user's quota debt reach zero?"
+
+Redis key & orchestration: `rl:gcra:user42` (single String storing one timestamp, TAT). Via Lua or the `redis-cell` module (`CL.THROTTLE`): allow the request if `TAT - now` is within the allowed burst window. If allowed, push TAT forward by one request interval (`max(TAT, now) + interval`). A native `GCRA` command was built during Redis 8.8 development but held out of the release (disabled by default), so don't count on it; Redis 8.8 ships `INCREX`, a window-counter limiter, instead.
+
+Behaviour: Identical burst handling and steady rate to Token Bucket, uses minimal memory (just one number per user), and gives exact Retry-After times for free (`TAT - now - burst window`).
+
+Problem: Harder to debug mentally. Looking at a raw future timestamp in Redis is less intuitive than seeing `tokens: 4`, and it relies on consistent clocks (always use Redis server `TIME`, not app server clocks).
+
+#### 6. Leaky Bucket
+
+Simple idea: A bucket with a small hole at the bottom. Requests pour in at any speed, drip out at a strictly constant rate, and overflow (get dropped) when the bucket fills up.
+
+Redis key & orchestration: Implemented in two ways:
+
+- Queue (traffic shaping): `rl:lb:q:user42` (List). `RPUSH` requests if `LLEN` is under capacity; a worker runs `LPOP` at a fixed interval to process them.
+- Meter (policing): `rl:lb:m:user42` (Hash with `level` and `last_leak_ts`). Lua reduces `level` based on elapsed time and rejects if adding 1 overflows capacity.
+
+Behaviour: Queue mode guarantees a flat, perfectly smooth output rate with zero bursts hitting downstream servers; meter mode immediately drops excess requests without delaying accepted ones.
+
+Problem: Latency and stale requests. In queue mode, even harmless bursts sit waiting in line, adding latency and risking timeouts when traffic stays heavy.
+
 ### Sliding Window Log
 
 The Sliding Window Log algorithm enforces rate limits by keeping an exact chronological record of every single request made by a user.

@@ -59,6 +59,7 @@ Order of the rest: the ranked list in [[Problem Catalog]].
 
 - **Plain Java only.** Machine-coding rounds forbid databases and frameworks and expect in-memory code. Solution code imports only `java.*`. Maven exists only to compile and run JUnit in the vault.
 - **Java 21** (`maven.compiler.release`), no preview features, `-Xlint:all` clean. Money in paise as `long` (₹30 = `30_00`), never `double`; format as `Rs 30.00` only in the receipt or driver.
+- **50-minute rounds get no third snapshot.** Each note's *50-Minute Cut* (template §5) lists which V0 files and methods to type and what to say instead, so V0 stays the single source of code.
 - **Two snapshots per problem:** `lld.<problem>.v0` (exactly what you'd submit at minute 90) and `lld.<problem>.full` (V0 + every ladder extension). Javadoc on each class or method says which extension introduced it.
 - **Self-contained snapshots.** No shared library, no imports between `v0` and `full`, none between problems. The small boilerplate (exceptions, clock, driver) is duplicated on purpose, because in the round you type it yourself.
 - **Folder layout inside each snapshot** (same names everywhere; omit folders a problem doesn't need):
@@ -117,6 +118,8 @@ Who owns which rule (data rules in the owning entity, workflow in the orchestrat
 V0 Mermaid classDiagram.
 ## 5. V0 — the 90-Minute Build
 Folder layout, key excerpts, exceptions, driver; list the boilerplate files to type first.
+### 50-Minute Cut
+For a 45–60 minute LLD discussion round. A reading order through V0, not new code: the V0 files and methods to type, in order; one-sentence lines to say instead of typing the rest (exception subtypes, validation, display/query methods, driver); size in lines and minutes, and which extension to spend the leftover time on.
 ## 6. Trace
 One scenario, operation by operation.
 ## 7. Evidence

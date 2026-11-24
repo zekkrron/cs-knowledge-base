@@ -152,6 +152,20 @@ public boolean tryAcquire(String clientId) {
 - **Errors:** `ValidationException` for `maxRequests ≤ 0`, window under 1 ms, blank client id.
 - **V0 limitation, stated:** `configure` resets the client's counter and is meant for setup; live changes are E3.
 
+### 50-Minute Cut
+
+For a 45–60 minute LLD discussion round (Atlassian, Uber, Microsoft style) instead of a 90-minute machine-coding round. Same design as V0; you type a subset of it and say the rest.
+
+- **Type, in this order** (files from `v0/`):
+    1. `RateLimit` (record: permits, window)
+    2. `ClientLimiter` (interface) and `FixedWindowLimiter`
+    3. `RateLimiterService`: fields, constructor, `configure`, `tryAcquire` with the `compute` block (skip `requireClient`)
+- **Say instead of typing:**
+    + "Client id and limits are validated at the edge; bad input is a `ValidationException`."
+    + "Time comes from an injected `Clock`, so tests use a manual clock."
+    + "A `Demo` main calls the service; nothing here prints."
+- **Size and time:** about 60 lines, ~10 minutes of typing while explaining. V0 is small, so **use the spare time on E1**: interviewers almost always ask for a better algorithm next. Type `TokenBucketLimiter` (~25 lines, lazy refill) and name sliding log and sliding counter with their trade-off. If time is left, talk through E3 (live policy change) using the `compute` block you already typed.
+
 ---
 
 ## 6. Trace

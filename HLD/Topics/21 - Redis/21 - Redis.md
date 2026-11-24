@@ -48,7 +48,7 @@ These are the jobs that come up in interviews as "oh, and we'll also use Redis f
 
 ### Rate limiting
 
-`INCR` plus `EXPIRE` on a key per user per window is a fixed-window counter. A sorted set with timestamps as scores gives a sliding window: add the current timestamp, trim everything older than the window, count what's left. Full algorithm comparison: [[08 - Reliability]].
+`INCR` plus `EXPIRE` on a key per user per window is a fixed-window counter. A sorted set with timestamps as scores gives a sliding window: add the current timestamp, trim everything older than the window, count what's left. All six algorithms with their Redis keys: [[08 - Reliability#The Six Algorithms in Redis]].
 
 ### Pub/sub
 

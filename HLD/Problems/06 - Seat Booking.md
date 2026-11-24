@@ -14,16 +14,16 @@ updated: 2026-11-09
 
 Defaults are assumptions unless a source is given.
 
-| Question                                                                                         | Default assumption                                                                                                       | If different                             |
-| ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------- |
-| Movies (assigned seats, many small shows) or live events (stadium, sections, general admission)? | Both: movies daily, a few mega events a month                                                                            | GA sections → T3                         |
-| Who owns the inventory?                                                                          | We do                                                                                                                    | Cinema chain's own ticketing system → T5 |
-| Hold duration?                                                                                   | 10 min to pay                                                                                                            | UPI collect / slow banks → T2            |
-| Seats per booking?                                                                               | Up to 10, all-or-nothing                                                                                                 | Adjacent seats → T4                      |
+| Question                                                                                         | Default assumption                                                                                                       | If different                                                                          |
+| ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------- |
+| Movies (assigned seats, many small shows) or live events (stadium, sections, general admission)? | Both: movies daily, a few mega events a month                                                                            | GA sections → T3                                                                      |
+| Who owns the inventory?                                                                          | We do                                                                                                                    | Cinema chain's own ticketing system → T5                                              |
+| Hold duration?                                                                                   | 10 min to pay                                                                                                            | UPI collect / slow banks → T2                                                         |
+| Seats per booking?                                                                               | Up to 10, all-or-nothing                                                                                                 | Adjacent seats → T4                                                                   |
 | Payment?                                                                                         | Third-party PSP (Razorpay-like), UPI and cards                                                                           | Own wallet → [[MD-05 - Immutable Double-Entry Ledger and Reconciliation Loop\|MD-05]] |
-| Scale?                                                                                           | *Assumed* ~1M tickets/day normally (from BookMyShow's ~29M record month); mega sales with 1 crore+ users (Coldplay 2024) | Drives V1 and V3                         |
-| Anti-scalping requirements?                                                                      | Yes, per-user caps and bot defence                                                                                       | T1                                       |
-| Box office / offline sales on the same inventory?                                                | Yes, at venues                                                                                                           | T6                                       |
+| Scale?                                                                                           | *Assumed* ~1M tickets/day normally (from BookMyShow's ~29M record month); mega sales with 1 crore+ users (Coldplay 2024) | Drives V1 and V3                                                                      |
+| Anti-scalping requirements?                                                                      | Yes, per-user caps and bot defence                                                                                       | T1                                                                                    |
+| Box office / offline sales on the same inventory?                                                | Yes, at venues                                                                                                           | T6                                                                                    |
 
 ---
 
@@ -149,7 +149,10 @@ stateDiagram-v2
 ### Why not the obvious alternatives
 
 - **`SELECT … FOR UPDATE` for 10 minutes:** a lock held across a human paying. Holding a lock means holding a database connection. People take time to find their credit cards and get distracted by text messages even. During that time, connections pile up, deadlocks multiply, a crashed pod holds locks until timeout. The hold is **state plus a clock** instead. `FOR UPDATE` is fine only inside a millisecond transaction that reads then branches, with IDs locked in sorted order.
-- **Redis `SET NX` per seat as the source of truth:**  Redis is usually configured for asynchronous replication from master nodes to replica nodes and thus a Redis failover can lose recent writes, and a TTL racing a late payment can double-sell. The status column is already the mutex.
+- **Redis `SET NX` per seat as the source of truth** (`SET seat:A12 user1 NX EX 600`: "claim it if nobody has, expire in 10 minutes"). It fails in two ways:
+    + **Failover loses holds.** Redis replicates to its replica asynchronously. If the master acks user 1's `SET` and dies before replicating it, the promoted replica has no key for A12, so user 2's `SET NX` succeeds too. Two people now hold one seat.
+    + **The TTL can expire under a payment.** User 1 pays at minute 10:05; the key expired at 10:00 and user 2 claimed the seat. The webhook arrives for user 1, and if the confirm path doesn't re-check who holds the seat, both are sold it.
+    + Postgres doesn't have either problem: the `status` column is already the mutex, the synchronous standby keeps it on failover, and confirm checks `held_by` in the same `UPDATE`. Redis would be a second copy of the truth that can disagree with the first.
 
 ### What V0 can't handle
 

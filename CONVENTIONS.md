@@ -425,7 +425,7 @@ Each card: what the interviewer says → what it hits → the answer → which v
 
 ## LLD Problems
 
-The complete procedure for LLD / machine-coding problems (ideology, V0 and extension ladder, research steps, code layout and driver rules, diagrams, note template, study order) lives in one place: `LLD/Problems/README.md`. Read it before writing or changing any LLD problem. As in HLD, every version gets a Mermaid diagram: V0 and each extension (E1–E4), plus the full version (rules in its §4).
+The complete procedure for LLD / machine-coding problems (ideology, V0 and extension ladder, research steps, code layout and driver rules, diagrams, note template, study order) lives in one place: `LLD/Problems/README.md`. Read it before writing or changing any LLD problem. As in HLD, every version gets a Mermaid diagram: V0 and each extension (E1–E4), plus the full version (rules in its §4). Every note also has a *50-Minute Cut* under its V0 section: what to type from V0 and what to say instead for a 45–60 minute discussion round (no separate code folder).
 
 ---
 

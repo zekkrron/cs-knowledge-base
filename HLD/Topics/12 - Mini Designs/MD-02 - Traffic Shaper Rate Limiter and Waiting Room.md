@@ -99,6 +99,8 @@ flowchart LR
 | GCRA | 1 timestamp (theoretical arrival time) | Same as a token bucket with a single value; cheap in Redis |
 | Leaky bucket (queue) | queue | Smooths output; adds latency |
 
+Each of these explained with its idea, Redis keys and orchestration, behaviour and problem: [[08 - Reliability#The Six Algorithms in Redis]].
+
 ### Token bucket in Redis Lua (atomic)
 
 ```lua

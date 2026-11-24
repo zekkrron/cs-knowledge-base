@@ -53,22 +53,29 @@ created: 2026-10-24
 - **Trigger:** must survive a full region loss, but hours of RTO are acceptable.
 - **Change:** continuous backups (WAL archiving / snapshots) copied to a second region; infrastructure as code to rebuild there. RPO minutes, RTO hours.
 
-### Step 2 — Warm standby (active-passive)
+### Step 2 — Pilot light (data live, compute off)
 
-- **Trigger:** RTO must be minutes.
+- **Trigger:** restoring from backups loses too much data (minutes of RPO are not acceptable), but paying for a second running stack is not justified; RTO of tens of minutes is fine. Typical for regulated, cost-sensitive systems.
+- **Change:** keep the **data layer live** in the DR region: an async cross-region replica of every database, receiving changes continuously. Keep the **app tier off**: no servers running, only machine images, container images and infrastructure as code ready to launch. On failover: promote the replica, launch and scale the app tier from zero, then switch DNS or the global LB. RPO = replication lag (seconds); RTO = tens of minutes, mostly the time to boot and warm the app tier.
+- The name comes from a gas heater: only the small pilot flame burns all the time, and the full burner is lit when needed.
+
+### Step 3 — Warm standby (active-passive)
+
+- **Trigger:** RTO must be minutes, so there's no time to build the app tier from zero.
 - **Change:** an async cross-region replica of every database, a scaled-down app tier in the DR region, DNS or global LB failover with health checks. Promote the replica on failover. RPO = replication lag at the moment of failure (seconds).
+- **Difference from pilot light:** the data layer is the same (a live async replica, same RPO). The difference is the app tier: in pilot light it's **off** and must be launched on failover (tens of minutes); in warm standby a small copy is **already running** and passing health checks, so failover only promotes the database, scales the running tier up and moves traffic (minutes). You pay for that always-on small tier (~1.5× vs ~1.3×).
 
-### Step 3 — Active-active for reads
+### Step 4 — Active-active for reads
 
 - **Trigger:** users far from the primary region need low-latency reads.
 - **Change:** read replicas and caches in each region serve reads locally; writes go to the primary region. Read-your-writes needs routing the writer back to the primary for a short time.
 
-### Step 4 — Geo-partitioned writes (home region per record)
+### Step 5 — Geo-partitioned writes (home region per record)
 
 - **Trigger:** write latency to a far primary is unacceptable, or residency rules require data to stay in a country.
 - **Change:** each user/tenant/event has a **home region** where its records are written; requests are routed there. Each region is primary for its partition and a replica for others'. No conflicts, because every record has one writer.
 
-### Step 5 — Multi-writer for conflict-tolerant data
+### Step 6 — Multi-writer for conflict-tolerant data
 
 - **Trigger:** some data must be writable everywhere even during a partition (counters, likes, presence, carts).
 - **Change:** multi-region-writable stores (DynamoDB global tables, Cassandra multi-DC, CRDT-based stores) with explicit conflict rules: counters as CRDT increments, sets as add/remove CRDTs, last-write-wins only where losing a concurrent update is acceptable.
@@ -120,6 +127,8 @@ flowchart LR
 
 ## 5. Decision Tables
 
+Rows are in the same order as the steps in *Evolution of the Block* (Step 0 → Step 6).
+
 | Topology | RPO | RTO | Cost | Pick when |
 |---|---|---|---|---|
 | Multi-AZ, one region | ~0 | 1–2 min | 1× | Default |
@@ -128,6 +137,7 @@ flowchart LR
 | Warm standby | seconds | minutes | ~1.5× | Payments, bookings with an RTO in minutes |
 | Active-active reads, single write region | seconds | minutes (writes) | ~2× | Global reads, writes tolerate one region |
 | Geo-partitioned active-active | seconds per partition | seconds (other partitions unaffected) | ~2×+ | Global writes, residency, very low RTO |
+| Multi-writer (conflict-tolerant data only) | seconds (writes not yet replicated when a region dies) | ~0 (other regions keep accepting writes) | ~2×+ | Counters, likes, presence, carts; never money or inventory |
 
 | Replication | Write latency | Pick when |
 |---|---|---|

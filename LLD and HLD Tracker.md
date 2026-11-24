@@ -16,7 +16,7 @@ created: 2026-11-17
 - [ ] 3 · Elevator System
 
 **HLD**
-- [ ] 1 · [[06 - Seat Booking]]
+- [x] 1 · [[06 - Seat Booking]]
 - [ ] 2 · Rate Limiter (distributed)
 - [ ] 3 · Notification System (push, SMS, email)
 
