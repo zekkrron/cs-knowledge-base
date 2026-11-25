@@ -285,21 +285,36 @@ classDiagram
 
 | Race | V0 behaviour | Fix in full |
 |---|---|---|
-| Two gates pick the same free slot | Both park it | `Slot` keeps occupants in an `AtomicReference`; `tryOccupy` is a CAS loop. The loser tries the next candidate. |
+| Two gates pick the same free slot | Both park it | `Slot` keeps its vehicle in an `AtomicReference`; `tryOccupy` is one `compareAndSet(null, v)`. The loser tries the next candidate. |
 | Two exits present one ticket | Both could unpark and bill | `activeTickets` is a `ConcurrentHashMap`; `remove(id)` returns the ticket to exactly one caller. |
 | Same plate at two gates | Parked twice | `parkedRegistrations.add(reg)` on a concurrent set is atomic; the second gets `Vehicle already parked`. |
 | Ticket id reused with the slot | `PR1234_1_4` issued again | Id carries an `AtomicLong` sequence: `PR1234_1_4_17`. |
 
 - **Added:** nothing new as a class; the change is inside existing ones.
-- **Edited:** `Slot` (atomic occupants, `tryOccupy`/`vacate(v)`), `SlotAllocationStrategy` returns an ordered **list of candidates** instead of one slot, `ParkingLotService` (concurrent maps, sequence), `Ticket` id format.
+- **Edited:** `Slot` (the vehicle in an `AtomicReference`, `tryOccupy`/`vacate(v)`), `SlotAllocationStrategy` returns an ordered **list of candidates** instead of one slot, `ParkingLotService` (concurrent maps, sequence), `Ticket` id format.
+- **E2 needs only one vehicle per slot.** The list of occupants and the capacity argument arrive with E3 (several bikes in one car slot); the `full` code shows that final form.
 
 ```java
-for (Slot slot : allocation.candidates(lot, vehicle, rules)) {
-    if (slot.tryOccupy(vehicle, rules.capacity(slot.type(), vehicle.type()))) {   // CAS: one gate wins
+// Slot: one atomic claim, no lock
+private final AtomicReference<Vehicle> vehicle = new AtomicReference<>();
+
+public boolean tryOccupy(Vehicle v) {
+    return v.type() == type && vehicle.compareAndSet(null, v);   // only one gate sees null
+}
+
+public boolean vacate(Vehicle v) {
+    return vehicle.compareAndSet(v, null);
+}
+
+// ParkingLotService.park
+if (!parkedRegistrations.add(reg)) {
+    throw new ConflictException("Vehicle already parked");
+}
+for (Slot slot : allocation.candidates(lot, vehicle)) {
+    if (slot.tryOccupy(vehicle)) {                                 // CAS: one gate wins
         Ticket ticket = new Ticket(lot.id() + "_" + slot.floor() + "_" + slot.number()
                 + "_" + sequence.incrementAndGet(), vehicle, slot.floor(), slot.number(),
-                slot.type(), clock.instant());
-        ticketByRegistration.put(reg, ticket);
+                clock.instant());
         activeTickets.put(ticket.id(), ticket);
         return ticket;
     }
@@ -328,8 +343,8 @@ classDiagram
         +candidates(ParkingLot, Vehicle) List~Slot~
     }
     class Slot {
-        -AtomicReference~List~Vehicle~~ occupants
-        +tryOccupy(Vehicle, int capacity) boolean
+        -AtomicReference~Vehicle~ vehicle
+        +tryOccupy(Vehicle) boolean
         +vacate(Vehicle) boolean
     }
     class Ticket { <<record>> id lot_floor_slot_seq }
@@ -352,11 +367,11 @@ sequenceDiagram
     G2->>S: candidates(car KA-02)
     S-->>G1: [1-4, 1-5, ...]
     S-->>G2: [1-4, 1-5, ...]
-    G1->>A: tryOccupy (CAS [] → [KA-01])
+    G1->>A: tryOccupy (CAS null → KA-01)
     A-->>G1: true
-    G2->>A: tryOccupy (CAS fails, re-read: full)
+    G2->>A: tryOccupy (CAS null → KA-02 fails: holds KA-01)
     A-->>G2: false
-    G2->>B: tryOccupy (CAS [] → [KA-02])
+    G2->>B: tryOccupy (CAS null → KA-02)
     B-->>G2: true
     G1->>T: put(PR1234_1_4_17)
     G2->>T: put(PR1234_1_5_18)
@@ -368,7 +383,7 @@ sequenceDiagram
 - **Evidence:** Uber SDE2 (LC 5938462, "4 bikes in one car spot in busy times"), PracHub (spot sizes and compatibility), DesignGurus (spot sizes). Confidence **medium**.
 - **The modelling fix:** slot size stops being the vehicle type. `SlotType` (BIKE, CAR, TRUCK) sits next to `VehicleType`.
 - **Added:** `SlotType`, `CompatibilityRules` (vehicle type → allowed slot types in preference order; capacity per slot; `bikeSharing` switch).
-- **Edited:** `Slot` holds a `SlotType` and a list of occupants (same type only, up to capacity); the strategy ranks by preference, then already-shared slots first (pack bikes, keep whole car slots free), then floor and number; service gets `setBikeSharing`.
+- **Edited:** `Slot` holds a `SlotType`, and E2's single `AtomicReference<Vehicle>` becomes an `AtomicReference<List<Vehicle>>` of occupants (same type only, up to capacity). `tryOccupy` gains a `capacity` argument and becomes a CAS loop: read the list, check it fits, copy it with the new vehicle, swap it in, and retry if another gate changed it first. The strategy's `candidates` receives the rules and ranks by preference, then already-shared slots first (pack bikes, keep whole car slots free), then floor and number; service gets `setBikeSharing`.
 
 ```java
 public static CompatibilityRules defaults() {
@@ -419,7 +434,7 @@ classDiagram
     classDef added fill:#d4f7d4,stroke:#2e7d32
 ```
 
-- Edited, not added: `Slot` (slot type, list of occupants), `Floor` (builds slots by `SlotType`), `SlotAllocationStrategy` (receives the rules), `ParkingLotService` (`setBikeSharing`, queries by `SlotType`).
+- Edited, not added: `Slot` (slot type; E2's single vehicle becomes a list of occupants with a capacity), `Floor` (builds slots by `SlotType`), `SlotAllocationStrategy` (receives the rules), `ParkingLotService` (`setBikeSharing`, queries by `SlotType`).
 
 ### E4 — "Find a car by registration (the customer lost the ticket). List cars of a colour. Reject a plate that is already inside."
 

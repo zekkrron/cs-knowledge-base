@@ -88,6 +88,7 @@ lld/<problem>/<v0|full>/
 **Every version gets a Mermaid diagram: V0, each extension E1–E4, and the full version.** No extension is left without one.
 
 - One **V0 class diagram**.
+- **Each delta shows the state after that extension, not the final code.** The `full` snapshot is V0 plus every extension, so drawing E2 from it leaks E3's and E4's members in. Draw and excerpt each extension with only what it and the earlier ones need; the later extension then lists what it changes.
 - A **delta diagram for every extension**: only the classes involved, with added classes highlighted (`cssClass "A,B" added` + `classDef added fill:#d4f7d4,stroke:#2e7d32`) and a line listing what was edited rather than added. An extension that only adds one implementation still gets a small one: the interface, the existing implementation and the new class highlighted, or the service with its new methods and fields.
 - A **sequence diagram** for concurrency or multi-step behaviour (races, refunds, retries), in addition to the delta diagram when the structure also changes.
 - One **full-version class diagram** after the ladder.

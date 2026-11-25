@@ -1,0 +1,3 @@
+in parkinglot LLD look at E2 delta. there you will realize that in E2 sepcifically there was no need to bring Slot to have a list of Vehicle as occupants rather than an Occupant... the need actually comes in E3 but since the final code is such that we end up writing the E2 also as occupants and that shows up in the delta diagram as well, which in my opinion should not have been the case.
+
+Do you agree or am I wrong here
