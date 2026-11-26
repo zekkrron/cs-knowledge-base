@@ -93,6 +93,70 @@ def eval_case(case) -> dict:
     }
 ```
 
+- **Retrieval metrics in one line each** (detail in [[06 - RAG Ingestion and Indexing Pipeline]]):
+    + **recall@k**: share of questions where a correct chunk is in the top k. Measures "did we fetch it at all".
+    + **MRR** (mean reciprocal rank): average of `1 / rank of the first correct chunk`. Rewards putting one right answer high.
+    + **nDCG@k** (normalised discounted cumulative gain): uses graded relevance and discounts by position (`relevance / log2(rank + 1)`), normalised against the ideal ordering. Use it when several chunks are relevant to different degrees, for example to judge a reranker.
+    + **context precision**: share of retrieved chunks that are relevant. Low precision means noise in the prompt.
+
+---
+
+## Evaluating Multi-Turn Agents: Simulated Users, State Grading and pass^k
+
+- Single-turn evals don't cover the agents people actually deploy: a support or booking agent holds a **conversation**, asks clarifying questions, follows **business policy** and changes **real state**. The standard method for this comes from **τ-bench** (Sierra, 2024).
+
+### The method
+
+1. **Environment**: a sandbox database plus the agent's real tools (the domain API) and a written **policy** ("refunds only within 7 days; confirm with the user before any change").
+2. **Simulated user**: another LLM plays the customer, given a private goal and persona ("you want to exchange the blue shirt for size L; you don't remember the order id"). It answers the agent's questions and pushes back like a person would.
+3. **Grading on state, not transcript**: when the conversation ends, compare the **database** with an annotated **goal state**. An agent that says "I've processed your exchange" but never called the tool scores zero; fluency counts for nothing.
+4. **Repeat each task k times** and report **pass^k**.
+
+```mermaid
+flowchart LR
+    U[Simulated user LLM: private goal + persona] <-->|conversation| A[Agent under test]
+    A -->|tool calls| E[(Sandbox DB + domain API)]
+    P[Policy text] --> A
+    E --> G{Final DB state == goal state?}
+```
+
+### pass^k vs pass@k
+
+- **pass@k**: the chance that **at least one** of k attempts succeeds. Right for code generation, where you can run tests and keep the one that passes.
+- **pass^k** ("pass-hat-k"): the chance that **all** k attempts succeed, averaged over tasks. Right for agents that get **one attempt per customer** and can't check their own work. It measures **reliability**, not capability.
+- Example from the original τ-bench leaderboard (one 2024 model, retail domain): pass^1 69.2% falling to pass^4 46.2%. At 1,000 conversations a day, 69% success is still about 300 failed customers a day.
+- **Read the distribution, not the mean.** Keep per-task outcomes across the k runs and split tasks into three groups:
+    + **always pass**: solved;
+    + **always fail**: usually a missing tool, an ambiguous policy or an impossible goal, not a model problem. Later analysis found annotation errors and underspecified tasks capping τ-bench scores;
+    + **sometimes pass**: the only group where a better model or prompt is the fix.
+
+```python
+def pass_hat_k(results: dict[str, list[bool]], k: int) -> float:
+    """results: task_id -> outcomes of n >= k independent trials. Unbiased estimator."""
+    from math import comb
+    total = 0.0
+    for outcomes in results.values():
+        n, c = len(outcomes), sum(outcomes)
+        total += comb(c, k) / comb(n, k)          # P(k trials drawn from n all succeed)
+    return total / len(results)
+```
+
+### Simulated users are part of the measurement
+
+- The user simulator is an LLM too, so a score describes the **agent plus simulator pair**. Research in 2026 found agent success rates varying by up to **9 percentage points** depending on which model played the user, and simulators that were systematically too easy on hard tasks and too harsh on moderate ones.
+- Simulated users also give **more positive feedback** than real people do. Use them for regression and comparison, and calibrate against a sample of real conversations.
+- Make simulators adversarial on purpose: personas that withhold information, change their mind, try to talk the agent past the policy, or inject instructions.
+
+### Versions to know
+
+| Version | Adds |
+|---|---|
+| **τ-bench** (2024) | Airline and retail domains, state grading, pass^k |
+| **τ²-bench** (2025) | "Dual control": the user also has tools and acts on the shared environment; a telecom domain |
+| **τ³-bench** (2026) | Banking knowledge retrieval, full-duplex voice, and more than 75 task fixes |
+
+- Other agent benchmarks worth naming: **SWE-bench** (fix real GitHub issues, graded by hidden tests), **Terminal-Bench**-style terminal tasks, **WebArena** / OSWorld-style browser and desktop tasks ([[16 - Computer Use and Browser Agents]]). Quote any public score with its version and date; they move fast and task sets get fixed.
+
 ---
 
 ## LLM-as-a-Judge
@@ -209,6 +273,17 @@ Return JSON: {"supported": "...", "window_correct": "...", "no_overpromise": "..
 > - "Every incident becomes an eval case, and prompt or model changes are gated in CI like code."
 > - "I never semantically cache transactional intents; 'send to Ravi' and 'send to Rahul' are nearly identical vectors."
 > - "Embedding migrations are dual-write, backfill, shadow compare, then switch."
+> - "For conversational agents I use τ-bench's method: a simulated user with a private goal, real tools on a sandbox DB, and grading on the final database state, not the transcript."
+> - "I report pass^k, not pass@k: a support agent gets one attempt per customer, so reliability across repeats is the number that matters."
+> - "I split tasks into always-pass, always-fail and flaky; always-fail is usually a tool or policy gap, and only the flaky group responds to a better model."
+> - "The user simulator is part of the measurement; I calibrate it against real conversations."
+
+## Sources
+
+- Yao et al., *τ-bench: A Benchmark for Tool-Agent-User Interaction in Real-World Domains* (2024). https://arxiv.org/abs/2406.12045 · leaderboard: https://github.com/sierra-research/tau-bench
+- Future AGI, *What Tau-Bench Actually Measures* (August 2026): pass^k, state grading, versions. https://futureagi.com/blog/tau-bench-explained/
+- *Lost in Simulation: LLM-Simulated Users are Unreliable Proxies for Human Users in Agentic Evaluations* (2026). https://arxiv.org/pdf/2601.17087
+- *Mind the Sim2Real Gap in User Simulation for Agentic Tasks* (2026). https://arxiv.org/pdf/2603.11245
 
 ## Related Notes
 

@@ -96,8 +96,29 @@ created: 2026-10-11
 | **Plain function tools** | One app, a handful of tools |
 | **A2A** (agent cards, tasks) | Delegating long jobs to agents owned by other teams/vendors |
 
-- **Watch out:** malicious or over-privileged MCP servers; allow-list, pin, scope tokens.
+- **Watch out:** malicious or over-privileged MCP servers; allow-list, pin, scope tokens. Since the 2026-07-28 spec MCP is stateless (no handshake or session id) and Sampling and Roots are deprecated.
 - **Depth:** [[03 - Tool Engineering and Action Spaces]]
+
+### Hundreds of tools fill the context before the request is read
+
+| Option | Pick when |
+|---|---|
+| **Tool retrieval / `search_tools`** | Large catalogue of independent tools |
+| **Code mode** (tools as a code API; the model writes a script, results filtered in a sandbox) | Many tools, big payloads, multi-step data plumbing; you can run a sandbox |
+| **Skills** (name and description in context, body loaded on demand) | Repeatable procedures needing long instructions; measure, many skills don't help |
+
+- **Default:** route first, then tool search; code mode when payloads are large. **Depth:** [[03 - Tool Engineering and Action Spaces]]
+
+### Securing a remote MCP server
+
+- **Moves:** server is an OAuth 2.1 resource server; 401 with Protected Resource Metadata; PKCE; `resource` parameter so tokens are audience-bound; validate `iss`; reject and never forward tokens not issued for you; 403 `insufficient_scope` and step-up for more scopes.
+- **Depth:** [[03 - Tool Engineering and Action Spaces]]
+
+### An agent acts for a user across several services (whose permissions?)
+
+- **Signal:** a shared API key; the user's long-lived token handed to the agent; a privileged sub-agent acting on a low-privilege request.
+- **Moves:** agents as non-human identities with owners and expiry; short-lived task-scoped tokens; token exchange so services see "agent X for user Y"; re-authorise every hop against the originating user (confused deputy, OWASP ASI03); step-up approval for risky actions.
+- **Depth:** [[03 - Tool Engineering and Action Spaces]], [[10 - AI Gateway Security and Guardrails]]
 
 ---
 
@@ -138,6 +159,12 @@ created: 2026-10-11
 
 - **Moves:** persist only validated facts with provenance; hard user/tenant filters before similarity search; TTL and deletion that reaches embeddings; human review for procedural memory.
 - **Depth:** [[04 - State Memory and Context Engineering]], [[10 - AI Gateway Security and Guardrails]]
+
+### A task is bigger than one context window (hours or days of work)
+
+- **Signal:** each new session forgets the last; the agent one-shots and runs out of context, or declares victory early.
+- **Moves:** an initializer session writes a JSON feature list (all failing), a progress file, an `init.sh` and a first commit; every later session reads them and `git log`, smoke-tests, does one feature, tests it end to end, commits and appends progress. Durable execution handles crashes; this handles context limits.
+- **Depth:** [[04 - State Memory and Context Engineering]]
 
 ---
 
@@ -328,6 +355,22 @@ created: 2026-10-11
 - **Moves:** redaction/tokenisation before external calls; provider retention and zero-data-retention terms; data-residency routing; retention and access control on traces; deletion that reaches logs, caches, embeddings, memories.
 - **Depth:** [[10 - AI Gateway Security and Guardrails]], [[18 - Security]]
 
+### "How would you threat-model this agent?"
+
+- **Move:** list every tool, credential, memory store and peer agent; ask which of OWASP's agentic risks (ASI01 goal hijack … ASI10 rogue agents) reaches each; apply **Least Agency** first (remove autonomy and permissions), then controls; **Strong Observability** for the rest.
+- **Depth:** [[10 - AI Gateway Security and Guardrails]]
+
+### The system you need has no API (portal, partner dashboard, desktop app)
+
+| Option | Pick when |
+|---|---|
+| **Scripted automation** (Playwright, RPA) | Stable pages, fixed steps |
+| **Browser agent** (DOM + screenshot, semantic targets) | Varied tasks on web apps |
+| **Computer-use agent** (screenshots, whole desktop) | No DOM: desktop apps, canvases |
+
+- **Moves:** isolated browser per task from a worker pool; verify the postcondition against backend truth, read before any retry; credentials injected by the harness; MFA hands off to a human; domain allow-list; approval for money and sends.
+- **Depth:** [[16 - Computer Use and Browser Agents]]
+
 ---
 
 ## 8. Quality, Evals and Drift
@@ -345,6 +388,11 @@ created: 2026-10-11
 ### The LLM judge can't be trusted
 
 - **Moves:** binary specific rubrics; reference answers or source context; evaluate both orders (position bias); different model family (self-preference); length control (verbosity); calibrate against 100–200 human labels.
+- **Depth:** [[11 - Evals Observability and Silent Drift]]
+
+### Evaluating a conversational agent that changes state (support, booking)
+
+- **Moves:** τ-bench method: a simulated user with a private goal and persona, the agent's real tools on a sandbox DB, a written policy, and grading on the **final database state** against a goal state; repeat each task k times and report **pass^k** (all k succeed), not pass@k; split tasks into always-pass, always-fail (usually a tool or policy gap) and flaky; calibrate the simulator against real conversations.
 - **Depth:** [[11 - Evals Observability and Silent Drift]]
 
 ### System returns 200 OK but is wrong or looping

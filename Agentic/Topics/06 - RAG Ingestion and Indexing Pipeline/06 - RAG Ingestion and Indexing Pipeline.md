@@ -163,7 +163,7 @@ def reingest(doc) -> None:
 
 - Evaluate retrieval separately from generation ([[11 - Evals Observability and Silent Drift]]):
     + Build a set of real questions with the chunks or documents that answer them.
-    + Measure **recall@k** (is a correct chunk in the top k?), **MRR** (how high is the first correct one?), and **context precision** (how much of what's retrieved is relevant).
+    + Measure **recall@k** (is a correct chunk in the top k?), **MRR** (how high is the first correct one?), **nDCG@k** (are the most relevant chunks ranked highest, with graded relevance and a penalty for lower positions; the usual metric for judging a reranker), and **context precision** (how much of what's retrieved is relevant).
     + Change one thing at a time (chunk size, strategy, embedding model, contextual headers) and re-run.
 
 ---

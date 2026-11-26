@@ -173,6 +173,23 @@ def generate_sql(question: str, schema: str, max_rounds: int = 3) -> str:
 - Frameworks (LangGraph, OpenAI Agents SDK, LlamaIndex, CrewAI, and others) speed things up but add abstraction layers that hide prompts and control flow.
 - Interview stance: "I'd start with plain API calls or a thin graph framework so I can see every prompt and transition; I'd adopt a framework for durability, checkpointing and tracing, not to avoid understanding the loop."
 
+### Comparing the common choices
+
+- "LangGraph vs CrewAI vs AutoGen vs custom" is asked as its own question. Compare them on the same four axes every time: **how control flow is expressed**, **where state lives**, **durability and human-in-the-loop**, and **how much is hidden from you**.
+
+| Option | Control flow | State and durability | Hidden from you | Pick when |
+|---|---|---|---|---|
+| **Plain API calls (custom loop)** | Your code | Whatever you build | Nothing | Small agents, a fixed workflow with one agentic step, or when you must see every token |
+| **LangGraph** | An explicit graph of nodes and edges, cycles allowed | Typed state, per-node checkpoints (Postgres, Redis), pause/resume, time travel ([[09 - Durable Execution HITL and Realtime UX]]) | Little: you write the nodes and prompts | Production agents with branching, HITL and resumability |
+| **OpenAI Agents SDK** | A loop with agents, tools, **handoffs** between agents and guardrails | Sessions; tracing built in | The loop itself | Fast start with handoff-style multi-agent apps on OpenAI models |
+| **CrewAI** | Role-based "crews" of agents with goals, plus "flows" for deterministic steps | Framework-managed | A lot of prompt scaffolding (roles, backstories) | Prototyping role-based collaboration |
+| **AutoGen / AG2** | Agents exchanging messages in a conversation, including group chats | Conversation history | Turn-taking and speaker selection | Research and experiments with conversational multi-agent patterns |
+| **LlamaIndex** | Retrieval-first: indexes, query engines, plus agent workflows | Index stores | Retrieval pipeline defaults | RAG-heavy apps where retrieval is the core |
+| **Durable workflow engine (Temporal) + model calls** | Workflow code with activities | Event-sourced, survives crashes and long waits | Little | Business-critical, long-running processes with many side effects |
+
+- What decides it in practice: **durability and HITL** (can a run pause for a day and resume after a deploy?), **observability** (can you see the exact prompt sent?), **lock-in** (how hard is it to leave?), and whether the team can debug it at 2 a.m.
+- Frameworks change quickly; name the axis you're choosing on, not just the brand.
+
 ---
 
 ## Failure Modes

@@ -5,7 +5,7 @@ created: 2026-10-11
 # AI Gateway, Security and Guardrails
 
 > [!abstract] What this is
-> The control plane every LLM call should pass through, and the security model around agents: an **AI gateway** (one API across providers, fallbacks, hedging, caching, budgets), **token-aware rate limiting**, **prompt injection** (direct and indirect) and data exfiltration, **sandboxing** model-generated code, and the split between **deterministic controls** (RBAC, scoped credentials) and **probabilistic guardrails** (classifiers, LLM checks). The decision this helps with: what to enforce in infrastructure vs in prompts, and how to fail safely.
+> The control plane every LLM call should pass through, and the security model around agents: an **AI gateway** (one API across providers, fallbacks, hedging, caching, budgets), **token-aware rate limiting**, **prompt injection** (direct and indirect) and data exfiltration, **sandboxing** model-generated code, the **OWASP Top 10 for Agentic Applications** (ASI01–ASI10) as a threat-modelling checklist, named **guardrail tools**, and the split between **deterministic controls** (RBAC, scoped credentials) and **probabilistic guardrails** (classifiers, LLM checks). The decision this helps with: what to enforce in infrastructure vs in prompts, and how to fail safely.
 
 ---
 
@@ -133,7 +133,43 @@ def call_with_limit(bucket: TokenBucket, messages, max_out=1024):
 | **Prompt hygiene** | Delimit untrusted content; tell the model it's data; restate rules after it | Probabilistic |
 
 - **Deterministic controls are the security boundary; probabilistic guardrails reduce noise and catch common cases.** An interviewer wants to hear that you never rely on "the system prompt says don't".
-- Reference list worth naming: the **OWASP Top 10 for LLM Applications** (prompt injection, sensitive information disclosure, excessive agency, improper output handling, and others).
+- Reference list worth naming: the **OWASP Top 10 for LLM Applications** (prompt injection, sensitive information disclosure, excessive agency, improper output handling, and others). For agents, the **OWASP Top 10 for Agentic Applications** below is the more specific list.
+
+### Guardrail tooling to name
+
+| Tool | What it is | Pick when |
+|---|---|---|
+| **Llama Guard** (Meta) | An open model that classifies prompts and responses against a safety policy | Self-hosted input/output moderation |
+| **Prompt Guard / injection classifiers** | Small classifiers trained to flag injection and jailbreak attempts | A cheap first filter on untrusted text; never the only control |
+| **NeMo Guardrails** (NVIDIA) | A framework of programmable "rails": allowed topics, dialogue flows, checks before and after the model | Conversational apps that need scripted boundaries |
+| **Guardrails AI** | Validators on model output (schema, PII, regex, custom checks) with re-ask on failure | Output validation and repair |
+| **Provider moderation endpoints** | The model provider's own safety classifier | Quick baseline when you already use that provider |
+
+- All of these are **probabilistic**: they lower the rate of bad inputs and outputs, they don't stop a determined attacker. Measure their false positives on real traffic, because a guardrail that blocks 3% of legitimate requests is a product bug ([[11 - Evals Observability and Silent Drift]]).
+
+---
+
+## OWASP Top 10 for Agentic Applications
+
+- Published by the OWASP GenAI Security Project in **December 2025** as the "2026" edition, with input from more than 100 practitioners. Where the LLM list treats a model as input-in, text-out, this list treats an **agent as an actor** with goals, credentials, tools, memory and peers.
+- Two principles run through it: **Least Agency** (an agent gets only the autonomy, tools and permissions its task needs) and **Strong Observability** (you can see what it did, why, and with which tools).
+- Most mitigations already appear in these notes; the list is the shared vocabulary that maps them to named risks.
+
+| ID | Risk | What happens | Main controls (and where in these notes) |
+|---|---|---|---|
+| **ASI01** | Agent Goal Hijack | Content the agent reads redirects its objective (e.g. EchoLeak, a zero-click Microsoft 365 Copilot flaw, 2025) | Treat all read content as data; plan-then-execute; approval for goal-changing actions (Prompt Injection above) |
+| **ASI02** | Tool Misuse and Exploitation | An allowed tool is used for a harmful outcome (e.g. a GitHub MCP agent reading a malicious public issue and leaking private repo data, 2025) | Least-privilege tool profiles, a policy check between planner and tool, dry-run previews, budgets ([[03 - Tool Engineering and Action Spaces]]) |
+| **ASI03** | Identity and Privilege Abuse | Delegated or inherited credentials escalate access; the confused deputy | Per-agent identity, short-lived task-scoped tokens, re-authorise every hop ([[03 - Tool Engineering and Action Spaces]] → Delegated identity) |
+| **ASI04** | Agentic Supply Chain | A model, tool, prompt, plugin or MCP server the agent loads is compromised (e.g. backdoored LiteLLM releases on PyPI, March 2026) | Allow-list and pin dependencies and MCP servers, verify hashes, keep an AI bill of materials, a kill switch |
+| **ASI05** | Unexpected Code Execution | Text becomes commands on the host (e.g. a Codex CLI sandbox-boundary CVE, 2025) | Sandboxes, no `eval`, a validation gate between generating and running code (Sandboxing below) |
+| **ASI06** | Memory and Context Poisoning | Stored memory, summaries or embeddings are corrupted and bias later sessions | Validate memory writes, provenance, per-user segmentation, rollback ([[04 - State Memory and Context Engineering]]) |
+| **ASI07** | Insecure Inter-Agent Communication | Agent-to-agent messages are spoofed, replayed or altered | Mutual auth, signed messages, nonces and timestamps, typed schemas ([[05 - Multi-Agent Topologies and Concurrency]]) |
+| **ASI08** | Cascading Failures | One fault (a hallucination, a bad tool, poisoned memory) spreads across agents | Separate planning from execution, circuit breakers, quotas, isolation between dev and prod ([[08 - Reliability]]) |
+| **ASI09** | Human-Agent Trust Exploitation | A person approves something harmful because the agent sounds confident | Approval screens show plain facts and risk, not the model's rationale; log what was shown vs executed ([[09 - Durable Execution HITL and Realtime UX]]) |
+| **ASI10** | Rogue Agents | An agent keeps acting outside its intended scope while each action looks legitimate (e.g. an AI assistant deleting a project database during a code freeze, 2025) | Owner and expiry per agent, behavioural baselines and alerts, signed audit logs, a tested kill switch ([[11 - Evals Observability and Silent Drift]]) |
+
+- How to use it in a design round: list every tool, credential, memory store and peer agent, ask which of the ten can reach each one, and remove autonomy before adding controls. That last step (Least Agency) reduces several risks at once.
+- The 2026 LLM Top 10 renumbered its entries, so mappings between the two lists that quote LLM numbers may refer to the 2025 numbering.
 
 ---
 
@@ -189,6 +225,13 @@ def call_with_limit(bucket: TokenBucket, messages, max_out=1024):
 > - "Prompt injection can't be fully prevented by prompts, so security is deterministic: identity from the session, least-privilege tools, egress controls and human approval for risky actions."
 > - "I never give one agent private data, untrusted content and an outbound channel at the same time."
 > - "Model-generated code runs in a microVM or gVisor sandbox with no network, no secrets and hard limits, destroyed after use."
+> - "I threat-model an agent against the OWASP agentic Top 10: for every tool, credential, memory and peer, which of ASI01–ASI10 reaches it. Least Agency first: remove autonomy before adding controls."
+> - "Guardrail classifiers like Llama Guard are a noise filter, not a security boundary, and I track their false-positive rate."
+
+## Sources
+
+- OWASP GenAI Security Project, *OWASP Top 10 for Agentic Applications for 2026* (published 9 December 2025). https://genai.owasp.org/resource/owasp-top-10-for-agentic-applications-for-2026/
+- NeuralTrust, *OWASP Top 10 for Agentic Apps 2026* (updated October 2026): the ten risks with incident examples and the LLM-list mapping. https://neuraltrust.ai/blog/owasp-top-10-for-agentic-applications-2026
 
 ## Related Notes
 

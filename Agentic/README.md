@@ -30,6 +30,7 @@ created: 2026-10-11
 | **2. Retrieval and data** | 06–08 | Full |
 | **3. Production systems** | 09–12 | Full |
 | **4. Serving, hardware, post-training** | 13–15 | Architect depth: explain *why* and *how it works*, do the arithmetic, choose between options. Not CUDA kernels or training-math derivations |
+| **5. Specialised agents** | 16 | Full: computer-use and browser agents |
 
 ---
 
@@ -40,19 +41,20 @@ created: 2026-10-11
 | 00 | [[00 - LLM Fundamentals for Engineers]] | Tokens, context windows, sampling, the stateless chat API, tool-calling mechanics, structured outputs, prompting, latency anatomy |
 | 01 | [[01 - Workflows vs Agents]] | When not to build an agent; prompt chaining, routing, parallelisation, orchestrator-workers, evaluator-optimizer |
 | 02 | [[02 - Execution Loops and Control Topologies]] | ReAct, Plan-and-Execute, ReWOO, Reflexion, DAGs vs cyclic state machines, loop termination |
-| 03 | [[03 - Tool Engineering and Action Spaces]] | Schemas, tool granularity, errors as observations, idempotency, MCP, A2A, tool permissions |
-| 04 | [[04 - State Memory and Context Engineering]] | Transcripts vs structured state, compaction, memory tiers, async memory writes |
+| 03 | [[03 - Tool Engineering and Action Spaces]] | Schemas, tool granularity, errors as observations, idempotency, delegated identity, code mode and skills, MCP (2026-07-28 spec and OAuth), A2A, tool permissions |
+| 04 | [[04 - State Memory and Context Engineering]] | Transcripts vs structured state, compaction, memory tiers and products, long-running multi-session harnesses, async memory writes |
 | 05 | [[05 - Multi-Agent Topologies and Concurrency]] | Single vs multi-agent, router / supervisor / swarm, scoped handoffs, fan-out and reducers |
 | 06 | [[06 - RAG Ingestion and Indexing Pipeline]] | Parsing, chunking strategies, embedding choice, metadata, freshness and re-indexing |
 | 07 | [[07 - Agentic RAG and Grounding Loops]] | Query decomposition, routing, CRAG, Self-RAG, GraphRAG, citation verification |
 | 08 | [[08 - Vector DB Internals and Hybrid Search]] | HNSW, IVF-PQ, DiskANN, filtering, hybrid search and RRF, reranking, Matryoshka, quantization |
 | 09 | [[09 - Durable Execution HITL and Realtime UX]] | Temporal-style replay, checkpointing, human-in-the-loop, streaming, voice |
-| 10 | [[10 - AI Gateway Security and Guardrails]] | Gateway control plane, token rate limits, prompt injection, sandboxing, RBAC, PII |
-| 11 | [[11 - Evals Observability and Silent Drift]] | Tracing, three-tier evals, LLM-as-judge bias, eval datasets in CI, semantic caching risks, embedding migrations |
+| 10 | [[10 - AI Gateway Security and Guardrails]] | Gateway control plane, token rate limits, prompt injection, guardrail tools, OWASP Agentic Top 10, sandboxing, RBAC, PII |
+| 11 | [[11 - Evals Observability and Silent Drift]] | Tracing, three-tier evals, retrieval metrics, simulated users and pass^k, LLM-as-judge bias, eval datasets in CI, semantic caching risks, embedding migrations |
 | 12 | [[12 - LLM Cost and Latency Economics]] | Token pricing, prompt caching, model routing, batching, budgets, perceived latency |
 | 13 | [[13 - GPU Serving and Disaggregated KV Cache]] | Prefill vs decode, continuous batching, PagedAttention, RadixAttention, disaggregated serving, KV networks, prefix-aware routing |
 | 14 | [[14 - Quantization Decoding and VRAM Math]] | BF16 to INT4, KV-cache compression, constrained decoding, speculative decoding, VRAM and cost arithmetic |
 | 15 | [[15 - Post-Training and Model Adaptation]] | Prompt vs RAG vs fine-tune, SFT, LoRA and multi-LoRA serving, distillation, RLVR / GRPO, test-time compute |
+| 16 | [[16 - Computer Use and Browser Agents]] | When a UI agent is right, observation and action, verify-then-retry, isolated browsers and MFA hand-off, page injection, evaluation |
 
 ## Practice and Mapping
 
@@ -60,6 +62,8 @@ created: 2026-10-11
 |---|---|
 | [[Agentic/Problems/README\|Practice Designs]] | Twelve interview-style walkthroughs: support agent with refunds, multi-tenant document RAG, coding agent, voice booking agent, deep research agent, text-to-SQL assistant, LLM inference platform, ChatGPT-scale chat, enterprise search over SaaS connectors, batch document extraction, content moderation, multi-tenant agent platform |
 | [[Agentic Problem to Solution Map]] | Every recurring AI-system problem mapped to its standard solutions, trade-offs and when to pick each |
+| [[AI Engineer Round Drills]] | The non-design rounds: LLM-flavoured coding tasks with reference code, debugging drills, the product/scoping round, the take-home |
+| [[AI Assisted Coding Rounds/README\|AI Assisted Coding Rounds]] (separate folder) | Coding interviews where you use an AI assistant: formats, company map, grading, method, practice plan |
 
 ---
 
@@ -72,7 +76,7 @@ created: 2026-10-11
 
 ## Reading Order
 
-00 → 01 → 02–05 → 06–08 → 09–12 → 13–15 → Practice Designs → Problem to Solution Map. Each topic leans on the ones before it; the map is for revision.
+00 → 01 → 02–05 → 06–08 → 09–12 → 13–15 → 16 → Practice Designs → Round Drills → Problem to Solution Map. Each topic leans on the ones before it; the map is for revision.
 
 ## Audio Overview Prompt
 

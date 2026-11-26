@@ -5,7 +5,7 @@ created: 2026-10-11
 # State, Memory and Context Engineering
 
 > [!abstract] What this is
-> Deciding **what the model sees on each call** and **what the system remembers across calls**: short-term state (transcripts vs structured state), keeping context small (compaction, observation masking, offloading), long-term memory tiers (episodic, semantic, procedural), and the write path for memory, including concurrent updates. The decision this helps with: what goes into the next prompt, what gets stored, and how.
+> Deciding **what the model sees on each call** and **what the system remembers across calls**: short-term state (transcripts vs structured state), keeping context small (compaction, observation masking, offloading), long-term memory tiers (episodic, semantic, procedural) and the products that implement them, **long-running agents** that work across many context windows, and the write path for memory, including concurrent updates. The decision this helps with: what goes into the next prompt, what gets stored, and how.
 
 ---
 
@@ -102,6 +102,60 @@ def mask_old_observations(messages: list[dict], keep_last: int = 2) -> list[dict
     + **TTL and deletion**: users must be able to forget things; deletion must reach every copy (embeddings included) ([[18 - Security]]).
     + **Memory poisoning**: untrusted content (a malicious document, a prompt-injected message) can get written to memory and influence every future session. Write only distilled, validated facts from trusted sources; keep provenance.
     + **Contradictions**: newer facts must supersede older ones explicitly, not just accumulate.
+    + **Memory is not a source of truth.** Learned preferences belong in memory; business data (balances, order status, entitlements) is read live from the system that owns it, with permissions checked, on every request. A remembered "premium member" can be stale the day the plan lapses.
+
+### Memory products and the move to files
+
+| Product | Shape | Pick when |
+|---|---|---|
+| **Mem0** | A memory layer you add to any agent framework: extracts facts from conversations, stores and retrieves them | Adding user memory to an existing agent |
+| **Zep** | Memory built on a temporal knowledge graph: facts have validity periods, so "lived in Pune until 2025" and "lives in Delhi" coexist correctly | Facts that change over time and need "as of" answers |
+| **Letta** (formerly MemGPT) | An agent runtime where memory is part of the platform; it began with MemGPT-style paging of context in and out | Long-running agents whose memory the runtime should manage |
+| **Plain files in git** | Notes, rules and progress files the agent reads and writes by path; versioned and diffable | Coding and long-horizon agents; memory a human must be able to review |
+
+- 2026 trend: plain files joined vectors and graphs as a memory store. Files are human-readable, reviewable in a diff, and revertible with git, which matters for **procedural** memory and for poisoning defence (you can see and roll back what changed). Letta moved to git-backed file memory in 2026, and the long-running harnesses below use the same idea.
+- Interview stance: name the tier first (episodic, semantic, procedural), then the store; a product is an implementation detail.
+
+---
+
+## Long-Running Agents: Working Across Many Context Windows
+
+- Durable execution ([[09 - Durable Execution HITL and Realtime UX]]) makes a run survive a **crash**. A different problem appears when a task takes hours or days: it can't fit in **one context window**, so the work happens in many sessions, and **each new session starts with no memory** of the last. Compaction alone doesn't solve it, because a summary doesn't always pass on clear instructions.
+- Failure patterns Anthropic reported building multi-hour coding agents:
+    + **One-shotting**: the agent tries to do everything at once, runs out of context halfway, and the next session finds a half-built, undocumented feature.
+    + **Premature victory**: a later session sees that progress was made and declares the whole job done.
+    + **Marking work done without real testing**: unit tests pass but the feature doesn't work end to end.
+    + **Re-learning the setup** every session: how to start the app, how to run tests.
+
+### The harness pattern
+
+1. **Initializer session** (a different first prompt) sets up the environment for everyone after it:
+    + a **feature list** expanded from the spec, every item marked failing, in **JSON** (models were less likely to overwrite or rewrite JSON than Markdown);
+    + a **progress file** that each session appends to;
+    + an `init.sh` that starts the app and runs a smoke test;
+    + an initial **git commit**.
+2. **Every later session**:
+    + gets its bearings: read the progress file, `git log`, the feature list; run `init.sh` and a basic end-to-end check, fixing anything broken first;
+    + works on **one feature**;
+    + tests it **end to end the way a user would** (browser automation for a web app) before marking it passing; may only flip the `passes` field, never delete or edit features;
+    + leaves a **clean state**: a descriptive commit and a progress note, so the next session can start immediately.
+
+```json
+{"category": "functional",
+ "description": "New chat button creates a fresh conversation",
+ "steps": ["Click 'New chat'", "Verify an empty conversation opens", "Verify it appears in the sidebar"],
+ "passes": false}
+```
+
+- Why it works: the state that matters lives in **artifacts** (feature list, progress notes, git history), not in any one context window. It is the same idea as a structured scratchpad, made durable and shared across sessions.
+- A later Anthropic harness for full-stack apps split the roles further into **planner, generator and evaluator** agents over multi-hour sessions; whether one general agent or specialised agents work better is still an open question.
+
+| Problem | Durable execution fixes it? | Multi-session harness fixes it? |
+|---|---|---|
+| Process crashes mid-run | Yes (replay or checkpoint) | No |
+| Task bigger than one context window | No | Yes (artifacts carry state) |
+| Agent forgets decisions after compaction | Partly | Yes (decisions written to files) |
+| Agent claims done too early | No | Yes (feature list + required end-to-end test) |
 
 ---
 
@@ -170,6 +224,14 @@ def apply_memory_update(user_id: str, update: MemoryUpdate) -> None:
 > - "Long-term memory has three tiers: episodic events, semantic facts and procedural know-how, each with its own store and retrieval."
 > - "Memory is written by a background consolidation worker, ordered per user, so concurrent sessions don't lose updates."
 > - "Memory is an attack surface: I only persist validated facts with provenance, scoped by user and tenant."
+> - "Memory holds preferences, never business truth; balances and entitlements are read live from their owning service."
+> - "Durable execution survives crashes; a task bigger than one context window needs a multi-session harness: a feature list, a progress file and git, so each fresh session can pick up where the last stopped."
+
+## Sources
+
+- Anthropic, *Effective harnesses for long-running agents* (November 2025). https://www.anthropic.com/research/effective-harnesses-for-long-running-agents
+- Anthropic, *Harness design for long-running apps* (2026). https://www.anthropic.com/research/harness-design-long-running-apps
+- Memory products and file-based memory (2026 surveys): Vectorize, *Mem0 vs Letta*. https://vectorize.io/articles/mem0-vs-letta · ai-system-design-guide, *Memory architectures*. https://github.com/ombharatiya/ai-system-design-guide/blob/main/08-memory-and-state/01-memory-architectures.md
 
 ## Related Notes
 

@@ -5,7 +5,7 @@ created: 2026-10-11
 # Tool Engineering and Action Spaces
 
 > [!abstract] What this is
-> Designing the **actions** an agent can take: tool schemas the model fills reliably, the right **granularity** of tools, returning errors as observations, making side-effecting tools **idempotent**, scoping **permissions**, and exposing tools through **MCP** (and agents to each other through A2A). The decision this helps with: what the model is allowed to do, and how to make each action safe, cheap and selectable.
+> Designing the **actions** an agent can take: tool schemas the model fills reliably, the right **granularity** of tools, returning errors as observations, making side-effecting tools **idempotent**, scoping **permissions** and **delegated identity**, keeping large tool catalogues out of the context (**code mode**, **skills**), and exposing tools through **MCP** (current to the 2026-07-28 spec, including its OAuth flow) and agents to each other through A2A. The decision this helps with: what the model is allowed to do, and how to make each action safe, cheap and selectable.
 
 ---
 
@@ -74,6 +74,48 @@ tool_schema = {"type": "function",
 | **Tool retrieval** | Embed tool descriptions; give the model only the top-k relevant tools per request |
 | **Namespacing / toolkits** | Group tools (`billing.*`, `shipping.*`); a sub-agent per group ([[05 - Multi-Agent Topologies and Concurrency]]) |
 | **Progressive disclosure** | A `search_tools` / `list_capabilities` tool that reveals detailed schemas only when needed |
+| **Code execution ("code mode")** | Present tools as a code API and let the model write a script that calls them (next section) |
+| **Skills** | Package instructions and scripts as folders the model loads only when the task needs them (next section) |
+
+---
+
+## Context-Efficient Tool Use: Code Mode and Skills
+
+- Direct tool calling has two costs that grow with the catalogue:
+    + **Definitions in context.** Most clients load every tool schema up front. With hundreds or thousands of tools across many MCP servers, that is a large share of the context before the user's request is even read.
+    + **Intermediate results through the model.** To copy a meeting transcript from Drive into a CRM record, the transcript passes through the model twice: once as the result of the read, and again as the argument of the write.
+
+### Code execution with MCP
+
+- Present each MCP server as a **code API on a filesystem** (`./servers/google-drive/getDocument.ts`, `./servers/salesforce/updateRecord.ts`). The model lists the directory, reads only the tool files it needs, and writes one script that calls them in a sandbox.
+- What it buys:
+    + **Only the needed definitions load.** Anthropic reports one example dropping from about 150,000 tokens to about 2,000 (98.7%) by loading tool definitions on demand.
+    + **Data stays in the sandbox.** A 10,000-row sheet is filtered in code; the model sees the five rows it logs, not all 10,000.
+    + **Control flow in code.** Loops, conditionals, retries and polling run in the script instead of as many model round-trips, which also cuts latency.
+    + **Privacy.** The harness can tokenise PII in results (`[EMAIL_1]`) and untokenise it only when it's passed to the next tool, so the real values never enter the model's context.
+    + **State and reuse.** The script can write intermediate files, and a working script can be saved as a reusable function.
+- Costs: you now run **model-written code**, which needs a real sandbox with resource limits, network egress rules and monitoring ([[10 - AI Gateway Security and Guardrails]]). For a handful of tools, direct tool calls are simpler. Cloudflare published the same idea under the name "Code Mode".
+
+```python
+# What the model writes in code mode: the transcript never enters its context
+transcript = gdrive.get_document(document_id="abc123")["content"]
+salesforce.update_record(object_type="SalesMeeting", record_id="00Q5f000001abcXYZ",
+                         data={"notes": transcript})
+print("updated")                                  # only this line goes back to the model
+```
+
+### Agent Skills (progressive disclosure as files)
+
+- A **skill** is a folder with a `SKILL.md` (a short name and description up front, detailed instructions in the body) plus optional scripts and reference files. Only the **name and description** sit in context by default; the body loads when the model decides the skill is relevant, and scripts or reference files load only if the body points to them.
+- Skills complement MCP: MCP gives **access** (what the agent can call), a skill gives **procedure** (how to do a task well with what it can call).
+- Measure before adopting. A March 2026 benchmark of coding skills (SWE-Skills-Bench) found that 39 of 49 tested skills gave no pass-rate improvement, and token overhead ranged from savings to a 451% increase. A skill is a prompt like any other and needs an eval ([[11 - Evals Observability and Silent Drift]]).
+
+| Approach | Loads into context | Pick when |
+|---|---|---|
+| **All tool schemas up front** | Every definition | Under ~10–20 tools (heuristic) |
+| **Tool retrieval / `search_tools`** | Top-k matching definitions | Large catalogue, independent tools |
+| **Code mode** | Only the files the model reads; results filtered in code | Many tools, large payloads, multi-step data plumbing; you can run a sandbox |
+| **Skills** | Name and description; body on demand | Repeatable procedures that need more instructions than a tool description holds |
 
 ---
 
@@ -145,6 +187,23 @@ def refund_order(args: RefundArgs, ctx: RequestContext) -> dict:   # ctx from th
     return payments.refund(order, args.amount_inr, idempotency_key=ctx.idempotency_key)
 ```
 
+### Delegated identity: whose authority is the agent using?
+
+- An agent acts **on behalf of** someone. Every tool call should carry two identities: the **user** it acts for and the **agent** doing the acting. Without both, audit logs can't answer "who did this", and permissions collapse to whatever the agent's own credential allows.
+- **Treat agents as non-human identities (NHIs).** Each agent (or agent deployment) gets its own identity, an owner and an expiry, like a service account, not a shared API key.
+- **Short-lived, task-scoped tokens.** Mint a token per run or task with only the scopes that task needs (`orders:read`, `refunds:write` up to a limit), audience-bound to the one downstream service, expiring in minutes. A stolen token is then worth one task, not the whole account.
+- **Delegation, not impersonation.** Prefer flows where the downstream service sees "agent X acting for user Y" (OAuth token exchange, RFC 8693, carries an `act` claim for the actor) over handing the agent the user's own long-lived token.
+- **The confused deputy.** A low-privilege agent asks a high-privilege agent or tool to do something on its behalf, and the high-privilege side acts on its *own* authority without re-checking the original caller. Fix: every hop authorises against the **originating user's** permissions, not the caller's. This is OWASP's ASI03 (Identity and Privilege Abuse) ([[10 - AI Gateway Security and Guardrails]]).
+- **Never pass tokens through.** A tool or MCP server must not forward the token it received to another service; it gets its own token for that service. The MCP spec forbids servers from accepting or forwarding tokens not issued for them (next section).
+- **Step-up for risky actions.** When an action needs more than the current scopes (a refund above the auto-approve limit), the service returns "insufficient scope"; the agent pauses and the user approves or re-authorises ([[09 - Durable Execution HITL and Realtime UX]]).
+
+| Pattern | What the downstream sees | Pick when |
+|---|---|---|
+| **Agent's own service credential** | Agent only | Back-office jobs with no end user |
+| **User's token passed to the agent** | User only (agent invisible) | Avoid: no audit of the actor, over-broad scope |
+| **Token exchange: agent acting for user** | Both, with narrowed scopes | Any agent acting for a signed-in user |
+| **Per-task capability token** | A short-lived grant for one task | High-risk tools; multi-agent hand-offs |
+
 ---
 
 ## Model Context Protocol (MCP)
@@ -166,10 +225,32 @@ flowchart LR
 | **Server** | Exposes capabilities from a system (GitHub, a DB, your internal API) |
 | **Transport** | JSON-RPC 2.0 over **stdio** (local processes) or **Streamable HTTP** (remote servers) |
 | **Server primitives** | **Tools** (model-invoked actions), **Resources** (readable data/context), **Prompts** (reusable templates) |
-| **Client primitives** | e.g. **sampling** (server asks the host's model to generate), **roots** (allowed filesystem scope), **elicitation** (server asks the user for input) |
+| **Asking the client for more input** | **Elicitation** (ask the user for input) via the multi round-trip pattern below. **Sampling** (server asks the host's model to generate) and **roots** (allowed filesystem scope) are **deprecated** since the 2026-07-28 spec |
 
-- Lifecycle: the client connects, both sides negotiate capabilities, the client lists tools/resources, and the host passes selected tool definitions to the model; when the model calls one, the client sends `tools/call` to the server.
-- Remote servers use **OAuth-based authorisation**; local stdio servers run with the user's local permissions.
+### What changed in the 2026-07-28 spec
+
+- **MCP is stateless at the protocol layer.** There is no `initialize` handshake and no `Mcp-Session-Id` header any more. Every request carries its protocol version and client capabilities in `_meta`, and a server that needs cross-call state passes an explicit handle as an ordinary tool argument. This is what lets a remote MCP server sit behind a plain load balancer with no sticky sessions.
+- **`server/discover`** replaces the handshake: servers must implement it to advertise versions, capabilities and identity, and clients may call it first.
+- **Multi round-trip requests (MRTR).** A server that needs more input (user confirmation, a choice) returns a result with `resultType: "input_required"`; the client gets the answer and **retries the original request** with the responses attached. This replaces servers sending their own requests to the client.
+- **Deprecated, still working for at least 12 months:** Roots (pass paths as tool parameters or configuration instead), Sampling (call the LLM provider directly instead), Logging (use stderr or OpenTelemetry), the old HTTP+SSE transport, and OAuth Dynamic Client Registration (use Client ID Metadata Documents).
+- **Tasks** (long-running, pollable operations) moved out of the core into an official extension, polled with `tasks/get`.
+- **Smaller changes worth knowing:** `tools/list` should return tools in a **deterministic order** so clients and LLM prompt caches hit; list results carry `ttlMs` caching hints; OpenTelemetry trace context travels in `_meta`.
+- Lifecycle now: the client optionally calls `server/discover`, lists tools and resources, and the host passes selected tool definitions to the model; when the model calls one, the client sends `tools/call` with its version and capabilities in `_meta`.
+
+### MCP authorisation (remote servers)
+
+- Authorisation is optional in MCP, but a remote server that has it follows OAuth 2.1. Local stdio servers take credentials from their environment instead.
+- Roles: the **MCP server is an OAuth resource server**, the **MCP client is the OAuth client**, and a separate **authorisation server** talks to the user and issues tokens.
+- The flow:
+    1. The client calls the server without a token and gets **401** with a `WWW-Authenticate` header pointing to the server's **Protected Resource Metadata** (RFC 9728) and the scopes it needs.
+    2. The client reads that metadata to discover the authorisation server, then reads the authorisation server's own metadata.
+    3. The client identifies itself, preferably with a **Client ID Metadata Document** (a URL it controls describing the client).
+    4. Authorisation code flow with **PKCE**, sending a **`resource`** parameter (RFC 8707) naming the exact MCP server the token is for.
+    5. The client sends `Authorization: Bearer …` on every request. The server must check the token was issued **for it** (audience) and must never accept or forward a token meant for someone else.
+    6. If a later call needs more scopes, the server returns **403 `insufficient_scope`** with the scopes required, and the client runs a **step-up** authorisation for the union of old and new scopes.
+- Two 2026 additions close a real attack. Clients must check the **`iss`** (issuer) in the authorisation response against the issuer they recorded before redeeming the code, and must key stored credentials by issuer. Both official MCP SDKs shipped high-severity fixes in October 2026 for a flaw where a malicious MCP server could make the client send its OAuth credentials to an authorisation server the attacker controlled.
+- In practice most servers are behind: one 2026 scan found 53% of MCP servers relied on static API keys or personal access tokens, and only 8.5% used OAuth. Treat "it's an MCP server" as saying nothing about its security.
+
 - **Risks to name:** a malicious or compromised server can return instructions inside tool descriptions or results (tool poisoning, a form of prompt injection); a server can be over-privileged; tool names can collide across servers. Mitigations: allow-list servers, pin versions, review tool descriptions, scope tokens narrowly, and keep authorisation in your own services.
 - When to use it: exposing internal systems to many AI clients, or consuming third-party integrations without writing glue code. For a single in-process agent with a handful of tools, plain function tools are simpler.
 
@@ -193,6 +274,11 @@ flowchart LR
 | **Model-controlled identity** | Prompt manipulation changes whose data is accessed | Identity injected from the session; authorise in the service |
 | **Huge tool outputs** | Context bloat, cost, distraction | Return trimmed fields; store full output out of band |
 | **Malicious MCP server** | Injected instructions or data exfiltration | Allow-list, pin, review, least-privilege tokens |
+| **Token passthrough / wrong audience** | A token issued for one service is replayed against another | Audience-bound tokens (RFC 8707 `resource`); servers reject tokens not issued for them; never forward tokens |
+| **OAuth mix-up via a malicious server** | Client sends its credentials to an attacker's authorisation server | Validate `iss`; key credentials by issuer; patched SDKs |
+| **Confused deputy between agents** | A privileged agent acts on a low-privilege caller's request | Authorise every hop against the originating user |
+| **Context full of tool schemas** | Slow, expensive, worse selection | Tool search, code mode, skills |
+| **Unsandboxed code mode** | Model-written script reaches the host or network | Sandbox with resource limits and egress rules |
 
 ---
 
@@ -205,6 +291,20 @@ flowchart LR
 > - "Side-effecting tools get idempotency keys from the orchestrator, never from the model, so a replay can't double-refund."
 > - "User and tenant identity are injected from the session and authorised in the service; the model can't choose whose data it touches."
 > - "MCP standardises tools and resources over JSON-RPC; A2A standardises delegating tasks between agents."
+> - "Since the July 2026 spec MCP is stateless: no handshake, no session id, so a remote server scales behind a normal load balancer."
+> - "A remote MCP server is an OAuth resource server: 401 with protected-resource metadata, PKCE, an audience-bound token, and step-up on insufficient scope."
+> - "Agents get their own short-lived, task-scoped identity and act *for* the user via token exchange; every hop re-authorises against the original user."
+> - "With hundreds of tools I'd use code mode: the model reads only the tool files it needs and filters big results in a sandbox, so they never hit the context."
+
+## Sources
+
+- MCP specification 2026-07-28, *Key Changes* and *Authorization* (read November 2026). https://modelcontextprotocol.io/specification/2026-07-28/changelog · https://modelcontextprotocol.io/specification/2026-07-28/basic/authorization
+- SEP-2577, *Deprecate Roots, Sampling, and Logging*. https://modelcontextprotocol.io/seps/2577-deprecate-roots-sampling-and-logging
+- Anthropic, *Code execution with MCP: Building more efficient agents* (November 2025). https://www.anthropic.com/research/code-execution-with-mcp
+- MCP SDK OAuth advisories, October 2026 (dev.to write-up). https://dev.to/fabwaseem/mcp-security-in-2026-the-oauth-sdk-cves-tested-and-how-to-lock-down-your-server-3lln
+- MCP server authentication survey, 2026 (DevToolLab; also cited by Microsoft Tech Community). https://devtoollab.com/blog/mcp-server-authentication-oauth-guide-2026
+- SWE-Skills-Bench figures via CloudsPress (2026). https://www.cloudspress.com/agent-skills-vs-mcp-what-context-costs-actually-look-like/
+- OWASP Top 10 for Agentic Applications (December 2025), ASI03. https://genai.owasp.org/resource/owasp-top-10-for-agentic-applications-for-2026/
 
 ## Related Notes
 
