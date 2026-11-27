@@ -145,6 +145,37 @@ app.invoke(Command(resume="approve"), config={"configurable": {"thread_id": run_
 
 ---
 
+## Always-On Agents
+
+- An always-on agent (an inbox assistant, an on-call helper, a sales follow-up agent) is **mostly asleep**. Each **run** starts from an event, works inside a session, saves state and goes back to sleep. Anthropic's guide (Nov 2026) builds it from five primitives.
+
+```mermaid
+flowchart LR
+    W[Webhooks, chat, email] --> I[(Event inbox)]
+    T[(Timers: follow-ups, schedules)] -->|scheduler adds event| I
+    I -->|batch pending events| R[Run: session + model + tools]
+    M[(Memory files)] <--> R
+    R -->|tool call| P[Permission layer: credential proxy, classifier]
+    P -->|needs user| D[Deferred call: run ends]
+    D -->|user answers, new event| I
+    R --> O[(Outbox)] --> X[Dispatcher: send or stay quiet]
+    R -->|set follow-up| T
+```
+
+| Primitive | What it is | Rules |
+|---|---|---|
+| **Event inbox** | A DB table; an HTTP handler that acks fast; one worker per inbox | Dedupe by source event id; the inbox is the source of truth; batch all pending events into one run |
+| **Timers** | Follow-ups (the agent sets them) and schedules (recurring), in their own table | A scheduler polls, marks follow-ups done or advances schedules, and adds an event to the inbox. Timers never start runs directly |
+| **Memory** | Files in durable storage | Store only what can't be looked up again, plus pointers into other systems: user instructions, user notes (index loaded at start), past messages sent (so nothing repeats), one progress file per task. Optional "dreaming" consolidates memory between runs |
+| **Permissions** | A credential proxy injects real credentials outside the agent; auto-mode classifiers; deferred tool calls | A deferred call ends the run with the session saved mid-call; the user's answer arrives later as a new inbox event and the run resumes |
+| **Outbox** | A table plus a dispatcher | Every run ends in one of three ways: send a message, stay quiet, or defer. Start quiet and earn attention; tune message volume with evals |
+
+- Context per run: keep the fixed overhead (instructions, memory index, tool list) small and prompt-cached ([[12 - LLM Cost and Latency Economics#Prompt caching in practice]]); compact the session or start a new one when it grows ([[04 - State Memory and Context Engineering]]).
+- It is the same durable-pause pattern as HITL above, with the inbox as the single entry point for webhooks, timers and human answers. Idempotency on the outbox matters as much as on the inbox: a retried run must not send the same message twice.
+- Failure to watch for: an agent that messages too often. "Stayed quiet when nothing mattered" is a metric to evaluate, not a side effect.
+
+---
+
 ## Streaming
 
 - Streaming makes **perceived latency ≈ time to first token** ([[00 - LLM Fundamentals for Engineers]]). For agents, stream **progress events** too ("Searching orders…", "Checking refund policy…"), not just final tokens.
@@ -178,6 +209,33 @@ async def stream(run_id: str):
     + **Cancellation**: a "stop" button must cancel the model call and pending tools, not just close the socket.
     + **Streaming + structured output**: parse partial JSON or stream a text field while structured fields arrive at the end; validate only the final result.
     + **Moderation on streams**: output guardrails can't see the whole answer yet; check incrementally by sentence, or delay display slightly for high-risk surfaces ([[10 - AI Gateway Security and Guardrails]]).
+
+---
+
+## AI UX: What the User Sees
+
+- The interface decides whether users trust, correct and keep using the system. It is also where most of your eval signal comes from. Product rounds probe it with "how would the user know the agent is wrong?"
+
+| Concern | Do | Avoid |
+|---|---|---|
+| **Progress** | Stream named steps ("Searching 3 sources…") and partial results; show elapsed time on long runs; let the user leave and come back (run id, notification) | A spinner for 40 seconds |
+| **Uncertainty** | Say when evidence is thin or missing; offer "I couldn't find X" as a normal outcome; route low-confidence cases to review | Raw probability numbers users can't act on; false confidence |
+| **Citations** | Inline markers that open the exact passage; only cite text that was checked to exist in the source ([[07 - Agentic RAG and Grounding Loops#Citation verification]]) | A list of links at the bottom nobody opens |
+| **Actions** | Preview the exact change, confirm anything costly or irreversible, offer undo where the system allows it, and show what was done afterwards | Silent side effects; a confirm dialog on every trivial step (users stop reading it) |
+| **Escalation** | A visible way to reach a human, with the context handed over so the user doesn't repeat themselves | Hiding the human path to raise containment rate |
+| **Editing** | Let users edit the output or the plan and continue from there | Forcing a full regenerate to fix one line |
+| **Generative UI** | Have the model return structured data that renders as a known component (a table, a form, a booking card) | Letting the model emit arbitrary HTML or script |
+
+### Feedback design
+
+- Huyen (*AI Engineering*, ch. 10) separates **explicit** feedback (thumbs, ratings, written comments) from **implicit** feedback (regenerate, edit, copy, abandon, rephrase the question, escalate). Explicit is clear but rare and skewed to strong opinions; implicit is plentiful but noisy.
+- Design rules:
+    + Ask at the moment of evidence (after an answer is used or rejected), not in a survey later.
+    + Make it cheap: one click, with an optional reason from a short list.
+    + Log feedback against the trace id, model and prompt version, so it can become an eval case ([[11 - Evals Observability and Silent Drift]]).
+    + Treat edits as the strongest implicit signal: the diff between output and the user's edit is a labelled correction.
+    + Watch for bias: only unhappy users rate, and a thumbs-down on a correct refusal is not a model error.
+- Comparison feedback (show two answers, pick one) gives preference data but costs the user effort. Use it sparingly, on internal or opted-in users.
 
 ---
 
@@ -246,6 +304,12 @@ async def on_vad_speech_start(session):
 > - "Human approval never blocks an HTTP request: I return 202 with a run id, pause durably, and resume from the approval webhook after re-validating."
 > - "I stream tokens and progress over SSE, decoupled from the run, and use WebSockets or WebRTC only when the client streams too."
 > - "For voice, barge-in must flush every audio buffer and cancel generation the moment VAD detects speech."
+> - "An always-on agent is an event inbox, timers that write to the inbox, memory files, a permission layer that can defer, and an outbox; most runs should end quietly."
+
+## Sources
+
+- William Hu, Anthropic, *Building always-on agents* (13 Nov 2026): the five primitives, deferred tool calls, quiet runs. https://claude.com/resources/articles/building-always-on-agents
+- Chip Huyen, *AI Engineering* (O'Reilly, 2025), ch. 10: explicit and implicit user feedback.
 
 ## Related Notes
 

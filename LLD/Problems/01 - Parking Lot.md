@@ -591,6 +591,16 @@ Run: `.\mvnw.cmd test` in `LLD/Code`.
 
 ---
 
+## 14. Idioms Used
+
+- V0: [[LLD Idioms#8. Injected Clock, read once per request|8 Injected Clock]] · [[LLD Idioms#11. One-implementation interface where the first follow-up plugs in|11 Interface where E1 plugs in]] · [[LLD Idioms#16. One-line guards and a three-class exception hierarchy|16 Guards and exceptions]] · [[LLD Idioms#18. Money as long paise; ceiling division for billable units|18 Money in paise]] · [[LLD Idioms#19. The service never prints; drivers format|19 Service never prints]]
+- E1: [[LLD Idioms#10. Strategy picked by key from a map|10 Strategy by key]]
+- E2: [[LLD Idioms#1. CAS claim; the loser tries the next candidate|1 CAS claim, loser tries next]] · [[LLD Idioms#5. Exactly one winner from a concurrent remove or add|5 One winner from remove/add]]
+- E3: [[LLD Idioms#2. CAS loop over an immutable copy|2 CAS loop over a copy]] · [[LLD Idioms#12. Rules table instead of subclasses|12 Rules table]]
+- E4: [[LLD Idioms#14. Secondary index kept by the service|14 Secondary index]]
+
+---
+
 ## Sources
 
 - workat.tech, *Design a Parking Lot* machine-coding statement (2022): commands, layout, ticket id. https://workat.tech/machine-coding/practice/design-parking-lot-qm6hwq4wkhp8

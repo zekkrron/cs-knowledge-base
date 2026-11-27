@@ -53,6 +53,7 @@ flowchart LR
 | **Hybrid ("set of marks")** | A screenshot with numbered boxes over interactive elements, plus the element list | Visual context with exact targets | More preprocessing | Default for browser agents |
 
 - Production libraries take a screenshot and extract the DOM **in parallel** on each step, send both to the model, execute the chosen action, and repeat.
+- **Pick the observation per task, and evaluate that choice.** Anthropic notes DOM extraction is fast but token-heavy, and screenshots are slower but use fewer tokens: summarising a Wikipedia article is cheaper from the DOM text, while browsing a large shopping page is cheaper by screenshot because its full DOM is huge. Its browser product has evals that check the agent picks the right mode for each context.
 
 ### Action: targeting the right thing
 
@@ -169,6 +170,7 @@ flowchart LR
 
 ## Sources
 
+- Anthropic, *Demystifying evals for AI agents* (January 2026): DOM vs screenshot trade-off, WebArena and OSWorld state checks. https://www.anthropic.com/research/demystifying-evals-for-ai-agents
 - PracHub, *Browser Agent Interview Questions: State, Verification, and Recovery* (September 2026). https://prachub.com/resources/browser-agent-interview-questions-state-verification-and-recovery
 - Browser Use, *A Production Architecture for the Browser Use Open-Source Library* (2026). https://browser-use.com/posts/production-architecture-browser-use
 - Anthropic, *Effective harnesses for long-running agents* (November 2025): end-to-end testing through browser automation. https://www.anthropic.com/research/effective-harnesses-for-long-running-agents

@@ -28,6 +28,28 @@ created: 2026-10-11
 | Better **reasoning** on checkable tasks (math, code, SQL) | **RLVR** or a reasoning model with more test-time compute | Rewards come from verifiers |
 
 - The ladder: **prompt → RAG → fine-tune → RL**, each step justified by evals ([[11 - Evals Observability and Silent Drift]]). Fine-tuning and RAG combine well: fine-tune for behaviour (how to use retrieved context, cite, abstain), RAG for knowledge.
+- Since 2025 there is a rung between hand-written prompts and fine-tuning: **automatic prompt optimisation** (next section). It needs the same eval set fine-tuning would, but no GPUs and no new model to serve.
+
+---
+
+## Automatic Prompt Optimisation: DSPy and GEPA
+
+- Hand-tuning a prompt is search done by a person: edit, eyeball a few outputs, repeat. It doesn't scale across a multi-step pipeline, it breaks when the model changes, and nobody can say whether the last edit helped. **Prompt optimisers** run that search automatically against a **metric on a labelled dataset**.
+- **DSPy** (Stanford NLP; version 3 released August 2025) treats a pipeline as a program:
+    + A **signature** declares inputs and outputs (`question, context -> answer, citations`).
+    + **Modules** compose them (retrieve, then answer, then verify).
+    + An **optimiser** writes the actual instructions and picks few-shot examples by trying candidates and scoring them with your metric. Swapping the model means re-running the optimiser, not rewriting prompts.
+- **Optimisers to name:**
+
+| Optimiser | How it searches | Pick when |
+|---|---|---|
+| **BootstrapFewShot** | Runs the program, keeps traces that pass the metric as few-shot examples | Small data, quick win |
+| **MIPROv2** | Proposes instructions and example sets, searches them with Bayesian optimisation | Tens to hundreds of labelled examples, several modules |
+| **GEPA** (Genetic-Pareto, Agrawal et al. 2025, ICLR 2026 oral) | The model **reads its own failures and the metric's textual feedback**, rewrites the prompt, and keeps a Pareto set of candidates that win on different examples | Rich feedback available (judge rationales, test output, compiler errors); agents and multi-step pipelines |
+
+- **What GEPA claims**: in the authors' experiments it beat GRPO (RL fine-tuning, below) by up to about 20% while using up to 35× fewer rollouts, and beat MIPROv2. Treat these as the paper's numbers on its tasks; the practical point is that rich textual feedback is a stronger signal than one scalar reward, so a well-built metric is the whole game.
+- **When to use it, in order**: a decent hand-written prompt and an eval set first; then an optimiser if quality plateaus or you maintain the pipeline across several models; then fine-tuning when you need a smaller model, lower latency or a behaviour prompts can't hold.
+- **Risks**: overfitting the dev set (hold out a test split the optimiser never sees), a metric that can be gamed (the optimiser will find the loophole, as with reward hacking below), and long, opaque prompts that are hard to review. **Optimised prompts are still deploys**: version them in git and ship them through the same eval and canary pipeline as any prompt change ([[11 - Evals Observability and Silent Drift]] → Shipping Prompt and Model Changes).
 
 ---
 
@@ -110,6 +132,37 @@ print(group_advantages([1.0, 0.0, 0.5, 1.0]))
 
 - **Reward hacking** is the main risk: the model finds ways to pass the verifier without solving the task (special-casing tests, exploiting a weak checker, overly long reasoning if length isn't penalised). Use robust verifiers, held-out tests and trajectory review.
 
+### RL environments and rewards for agents
+
+Asked as a design question: "training LLM agents for long-context, long-horizon tasks: environments and rewards" (Harvey, MLE, 2026) and "a real-time QA chatbot: training data, RL tasks and rewards" (Meta, MLE onsite, Sep 2026). CMU 11-768 (Fall 2026) teaches the same arc: harness → eval → training.
+
+- **An environment** = a task distribution, a sandboxed world the agent acts in (a repo with tests, a browser with a site snapshot, a mock CRM, a document set), the tools it may call, a step and token budget, and a **grader** that scores the final state or trajectory. The same object serves evals and training; that's why teams build evals first ([[11 - Evals Observability and Silent Drift#Designing Agent Evals You Can Trust]]).
+- **Reward design**, from strongest to weakest signal:
+
+| Reward | Example | Risk |
+|---|---|---|
+| **Outcome, verified** | Hidden tests pass; database ends in the right state; extracted fields match labels | Sparse on long tasks; hackable if the checker is weak |
+| **Rubric graded by a model** | Legal memo scored against an expert rubric item by item | Judge bias and drift; calibrate on human labels, keep the judge frozen during a run |
+| **Process or milestone** | Partial credit for finding the right file, the right clause | Rewards looking busy; can teach the steps without the goal |
+| **Penalties** | Tokens, steps, forbidden tool calls, policy violations | Too strong → the agent gives up early |
+
+- **Long-horizon specifics:** rewards arrive after hundreds of steps, so use curricula (short tasks first), milestone rewards only where they can't be gamed, and group-relative advantages (GRPO) over several rollouts of the same task. Long contexts make rollouts expensive: cap context with compaction inside the harness, exactly as at inference ([[04 - State Memory and Context Engineering]]).
+- **Environment engineering is most of the work:** deterministic resets, snapshotting, thousands of parallel sandboxes, network isolation, and **train and inference must use the same tool formats and harness**, or the trained behaviour doesn't transfer (Amazon's Rufus-Air post-training report, 2026, lists sandbox reliability and consistent formats as major issues).
+- **Reward hacking in agents** looks like editing the tests, hard-coding expected outputs, reading the grader's files, or claiming success in text. Defences: graders the agent can't see or write, hidden test sets, checking the final state rather than the agent's report, and reading sampled trajectories every run.
+- **Data for a domain** (legal, support): collect expert-written tasks with rubrics, mine production failures as new tasks, keep a held-out set never used for training ([[#The Data Flywheel: How the System Gets Better Over Time]]).
+
+---
+
+## Decision Models: Calibrated Scores in One Pass
+
+Routing, guardrails, graders and "should this go to a human?" checks are decisions over a **fixed set of options**, not open-ended generation. A 2026 pattern turns an LLM into a fast, calibrated decision component: Cloudflare's open Clef models (Oct 2026), OpenAI's Decisions API (public beta), and Sarvam's Prism (Nov 2026), a LoRA of Sarvam-105B that its authors report at a 44 ms median on one B200 (vendor-reported).
+
+- **One forward pass, no decoding:** put the context and the options in the prompt, each option tagged with one label token, and read the logits for those label tokens at one position; a softmax over them is the distribution. Latency is one prefill; cache the shared prefix (rubric, instructions).
+- **Train for calibration, not just accuracy:** plain cross-entropy pushes probabilities toward 0 and 1; label smoothing plus a **Brier loss** (a proper scoring rule) rewards honest probabilities; LoRA keeps the base model intact. Measure expected calibration error and reliability curves on held-out data, per language and task ([[21 - ML Foundations Quick Reference#Metrics]]).
+- **Remove option-order bias:** LLMs prefer options by position or label. Either average over permutations (several passes) or train and serve with one canonical order; test by shuffling options on an eval set and counting flipped decisions (Prism reports 0 of 2,000 flips with a fixed order vs 4.0% without, vendor-reported).
+- **Use the probability:** thresholds by risk, for example auto-pass above 0.9, auto-fail below 0.1, humans for the middle; this is how a grader, a moderation cascade or a refund check turns a score into routing ([[11 - LLM Content Moderation Pipeline]], [[11 - Evals Observability and Silent Drift#LLM-as-a-Judge]]).
+- **Pick when:** high-volume classification or routing where latency and calibrated confidence matter; keep generative judges for open-ended critique.
+
 ---
 
 ## Distilling Agent Trajectories
@@ -171,6 +224,62 @@ flowchart LR
 
 ---
 
+## Dataset Engineering and Synthetic Data
+
+Most fine-tuning results are decided by the data, not the method (Huyen, *AI Engineering*, ch. 8). Interview prompts that test it: "design quality checks for spreadsheet LLM training data" (Microsoft), "training data, reward design and deployment for an LLM chatbot" (Amazon), "training data, RL tasks and rewards" (Meta) (PracHub, 2026).
+
+- **Three properties:** quality (correct, consistent format, following the guidelines), coverage (the tasks, languages, edge cases and refusals the model will see), quantity (enough examples per behaviour; a few thousand good examples beat a hundred thousand noisy ones for SFT of a narrow behaviour, *heuristic*).
+- **Labelling:** written guidelines with worked examples; two annotators on a sample and measure **inter-annotator agreement** (Cohen's kappa); adjudicate disagreements and fix the guideline; model pre-labels reviewed by humans are cheaper but bias reviewers toward accepting.
+- **Synthetic data** when real data is scarce or sensitive:
+
+| Method | How | Watch |
+|---|---|---|
+| **Distil from a stronger model** | Teacher answers your prompts; keep the good ones | Licence terms; the student copies the teacher's errors |
+| **Self-instruct / evolve** | Generate new instructions from seed examples, then make them harder or more varied | Collapse toward the generator's style; low diversity |
+| **Rejection sampling with a verifier** | Generate many answers, keep those that pass tests, schema checks or a calibrated judge | The verifier's blind spots become the data's |
+| **Back-translation and transliteration** | Translate high-resource data into low-resource languages (Indian languages) | Translationese; check with native speakers |
+| **Programmatic generation** | Templates and simulators for structured tasks (forms, SQL, tool calls) | Unrealistic distributions; mix with real samples |
+
+- **Processing:** exact and near-duplicate removal (hashing; MinHash for near-duplicates), PII scrubbing, toxicity and quality filters, format normalisation, and **decontamination**: remove anything that overlaps the eval sets, or the next score is meaningless ([[11 - Evals Observability and Silent Drift]]).
+- **Data-quality checks for tabular or spreadsheet data** (the Microsoft prompt): schema and type validation, null and outlier rates per column, label leakage checks, train/test overlap, distribution comparison between synthetic and real data, and a small human-reviewed sample per batch.
+- **Never train on unverified model output in a loop** (model collapse): synthetic data must pass a check grounded outside the generating model.
+
+---
+
+## The Data Flywheel: How the System Gets Better Over Time
+
+- "How does your system improve after launch?" is a common senior question. The answer is one loop that connects observability, evals and training, so every week of production makes the next version better.
+
+```mermaid
+flowchart LR
+    P[Production traffic] --> T[Traces + signals: thumbs, edits, escalations, retries, outcomes]
+    T --> M[Mine: failures, disagreements, new intents]
+    M --> L[Label: humans + calibrated judges]
+    L --> E[(Eval sets: regression + capability)]
+    L --> D[(Training data: SFT pairs, preference pairs, verified trajectories)]
+    D --> F[Improve: prompt, retrieval, routing, or fine-tune / distil]
+    F --> G{Offline evals + canary}
+    E --> G
+    G -->|ship| P
+```
+
+1. **Capture**: trace every run with its outcome ([[11 - Evals Observability and Silent Drift]]). The useful signals are **implicit** as much as explicit: a user editing the draft, rephrasing the same question, escalating to a human, or an action being reverted says more than a thumbs-down.
+2. **Mine**: sample failures, low-confidence answers, judge disagreements and new intents. Cluster them so you fix a *category*, not one conversation.
+3. **Label**: humans label a sample; a judge calibrated against them labels the rest.
+4. **Feed two stores from the same labels**:
+    + **eval sets** (every incident becomes a regression case; new hard cases become capability tasks);
+    + **training data**: (input, good output) pairs for SFT, (better, worse) pairs for preference tuning, verified successful trajectories for distillation ([[#Distilling Agent Trajectories]]).
+5. **Improve** with the cheapest lever that fixes the category: a prompt or tool-description change, a retrieval fix, a routing rule, and only then fine-tuning or distillation.
+6. **Ship through the same gate**: offline evals, then canary ([[11 - Evals Observability and Silent Drift]] → Shipping Prompt and Model Changes).
+
+- Guard rails on the loop:
+    + **Keep eval and training data separate**, or the next score is contaminated.
+    + **Consent and PII**: production data used for training needs a legal basis, redaction and deletion handling ([[18 - Security]]).
+    + **Feedback is biased**: thumbs come mostly from annoyed users; implicit signals and random samples correct for it.
+    + **Don't train on the model's own unverified outputs**: only outputs that passed an outcome check or human review, or quality slowly drifts.
+
+---
+
 ## Failure Modes
 
 | Failure | What happens | Mitigation |
@@ -182,6 +291,7 @@ flowchart LR
 | **Eval contamination** | Inflated scores | Strict train/eval separation |
 | **Adapter sprawl** | Hundreds of unmaintained adapters on old bases | Registry, ownership, retraining plan per base upgrade |
 | **Serving each adapter separately** | GPU waste | Multi-LoRA serving on a shared base |
+| **Prompt optimiser overfits the dev set** | Big offline gain, none in production | Held-out test split; ship through the normal eval and canary gate |
 
 ---
 
@@ -193,6 +303,19 @@ flowchart LR
 > - "RLVR replaces human preference with verifiers like unit tests; GRPO scores a group of samples per prompt and uses the group mean as the baseline, so no critic model is needed."
 > - "To distil an agent, I filter teacher trajectories to verified, minimal-step, policy-clean ones; training on raw logs copies the teacher's mistakes."
 > - "Test-time compute lets a smaller model reason longer on hard requests; I route only those to high reasoning effort."
+> - "The system improves through a flywheel: traces and implicit feedback, mined and labelled, feed both the eval sets and the training data, and every change ships through the same eval and canary gate."
+> - "Before fine-tuning I'd try a prompt optimiser like DSPy with GEPA: it rewrites the prompts against my metric using the failures' textual feedback, needs no GPUs, and re-runs when the model changes."
+
+## Sources
+
+- Agrawal et al., *GEPA: Reflective Prompt Evolution Can Outperform Reinforcement Learning* (2025; ICLR 2026 oral). https://arxiv.org/abs/2507.19457
+- Morph, *GEPA prompt optimization* and *DSPy vs TextGrad vs GEPA vs OPRO* (2026). https://www.morphllm.com/gepa-prompt-optimization · https://www.morphllm.com/prompt-optimization
+- Decagon, *Optimizing GEPA for production: a test-driven approach to prompt engineering* (2026). https://webflow2.decagon.ai/blog/optimizing-gepa-for-production
+- DSPy documentation (signatures, modules, optimisers). https://dspy.ai
+- PracHub, *Design a Real-Time Question-Answering Chatbot: Training Data, RL Tasks and Rewards* (Meta, MLE onsite, Sep 2026). https://prachub.com/interview-questions/design-a-real-time-question-answering-chatbot-training-data-rl-tasks-and-rewards
+- CMU 11-768 *AI Agents* (Fall 2026): lectures on SFT and RL for agents; assignments harness → eval → training. https://www.cmu-agents.com/
+- Cloudflare, *Introducing Clef: our open-source decision models* (Oct 2026); OpenAI, *Decisions API guide* (public beta); Sarvam, *Prism* (Nov 2026). https://blog.cloudflare.com/clef-decision-models/ · https://www.sarvam.ai/blogs/sarvam-prism
+- Amazon, *Rufus-Air: An Open LLM Post-Training Recipe* (arXiv 2609.29421, 2026): agent RL environments, sandbox reliability, consistent training and inference formats. https://arxiv.org/abs/2609.29421
 
 ## Related Notes
 

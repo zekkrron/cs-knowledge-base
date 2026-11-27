@@ -99,6 +99,9 @@ Solver: answer using #E1 and #E2
 | **ReWOO** | Plan + solve | No | Yes (fixed plan) | Predictable tool chains where cost/latency matter |
 
 - In practice these mix: a plan-and-execute outer loop whose steps are short ReAct loops, or ReWOO with a fallback to ReAct when a placeholder resolves to an error.
+- Two more names interviewers use:
+    + **LLMCompiler** (Kim et al., 2023): the planner emits a **DAG** of tool calls with dependencies, and an executor runs independent calls **in parallel** as soon as their inputs are ready, replanning if needed. ReWOO plus parallelism; pick it when a plan has many independent lookups and latency matters.
+    + **Tree of Thoughts** (Yao et al., 2023): the model proposes several partial solutions at each step, scores them, and searches the tree (breadth- or depth-first) with backtracking. Many calls per answer; worth it for puzzles and planning with a checkable score, rarely in production agents, where test-time compute is usually spent on sampling plus a verifier instead ([[15 - Post-Training and Model Adaptation#Test-Time Compute Scaling]]).
 
 ---
 
@@ -231,6 +234,26 @@ class Budget:
 
 ---
 
+## The Harness as a Whole
+
+- The **harness** is everything around the model that turns it into an agent: the loop, tools, context, state, checks and limits. A 2026 survey of agent harnesses (OpenReview) splits it into seven layers, abbreviated **ETCLOVG**. Use it as a checklist when asked "design the harness" or "what would you build around the model?".
+
+| Layer | Question it answers | Where it lives in this vault |
+|---|---|---|
+| **E**xecution | Where does model-written code or a tool call actually run, and what can it touch? | [[10 - AI Gateway Security and Guardrails#Sandboxing Model-Generated Code]], [[16 - Computer Use and Browser Agents]] |
+| **T**ool interface | How are actions described, discovered and called? | [[03 - Tool Engineering and Action Spaces]] (schemas, MCP, code mode, skills) |
+| **C**ontext | What goes into each call, and what gets dropped? | [[04 - State Memory and Context Engineering]] |
+| **L**ifecycle and orchestration | Which loop, when to stop, how to survive crashes and pauses? | This note (loops, graphs, termination), [[05 - Multi-Agent Topologies and Concurrency]], [[09 - Durable Execution HITL and Realtime UX]] |
+| **O**bservability | Can you replay what happened and attribute cost? | [[11 - Evals Observability and Silent Drift]], [[12 - LLM Cost and Latency Economics#Budgets and Attribution]] |
+| **V**erification | What external check says the step worked? | [[#Deterministic self-correction beats pure self-critique]], [[16 - Computer Use and Browser Agents#Verification and Recovery]], [[07 - Agentic RAG and Grounding Loops]] |
+| **G**overnance | Who is the agent acting as, what needs approval, what is logged? | [[03 - Tool Engineering and Action Spaces#Permissions and Identity]], [[10 - AI Gateway Security and Guardrails]], [[09 - Durable Execution HITL and Realtime UX#Human-in-the-Loop (HITL)]] |
+
+- A worked example with all seven layers is [[03 - Coding Agent]]: sandboxed execution, a small file and shell tool set, repo indexing for context, a capped edit-test loop, traces, tests as the verifier, and approval before pushing.
+- How to use it in an interview: name the layers in one sentence, then spend the time on the one or two layers where this product is hard. For a refund agent that is governance and verification; for a coding agent it is context and execution.
+- For a personal project, map your own system onto the layers before the deep-dive round, so gaps are found by you and not the interviewer ([[Resume/Delhivery/README]]).
+
+---
+
 ## Failure Modes
 
 | Failure | What happens | Mitigation |
@@ -251,6 +274,12 @@ class Budget:
 > - "Self-correction only works with external ground truth like tests or a compiler; pure self-critique often makes answers worse."
 > - "I model the agent as a state graph with conditional edges and a checkpointer, so I can add deterministic nodes, pause for humans and resume after crashes."
 > - "Termination is enforced by the runtime: step caps, token budgets, timeouts and repeated-action hashing, with an escalation path."
+
+## Sources
+
+- S. Kim et al., *An LLM Compiler for Parallel Function Calling* (arXiv 2312.04511, 2023).
+- S. Yao et al., *Tree of Thoughts: Deliberate Problem Solving with Large Language Models* (NeurIPS 2023).
+- Survey of agent harness design, seven layers (Execution, Tool interface, Context, Lifecycle and orchestration, Observability, Verification, Governance) (OpenReview, 2026).
 
 ## Related Notes
 

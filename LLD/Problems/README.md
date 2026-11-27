@@ -52,6 +52,11 @@ Order of the rest: the ranked list in [[Problem Catalog]].
 2. **Collect follow-ups from 10–20 dated interview reports.** For each report record company, date, starting prompt, every follow-up asked.
 3. **Tally.** Features present in most starting prompts → V0. Most frequent follow-ups → E1–E4 with evidence and confidence. The rest → "Also asked".
 4. **Record every source with its date** in the note's `## Sources`, and keep the tally table in the note (§5 *Evidence*).
+5. **Update [[LLD Idioms]] after the code is written** (part of "done", not optional):
+    + For every idiom entry the problem's code uses, add the problem and version to its **Used in** line and to the Index table (e.g. "Seat Booking E2").
+    + For any recurring code shape the problem introduces that has no entry yet, add one in the same format: Signal, Shape (a few lines of Java), Used in, Watch out, Depth (link to the pattern, foundations or concurrency note).
+    + A shape counts as an idiom when it's under ~15 lines, below the level of a design pattern, and likely to recur in another problem. One-off logic stays in the problem note.
+    + List the idioms in the note's §14 *Idioms Used*.
 
 ---
 
@@ -79,7 +84,7 @@ lld/<problem>/<v0|full>/
     + Add a **CLI** in `cli/` only when the reported prompt defines input commands and exact output strings (workat.tech style), or says the reviewer will run their own inputs.
     + The domain and service **never read input or print**. They take typed arguments, return results (everything the output needs, e.g. `unpark` returns the `Vehicle`) or throw domain exceptions, and take a `java.time.Clock` when time matters. That makes any solution convertible to a CLI by adding a driver only.
 - **Tests:** JUnit 5 under `src/test/java` mirroring the packages. Tests call the service directly (never the driver), one group per extension, at least one multi-threaded test where concurrency is on the ladder, plus a test of the CLI output if a CLI exists.
-- **Done means** `.\mvnw.cmd test` passes in `LLD/Code`. Run it before reporting a problem finished.
+- **Done means** `.\mvnw.cmd test` passes in `LLD/Code` **and** [[LLD Idioms]] is updated (§2 step 5). Run the tests before reporting a problem finished.
 
 ---
 
@@ -137,6 +142,8 @@ Off-ladder questions (SOLID, complexity, validation, testing, "how would this sc
 | Case | Expected | Test |
 ## 12. Self-Review Rubric
 ## 13. One-Minute Pitch
+## 14. Idioms Used
+Links to the [[LLD Idioms]] entries this problem's code uses, each with the version it appears in. New shapes get a new entry there first.
 ## Sources
 ## Related Notes
 ```
@@ -184,4 +191,5 @@ Use only the uploaded source. Keep it conversational, but do not skip steps or j
 ## Related Notes
 
 - [[Problem Catalog]]
+- [[LLD Idioms]]
 - [[LLD/README|LLD]]

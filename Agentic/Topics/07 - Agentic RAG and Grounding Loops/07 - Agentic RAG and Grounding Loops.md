@@ -134,6 +134,8 @@ def answer(question: str, user: User) -> AnswerWithCitations:
 | Failure mode | Misses connections across documents | Extraction errors become wrong "facts" in the graph |
 | Pick when | Default | Questions are relational or global, and the corpus is stable enough to justify the indexing cost |
 
+- Depth (data models, entity resolution, text-to-Cypher, cheaper variants, upkeep, permissions, evals): [[18 - Knowledge Graphs and GraphRAG]].
+
 - Hybrid designs are common: vector search for passages plus a lightweight entity graph (or a real graph DB for domains that are already graphs, like supply chains or org charts).
 
 ---

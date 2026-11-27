@@ -181,6 +181,21 @@ def pick_node(prompt_tokens: list[int], nodes: list[Node], block: int = 16) -> N
 
 ---
 
+## Running a Model Fleet: Registry, Rollouts and Cold Starts
+
+- **Model registry.** Every deployable model is an immutable, versioned entry: artifact location, base model and adapter versions, quantization format, context length, supported GPU types, memory needed, eval results and approval status. Requests and incidents are traced to the exact version that served them, the same as a container image tag.
+- **Rollouts** follow the code pattern: shadow traffic, then a canary slice, then a ramp, with rollback to the previous registry version ([[11 - Evals Observability and Silent Drift]] → Shipping Prompt and Model Changes).
+- **Cold starts are slow.** Loading tens of GB of weights onto a GPU takes tens of seconds to minutes, so a model server isn't a stateless container you can spin up on demand:
+    + keep a **warm pool** of minimum replicas for each live model;
+    + **autoscale on queue depth, in-flight sequences, KV-cache use or TTFT**, not CPU or GPU utilisation alone;
+    + speed loading with local NVMe caches of weights, pre-pulled images and snapshot restore;
+    + **pre-warm** before known peaks (a sale, a launch);
+    + rarely used models accept a cold start, or go to a provider API instead.
+- **Admission control.** Accepting unlimited work into an unbounded queue blows up TTFT for everyone. Reject or shed low-priority requests at the gateway when queue time would exceed the SLO ([[10 - AI Gateway Security and Guardrails]]).
+- **Placement.** Decide which models stay loaded, how many replicas each gets, where LoRA adapters live ([[15 - Post-Training and Model Adaptation]] → multi-LoRA), and when to unload. Popular models stay warm; long-tail models share GPUs or scale to zero.
+
+---
+
 ## Failure Modes
 
 | Failure | What happens | Mitigation |

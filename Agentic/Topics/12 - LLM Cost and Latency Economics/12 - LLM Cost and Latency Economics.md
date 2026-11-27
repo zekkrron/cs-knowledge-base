@@ -137,6 +137,29 @@ def answer(query: str) -> str:
     + Per feature: cost per task targets tracked on dashboards.
 - **Unit economics**: cost per resolved ticket, per generated report, per active user per month, compared with what the feature earns or saves.
 
+### Unit economics and pricing
+
+- The question in a product or FDE round: "does this feature make money, and what happens when usage doubles?" Answer with cost per unit of value, the pricing model, and the margin.
+
+| Pricing model | Revenue moves with | Who carries the cost risk | Breaks when |
+|---|---|---|---|
+| **Per seat** (flat monthly) | Number of users | The vendor | Power users run far more tasks than the average the price assumed |
+| **Per token or per call** (pass-through plus markup) | Usage | The customer | Customers can't predict the bill; agents with long contexts look expensive |
+| **Per outcome** (per resolution, per saved cancellation; Sierra prices this way, DataInterview, Oct 2026) | Value delivered | The vendor, on failed attempts | The outcome definition is disputed, or many runs fail before one succeeds |
+| **Hybrid** (seat plus usage tiers or credits) | Both | Shared | Credit rules get complicated |
+
+- Worked example (all inputs *assumed*, prices from the cost model above): a support agent, 12 steps per conversation.
+    + LLM cost per conversation ≈ **$0.38** with a 90% cached prefix (`task_cost(..., cache_hit=0.9)`), $0.50 without.
+    + Add retrieval, tools, logging and hosting at +30%: ≈ **$0.50** per conversation.
+    + Only 60% of conversations end resolved, so cost per resolution ≈ 0.50 / 0.6 ≈ **$0.83**.
+    + At a price of $1.50 per resolution, gross margin ≈ (1.50 − 0.83) / 1.50 ≈ **45%**. Every point of resolution rate and every cache hit moves the margin; that is why outcome pricing makes evals a finance concern.
+- Usage doubles:
+    + Per-token pricing: revenue and cost both double; margin holds.
+    + Per-outcome pricing: margin holds only if resolution rate holds on the new traffic, which is usually harder.
+    + Per-seat pricing: revenue is flat and cost doubles.
+- Power users on flat pricing: a $50 seat whose user runs 400 tasks a month at $0.50 costs $200. Fixes: fair-use caps, a cheaper model past a quota, credits, or a usage tier. Look at the distribution of cost per user, not the mean, because a few heavy users usually carry most of the cost.
+- Levers in order of effort: caching and compaction, routing routine steps to a cheaper model ([[#Cascades]]), fewer steps through better tools, then self-hosting at high steady volume ([[#API vs Self-Hosting]]).
+
 ---
 
 ## API vs Self-Hosting
@@ -156,6 +179,37 @@ self-hosted cost per 1M output tokens ≈ GPU $/hour ÷ (tokens/second × 3600 �
 | **Hybrid** | Frontier API for hard steps; self-hosted small or fine-tuned models for high-volume routine steps |
 
 - Throughput per GPU depends on batching, KV-cache memory, quantization and model size, which is the subject of [[13 - GPU Serving and Disaggregated KV Cache]] and [[14 - Quantization Decoding and VRAM Math]].
+
+### Choosing a model and reading benchmarks
+
+"Choose fast or cheap models" is a Google screen question (PracHub, Jan 2026); the method matters more than the answer.
+
+1. **Write the task's bar first:** quality metric and threshold on your own eval set, latency targets (TTFT and total), cost per task, context length, modalities, data rules (residency, retention), and whether you need fine-tuning or self-hosting.
+2. **Shortlist from public signals, then ignore them:** leaderboards and benchmarks narrow the field, but they are contaminated (test items leak into training data), saturated at the top, and measure tasks that aren't yours; vendor-reported numbers are run by the vendor. Arena-style human-preference rankings reward style as well as substance.
+3. **Run your eval set on 3–5 candidates**, several samples each with error bars ([[11 - Evals Observability and Silent Drift#Eval Statistics: Error Bars on Every Score]]), and record quality, latency and cost per task together.
+4. **Pick per step, not per product:** the cheapest model that clears the bar for each step, a stronger one for the hard steps, and a fallback in the same tier ([[#Cascades]]).
+5. **Re-run on every new model release**; model choice is a recurring decision, and a newer small model often replaces an older large one.
+
+- Build vs buy (Huyen, *AI Engineering*, ch. 4): API models for frontier quality and fast iteration; open weights when you need control, fine-tuning, residency or steady high volume; the table above and the next section cover the economics.
+
+### On-prem, air-gapped and sovereign deployment
+
+Banks, government, defence and healthcare often can't send data to a public API. The question is "what changes when the model has to run inside our walls?"
+
+| Option | What it means | Pick when |
+|---|---|---|
+| **Provider API with residency controls** | Regional endpoints, zero data retention, no training on your data | Data may leave your network but must stay in a region |
+| **Provider models in your cloud account** | Frontier models through your cloud (Bedrock, Vertex AI, Azure) over private endpoints, in your VPC and region | You need a frontier model and your cloud is already approved |
+| **Self-hosted open weights in your cloud** | vLLM or SGLang on your GPUs ([[13 - GPU Serving and Disaggregated KV Cache]]) | Strict control, fine-tuning, or steady volume |
+| **On-prem, connected** | Your data centre; vendor-managed stacks exist (Google Distributed Cloud connected with Gemini, preview 2025) | Data can't leave the building, but the site can reach the vendor |
+| **Air-gapped** | No connection to the vendor or the internet; Gemini on GDC air-gapped is generally available (Google, Aug 2025), as are open-weight models | Classified or regulated environments |
+
+- **What changes when air-gapped:**
+    + **Model updates arrive as signed artifacts on approved media** and go through your own eval suite before promotion; nothing auto-updates ([[14 - Model Weight Distribution to a GPU Fleet]]).
+    + **Everything around the model must be local too:** embedding model, reranker, guardrail classifiers, vector store, package mirrors, tracing and eval tooling. A design that calls a hosted moderation API or a SaaS tracer fails here.
+    + **Capacity is fixed:** you can't burst to a provider, so admission control and queues matter more, and quantization buys capacity ([[14 - Quantization Decoding and VRAM Math]]).
+    + **Model choice narrows** to what the vendor licenses for on-prem or open weights; evaluate quality gaps on your tasks before promising parity with the API.
+- **India:** sector rules (RBI's payment-data localisation) and government buyers push toward in-country hosting ([[10 - AI Gateway Security and Guardrails#Regulation to name in a design round]]). The IndiaAI Mission's subsidised GPU capacity (38,000+ GPUs onboarded through the AI compute portal, Lok Sabha answers, 2026) and Indian model builders such as Sarvam are the "sovereign" options interviewers in India may expect you to name.
 
 ---
 
@@ -181,6 +235,12 @@ self-hosted cost per 1M output tokens ≈ GPU $/hour ÷ (tokens/second × 3600 �
 > - "Easy, high-volume steps go to a small model and only hard ones escalate; offline work goes to the batch API."
 > - "Latency is the sum of sequential steps, so I parallelise independent calls, shorten outputs and stream progress."
 > - "Self-hosting only wins at high, sustained utilisation; GPUs cost the same per hour whether they're busy or not."
+
+## Sources
+
+- DataInterview, *Sierra Forward Deployed Engineer interview guide* (28 Oct 2026): Sierra prices on outcomes (resolutions, saved cancellations, revenue, CSAT).
+- Google Cloud, *Gemini is now available anywhere* (GA on Google Distributed Cloud air-gapped, Aug 2025) and *Run Gemini and AI on-prem with Google Distributed Cloud* (Apr 2025). https://cloud.google.com/blog/topics/hybrid-cloud/gemini-is-now-available-anywhere
+- Lok Sabha unstarred question 6044 (answered 1 April 2026): IndiaAI national compute capacity on subsidised cloud GPUs. https://sansad.in/getFile/lsapps/loksabhaquestions/annex/187/AU6044_lZOsLn.pdf
 
 ## Related Notes
 

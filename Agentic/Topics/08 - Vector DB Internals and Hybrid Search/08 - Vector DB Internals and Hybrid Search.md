@@ -178,6 +178,26 @@ fused = rrf([bm25_search(q, k=50), dense_search(q, k=50)])
 
 ---
 
+## Fine-Tuning the Embedder and Reranker
+
+- Off-the-shelf embedding models are trained on general web text. On a narrow domain (logistics SOPs, legal clauses, your internal API names), "similar" in their space isn't "relevant" for your users. Fine-tuning the **retriever** is often cheaper and higher-impact than fine-tuning the LLM, and practitioner reports put typical domain-adaptation gains at roughly **10–25% recall@10** on technical corpora (*treat as a range, not a promise*).
+- **Data you need: (query, positive) pairs**, ideally with **hard negatives**:
+    + **Positives** from real signals: queries and the documents users clicked or cited, support tickets and the article that resolved them, or **synthetic queries** an LLM writes for each chunk ("what question does this chunk answer?").
+    + **Hard negatives**: documents that look relevant but aren't, usually mined by taking the current model's top results and removing the true positives. They teach the fine distinctions that random negatives can't.
+    + Watch for **false negatives**: a mined "negative" that's actually relevant teaches the model the wrong thing. Filter mined negatives scoring too close to the positive.
+- **Loss:** contrastive training. The common default is **multiple-negatives ranking loss** (in-batch negatives): each query's positive must score above every other document in the batch, so a batch of 64 gives 63 free negatives per query; add mined hard negatives on top.
+- **The reranker** (a cross-encoder) is fine-tuned on the same data as a classifier over (query, document) pairs. It's often the better first target, because it doesn't require re-embedding the corpus.
+- **Re-embedding cost:** a new embedding model means a new index for the whole corpus (dual-write, backfill, shadow, switch; [[11 - Evals Observability and Silent Drift]] → embedding migration). Budget it before fine-tuning the embedder.
+- **Evaluate on a held-out set of real queries** with recall@k, MRR and nDCG, and check you didn't hurt general queries.
+
+| Change | Gains | Costs | Pick when |
+|---|---|---|---|
+| **Fine-tune the reranker** | Precision of the final top-k | Training data; no re-indexing | Right documents are in the top 50 but ranked badly |
+| **Fine-tune the embedder** | Recall: the right documents enter the candidate set at all | Full re-embed of the corpus | Recall@50 itself is low on domain queries |
+| **Neither; fix hybrid search or chunking first** | Often the cheapest win | Engineering only | Exact terms (codes, ids) or broken chunks cause the misses |
+
+---
+
 ## Picking a Store
 
 | Option | Pick when |
@@ -215,6 +235,12 @@ fused = rrf([bm25_search(q, k=50), dense_search(q, k=50)])
 > - "Post-filtering starves small tenants; I use filter-aware search, and give the largest tenants their own partitions."
 > - "Dense vectors miss SKUs and error codes, so I run BM25 alongside and fuse with Reciprocal Rank Fusion, which needs no score normalisation."
 > - "Retrieval is for recall, a cross-encoder reranker is for precision: retrieve 50–100, rerank, send the top 5–10."
+> - "On a narrow domain I fine-tune the reranker first (no re-indexing), then the embedder with in-batch and mined hard negatives if recall itself is low."
+
+## Sources
+
+- NV-Retriever, *Improving text embedding models with effective hard-negative mining* (2024). https://arxiv.org/abs/2407.15831
+- ML Journey, *How to Fine-Tune Embedding Models with Contrastive Learning* (2026): typical recall gains. https://mljourney.com/how-to-fine-tune-embedding-models-with-contrastive-learning/
 
 ## Related Notes
 

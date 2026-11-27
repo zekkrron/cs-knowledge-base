@@ -427,6 +427,8 @@ Each card: what the interviewer says → what it hits → the answer → which v
 
 The complete procedure for LLD / machine-coding problems (ideology, V0 and extension ladder, research steps, code layout and driver rules, diagrams, note template, study order) lives in one place: `LLD/Problems/README.md`. Read it before writing or changing any LLD problem. As in HLD, every version gets a Mermaid diagram: V0 and each extension (E1–E4), plus the full version (rules in its §4). Every note also has a *50-Minute Cut* under its V0 section: what to type from V0 and what to say instead for a 45–60 minute discussion round (no separate code folder).
 
+**Idioms rule:** every new or changed LLD problem updates `LLD/LLD Idioms.md`. Add the problem and version to the **Used in** line of each idiom its code uses (and the Index table), add a new entry for any recurring code shape that has none (Signal, Shape, Used in, Watch out, Depth), and list them in the note's §14 *Idioms Used*. A problem isn't done until this is updated (`LLD/Problems/README.md` §2 step 5).
+
 ---
 
 ## Formatting

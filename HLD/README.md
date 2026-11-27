@@ -4,6 +4,14 @@ High Level Design notes.
 
 > [!tip] **Interview tomorrow, few hours?** Read [[16 - Estimation and Decision Cheat Sheet]], then walk [[06 - Seat Booking]] or [[13 - URL Shortener]] out loud.
 
+> [!todo] Later: Problem to Solution Map cleanup (`Topics/25 - Problem to Solution Map/`)
+> The map files become the core of revision and the entry point into the topic notes. In this order, each step additive (existing content stays as it is):
+> 1. Extract anything useful from the question banks (`13 - Question Bank`, `05 - Databases/11 - Interview Questions`, Kafka `08 - Interview Questions`) into the map files in their format, then retire the old question bank.
+> 2. Point every **Depth** link at a section (`[[02 - Indexing#Composite indexes]]`), not a whole file.
+> 3. Research what's actually asked, add the missing problems, label evidence and confidence, and reorder by ROI.
+> 4. Last, for recall practice: reword headings that give the answer away, and fold answers into collapsed callouts.
+> 5. Add a "Map entries this problem uses" line to each HLD problem note.
+
 ## Topics (building blocks)
 
 [[Topics/README|HLD Topics]] — one folder per topic. Kafka lives under [[07 - Async Messaging]].

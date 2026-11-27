@@ -120,6 +120,30 @@ created: 2026-10-11
 - **Moves:** agents as non-human identities with owners and expiry; short-lived task-scoped tokens; token exchange so services see "agent X for user Y"; re-authorise every hop against the originating user (confused deputy, OWASP ASI03); step-up approval for risky actions.
 - **Depth:** [[03 - Tool Engineering and Action Spaces]], [[10 - AI Gateway Security and Guardrails]]
 
+### The agent's identity is a static API key
+
+- **Signal:** a long-lived key in an environment variable; nobody knows who owns it; it hasn't rotated in a year.
+- **Moves:** attested workload identity per agent (SPIFFE SVID from SPIRE or the cloud platform, minutes-long, auto-rotated); RFC 8693 token exchange for a short-lived, audience-bound token naming user and agent; policy at the tool checks both; audit logs record both.
+- **Depth:** [[03 - Tool Engineering and Action Spaces]] → Workload identity
+
+### Agents from other teams or vendors need to cooperate
+
+- **Moves:** A2A (v1.0, March 2026; with MCP under the Agentic AI Foundation since August 2026): Agent Cards, tasks with a lifecycle and streaming; verify **signed Agent Cards**, authenticate both ends, re-authorise against the originating user, treat the remote agent's output as untrusted (OWASP ASI07).
+- **Depth:** [[03 - Tool Engineering and Action Spaces]] → A2A
+
+### The agent has to pay for something
+
+| Layer | Option |
+|---|---|
+| **Checkout** | ACP (OpenAI and Stripe, beta) or UCP (Google) |
+| **Proof of what the user approved** | AP2 signed intent and cart mandates |
+| **Payment credential** | Scoped single-use token (e.g. Stripe Shared Payment Token), never a card number |
+| **Machine payments per call** | x402 |
+| **Telling real agents from bots** | Visa Trusted Agent Protocol (signed requests) |
+
+- **Rules:** code enforces limits and merchant allow-lists; fresh approval outside the original intent; idempotent, auditable purchases.
+- **Depth:** [[03 - Tool Engineering and Action Spaces]] → Agents That Pay
+
 ---
 
 ## 3. Context, State and Memory
@@ -251,12 +275,27 @@ created: 2026-10-11
 | Recent public info | Web search |
 | Multi-hop relationships, corpus-wide themes | GraphRAG / graph queries |
 
-- **Depth:** [[07 - Agentic RAG and Grounding Loops]]
+- **Depth:** [[07 - Agentic RAG and Grounding Loops]], [[18 - Knowledge Graphs and GraphRAG]]
 
 ### Citations are fabricated
 
 - **Moves:** chunk ids in context; require per-claim citations; verify ids exist, quotes are verbatim, claims are supported (NLI / small judge); regenerate or drop unsupported claims.
 - **Depth:** [[07 - Agentic RAG and Grounding Loops]]
+
+### "The context window is huge now; why do we need RAG?"
+
+- **Moves:** usable length is shorter than advertised (RULER), similar distractors hurt (context rot), every token is paid on every call, and a window can't enforce freshness or per-user permissions. Long context wins when the whole relevant source fits; hybrid is retrieve the right documents, then pass them whole.
+- **Depth:** [[00 - LLM Fundamentals for Engineers]]
+
+### Retrieval is weak on domain-specific queries
+
+| Option | Pick when |
+|---|---|
+| Fix hybrid search or chunking | Exact terms or broken chunks cause the misses |
+| Fine-tune the reranker | Right documents are in the top 50 but ranked badly; no re-indexing |
+| Fine-tune the embedder (in-batch + mined hard negatives) | Recall@50 itself is low; budget a full re-embed |
+
+- **Depth:** [[08 - Vector DB Internals and Hybrid Search]]
 
 ### Vector index doesn't fit in memory
 
@@ -269,6 +308,40 @@ created: 2026-10-11
 | **DiskANN** | Most RAM | SSD-bound latency |
 
 - **Depth:** [[08 - Vector DB Internals and Hybrid Search]]
+
+### Documents are scans, slides and charts, not clean text
+
+| Option | Costs you | Pick when |
+|---|---|---|
+| **OCR / layout parser → text RAG** | Charts lost, tables garbled | Text-heavy, exact-quote citations |
+| **Vision model on the page** | ~1–1.5k tokens per page per call | Extraction from forms and invoices; questions about a known page |
+| **Page-image retrieval (ColPali-style, late interaction)** | ~1k vectors per page; storage and slower search | Decks, reports with charts, scanned manuals |
+
+- **Default:** both views: OCR text for BM25 and citations, page images retrieved and read by a vision model only for the top pages; cite a cropped region, not just a page. Pool and quantise multi-vector indexes and search in two stages.
+- **Depth:** [[17 - Multimodal Systems]]
+
+### Images, audio or video blow the token budget
+
+- **Moves:** resize and crop before sending (Claude ≈ width × height / 750 tokens); drop images from context after use; for video (≈ 1M tokens an hour at 1 fps) search the transcript and keyframes first and send only the relevant seconds; for speech, vocabulary hints, read-back of names and numbers, WER per entity type.
+- **Depth:** [[17 - Multimodal Systems]]
+
+### Building and keeping a knowledge graph for an LLM
+
+| Option | Pick when |
+|---|---|
+| **No graph: hybrid vector + BM25 + reranker** | Default; questions are about passages |
+| **Graph-seeded hybrid** (vector hits seed a bounded expansion) | Multi-hop questions over known entities |
+| **GraphRAG with community summaries** | Corpus-wide themes over a stable corpus |
+| **LazyGraphRAG / LightRAG / HippoRAG 2** | Graph benefits with lower indexing cost or frequent updates |
+| **Text-to-Cypher** | Precise structured questions over a curated graph |
+
+- **Moves:** fixed schema; extraction with quoted spans checked against the chunk; provenance and ACL on every edge; entity resolution that prefers a missed merge to a wrong one; incremental re-extraction by content hash; summaries per access group; evaluate against a vector baseline by question type.
+- **Depth:** [[18 - Knowledge Graphs and GraphRAG]]
+
+### One question must be answered across every document (100k contracts)
+
+- **Moves:** cheap filter with measured recall; one structured map call per document with evidence spans; token-bucket scheduler and batch API; reduce in code; LLM narrative only over the aggregate; progress and partial results.
+- **Depth:** [[10 - Batch Document Extraction]] → V4
 
 ### Changing the embedding model
 
@@ -310,6 +383,23 @@ created: 2026-10-11
 - **Moves:** VAD-triggered barge-in that flushes every audio buffer, cancels LLM generation and TTS, and truncates history to what was spoken; semantic end-of-turn detection; WebRTC transport; streaming at every stage.
 - **Depth:** [[09 - Durable Execution HITL and Realtime UX]]
 
+### A run's output can't be tied to the prompt that produced it
+
+- **Signal:** collaborators edit the draft while runs are in flight; "re-run" gives different results and nobody knows why.
+- **Moves:** freeze an immutable run snapshot (prompt text, variables, dated model id, parameters, tools) before queueing; runs point only at snapshots; drafts saved with compare-and-swap on a revision; promise same inputs, never same outputs.
+- **Depth:** [[13 - Prompt Playground]]
+
+### An agent must act on events and timers, not only on chat
+
+- **Signal:** "follow up if they don't reply in two days"; webhooks from email, CRM or on-call tools; the agent messages too often.
+- **Moves:** an event inbox (fast ack, dedupe by source id, batch pending events into one run); timers that write events to the inbox; memory files for what can't be looked up again; a credential proxy and deferred tool calls that end the run and resume from the user's answer; an outbox where "stay quiet" is a normal outcome.
+- **Depth:** [[09 - Durable Execution HITL and Realtime UX#Always-On Agents]]
+
+### Users can't tell when the agent is wrong, and give no feedback
+
+- **Moves:** named progress steps; "couldn't find it" as a normal answer; verified inline citations; preview and confirm costly actions; a visible human path; one-click feedback tied to the trace id; treat user edits as labelled corrections.
+- **Depth:** [[09 - Durable Execution HITL and Realtime UX#AI UX: What the User Sees]]
+
 ---
 
 ## 7. Security and the Gateway
@@ -317,7 +407,7 @@ created: 2026-10-11
 ### Provider outage, keys everywhere, no control over spend
 
 - **Move:** an AI gateway owning credentials, routing, retries and fallbacks (evaluated, same tier, residency-aware), hedging for idempotent calls, token-aware limits, budgets, caching, tracing and redaction.
-- **Depth:** [[10 - AI Gateway Security and Guardrails]]
+- **Depth:** [[10 - AI Gateway Security and Guardrails]], [[16 - AI Gateway]]
 
 ### One tenant's big prompts exhaust the token quota
 
@@ -360,6 +450,16 @@ created: 2026-10-11
 - **Move:** list every tool, credential, memory store and peer agent; ask which of OWASP's agentic risks (ASI01 goal hijack … ASI10 rogue agents) reaches each; apply **Least Agency** first (remove autonomy and permissions), then controls; **Strong Observability** for the rest.
 - **Depth:** [[10 - AI Gateway Security and Guardrails]]
 
+### "How do you know the defences actually hold?"
+
+- **Move:** a red-team pipeline: threat model → attack corpus per category (jailbreak, indirect injection in documents, tool results and images, exfiltration, privilege abuse, tool misuse, over-refusal probes) → automated multi-turn variants (Promptfoo, garak, PyRIT) → attack the full agent with tools in a sandbox → score on **tool calls from the trace**, not the judge's verdict → humans confirm → attack success rate per category at a stated number of attempts → fix by removing agency first → every finding becomes a CI regression case.
+- **Depth:** [[10 - AI Gateway Security and Guardrails]] → Red-Teaming
+
+### "What about regulation?"
+
+- **Move:** name the regime and its effect on the design: DPDP (consent, purpose, erasure through transcripts, memories and embeddings); EU AI Act after the Digital Omnibus: transparency (AI disclosure, labelled and machine-marked generated content) since 2 August 2026, high-risk duties (hiring, credit, education) from 2 December 2027; classify the use case and keep audit logs and human oversight.
+- **Depth:** [[10 - AI Gateway Security and Guardrails]] → Regulation
+
 ### The system you need has no API (portal, partner dashboard, desktop app)
 
 | Option | Pick when |
@@ -389,6 +489,57 @@ created: 2026-10-11
 
 - **Moves:** binary specific rubrics; reference answers or source context; evaluate both orders (position bias); different model family (self-preference); length control (verbosity); calibrate against 100–200 human labels.
 - **Depth:** [[11 - Evals Observability and Silent Drift]]
+
+### Eval scores can't be trusted, or stopped moving
+
+- **Moves:** capability suite (starts low) plus regression suite (~100%), tasks graduate between them; add harder tasks when a suite saturates; unambiguous tasks with a reference solution each; balanced should/shouldn't cases; grade outcomes not exact paths, with partial credit; one judge per dimension with an "Unknown" option; isolated trials; read transcripts. A 0% task is usually a broken task or grader.
+- **Depth:** [[11 - Evals Observability and Silent Drift]]
+
+### "Model B beat model A by 1.5 points. Is that real?"
+
+- **Moves:** report a standard error with every score; compare **paired differences** on the same questions (frontier models' per-question scores correlate 0.3–0.7, so paired SEs are much smaller); **cluster** the SE when questions share a passage, repo or template (can be 3× the naive SE); resample each question k times with chain of thought; Wilson intervals for small n or rates near 100%; size the eval with power analysis (about 1,400 paired questions to see 3 points at 80%); correct across many evals (Holm, Benjamini-Hochberg); bootstrap statistics with no formula.
+- **Depth:** [[11 - Evals Observability and Silent Drift#Eval Statistics: Error Bars on Every Score]]
+
+### Spotting hallucinations with no reference answer
+
+| Signal | Pick when |
+|---|---|
+| **Token log-probabilities** | Cheap first filter on short factual answers; logprobs available |
+| **Self-consistency / SelfCheckGPT** | Black-box API; offline audit of sampled traffic |
+| **Semantic entropy** (cluster samples by meaning) | Strongest unsupervised signal for factual Q&A; worth N× generation |
+| **Probes on hidden states** | Self-hosted open weights at volume |
+| **Verify claims with tools** | High-stakes answers; agent claims about state |
+
+- **Caveat:** these detect uncertainty; confident errors pass. Ground with retrieval first.
+- **Depth:** [[11 - Evals Observability and Silent Drift#Hallucination Detection Without a Reference]]
+
+### Nothing is down, but the answers got worse (AI on-call)
+
+- **Moves:** a **quality SLO** (share of sampled responses passing graders, 28-day budget, burn-rate alerts); page on spend rate, steps per task, guardrail spikes and provider errors; **mitigate first** (config rollback, fallback model, kill switch, human review, spend cap), then diff failing vs passing traces by prompt, model, index and tool version; check input-mix shift and silent provider updates; size the blast radius in wrong **actions**; failing cases join the regression suite. Never let the model be the only reporter of a tool failure (it narrates errors as success).
+- **Depth:** [[11 - Evals Observability and Silent Drift#Quality SLOs and Incident Response]]
+
+### Rolling out a prompt or model change safely
+
+- **Moves:** prompts in git with a `prompt_version` on every trace; pinned model versions; offline evals gate the merge; shadow → canary (1–5%) → A/B or ramp; rollback is a config flip; watch success per intent, refusals, cost and steps per task.
+- **Depth:** [[11 - Evals Observability and Silent Drift]], [[13 - GPU Serving and Disaggregated KV Cache]] (model registry)
+
+### "Is this good enough to launch?"
+
+| Layer | Examples |
+|---|---|
+| **Business** | Resolved cases, conversion, cost per resolved case |
+| **User** | Task completion, draft acceptance, edit distance, repeat contact, escalations |
+| **Task quality** | Offline evals: groundedness, correctness, tool-call correctness |
+| **System** | p95 latency, availability, cost per **successful** task |
+| **Risk** | Unsafe output, leakage, harmful actions, **over-refusal**, segment gaps |
+
+- **Moves:** hard guardrails separate from goal metrics, never blended; randomise by user or conversation (tenant or switchback for B2B); watch novelty effects; shadow or staged rollout when A/B isn't possible; write the ship rule before the test.
+- **Depth:** [[11 - Evals Observability and Silent Drift]] → Product Metrics
+
+### "How does the system get better after launch?"
+
+- **Move:** the data flywheel: traces plus implicit signals (edits, rephrasing, escalations) → mine and cluster failures → label (humans + calibrated judge) → feed both eval sets and training data → cheapest fix first (prompt, retrieval, routing, then fine-tune or distil) → same eval and canary gate. Keep eval and training data separate; train only on verified outputs.
+- **Depth:** [[15 - Post-Training and Model Adaptation]]
 
 ### Evaluating a conversational agent that changes state (support, booking)
 
@@ -443,6 +594,17 @@ created: 2026-10-11
 | **Hybrid** | Frontier API for hard steps, self-hosted small models for volume |
 
 - **Depth:** [[12 - LLM Cost and Latency Economics]], [[14 - Quantization Decoding and VRAM Math]]
+
+### Does the feature make money? (pricing and margin)
+
+| Pricing | Pick when |
+|---|---|
+| **Per seat** | Usage per user is predictable; add fair-use caps for power users |
+| **Per token or call** | Developer platforms; customers accept a variable bill |
+| **Per outcome** | The outcome is countable and agreed (resolution, saved cancellation); you can carry failed attempts |
+
+- **Moves:** cost per resolution = cost per conversation / resolution rate; gross margin against price; look at the cost distribution per user, not the mean; check what doubling usage does under each model.
+- **Depth:** [[12 - LLM Cost and Latency Economics#Unit economics and pricing]]
 
 ---
 
@@ -501,6 +663,36 @@ created: 2026-10-11
 - **Formula:** VRAM ≈ weights (params × bytes) + KV (per-token bytes × tokens in flight) + ~10–20% overhead; cost per 1M tokens ≈ GPU $/hour × GPUs ÷ (aggregate tokens/s × utilisation × 3600 ÷ 10⁶).
 - **Depth:** [[14 - Quantization Decoding and VRAM Math]]
 
+### "Is this compute-bound or memory-bound? How fast can it go?"
+
+- **Method:** FLOPs (`2·m·k·n` per matmul, ~2 × params per token) ÷ bytes moved = arithmetic intensity; compare with the ridge point (H100 ≈ 295 FLOP/byte). Below → time ≈ bytes ÷ bandwidth; above → FLOPs ÷ peak. Weight-matmul intensity ≈ tokens per step, so decode under ~300 tokens is memory-bound.
+- **Sharding:** contracting dimension unsplit → no comms; one input split on it → AllGather; both split → local matmul + AllReduce (2× AllGather). Megatron TP = two activation all-reduces per layer; keep TP inside NVLink, pipeline or data parallel across nodes.
+- **Depth:** [[14 - Quantization Decoding and VRAM Math#Roofline and Sharding Arithmetic]]
+
+### Shipping a new model version to thousands of GPU hosts
+
+- **Signal:** model size × fleet size is a petabyte per release; the origin would need hours.
+- **Bound first:** time ≥ max(F ÷ seed upload, F ÷ slowest download, N·F ÷ total upload) ≈ F ÷ node link with a swarm; twice that if upload and download share one link.
+- **Moves:** chunked, content-addressed, signed artifacts in a rack-aware swarm with regional seeds; a control plane of per-cohort assignments with a generation that only grows; fetch early, activate later in drained batches; previous version kept warm; GPU-to-GPU loading from serving peers; quality gates per rollout stage with auto-pause.
+- **Depth:** [[14 - Model Weight Distribution to a GPU Fleet]], [[13 - GPU Serving and Disaggregated KV Cache]]
+
+### Minute-long GPU jobs (video, image generation) and demand far above capacity
+
+- **Signal:** one job holds a GPU for minutes; peak submissions are 10× what the fleet can run; one heavy user takes the fleet.
+- **Moves:** submit returns a job id; every state change is a conditional update with attempt and fencing epoch; leases, heartbeats, reaper and reconciler; checkpoints for long jobs; weighted fair queueing on **GPU-seconds**, charged by estimate and corrected at completion; bounded tier queues with ETAs and 429s; whole-node reservations and backfill for multi-GPU jobs.
+- **Depth:** [[15 - GPU Job Scheduler for Video Generation]]
+
+### GPUs sit idle or jobs never start on a shared cluster
+
+- **Signal:** a 16-GPU job holds 12 GPUs and waits; free GPUs are scattered one per node; a bad GPU keeps failing jobs.
+- **Moves:** gang scheduling (Kueue, Volcano, Slurm); best-fit placement and a fragmentation metric; topology-aware placement on NVLink islands and leaf switches; DCGM and Xid monitoring with rate-limited cordon and drain; MIG for isolated small tenants.
+- **Depth:** [[19 - GPU Cluster Infrastructure and Operations]]
+
+### A model is too big to train, or the run is slow
+
+- **Moves:** count 16 bytes per parameter for mixed-precision Adam; FSDP/ZeRO to shard state; TP inside the node, PP across nodes (bubble ≈ (p − 1)/(m + p − 1)), EP with all-to-all for MoE; FlashAttention and context parallelism for long sequences; activation checkpointing; asynchronous RL with bounded staleness for post-training.
+- **Depth:** [[20 - Training and RL Systems at Architect Depth]]
+
 ---
 
 ## 11. Adapting the Model
@@ -517,6 +709,17 @@ created: 2026-10-11
 | **Tone / preference** alignment | DPO |
 
 - **Depth:** [[15 - Post-Training and Model Adaptation]]
+
+### Hand-tuned prompts plateau or break when the model changes
+
+| Option | Pick when |
+|---|---|
+| **BootstrapFewShot** (DSPy) | Small labelled set, quick win |
+| **MIPROv2** | Tens to hundreds of examples, several modules |
+| **GEPA** (reflective prompt evolution) | Rich textual feedback (judge rationales, test output); agents and multi-step pipelines |
+
+- **Moves:** needs a metric and a labelled set first; hold out a test split; version optimised prompts and ship through the normal eval and canary gate; fine-tune only if a smaller model or frozen behaviour is needed.
+- **Depth:** [[15 - Post-Training and Model Adaptation]] → Automatic Prompt Optimisation
 
 ### Fine-tuned model copies the teacher's bad habits
 

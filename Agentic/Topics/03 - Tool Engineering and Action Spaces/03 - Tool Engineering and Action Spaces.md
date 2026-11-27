@@ -204,6 +204,36 @@ def refund_order(args: RefundArgs, ctx: RequestContext) -> dict:   # ctx from th
 | **Token exchange: agent acting for user** | Both, with narrowed scopes | Any agent acting for a signed-in user |
 | **Per-task capability token** | A short-lived grant for one task | High-risk tools; multi-agent hand-offs |
 
+### Workload identity: proving *which* agent is calling
+
+- Delegation answers "acting for whom". A second question comes first: **is this caller really the agent it claims to be?** A static API key in an environment variable answers it badly: it can be copied, it rarely rotates, and anything holding it *is* the agent. Industry surveys put almost half of non-human identities unchanged for over a year (CSA, citing Entro Security, 2026).
+- The 2026 pattern combines two standards, each doing one job:
+
+| Layer | Standard | What it proves | Lifetime |
+|---|---|---|---|
+| **Workload identity** | **SPIFFE** (an ID like `spiffe://corp/agents/support-bot`), issued by SPIRE or a cloud platform as an X.509 or JWT "SVID" after **attesting** the running process (its pod, image, node) | *Which software* is calling, with no secret stored at rest | Minutes, rotated automatically |
+| **Delegated authority** | **OAuth 2.0 token exchange** (RFC 8693): the agent presents its SVID plus the user's token and receives a narrowed token with an `act` claim | *For whom* and *with which scopes* | Minutes, per task |
+
+```mermaid
+sequenceDiagram
+    participant U as User session
+    participant A as Agent workload
+    participant W as SPIRE / platform
+    participant AS as Authorisation server
+    participant T as Tool / API
+    A->>W: attest (pod, image, node)
+    W-->>A: SVID: spiffe://corp/agents/support-bot (short-lived)
+    U->>A: request + user token
+    A->>AS: token exchange (RFC 8693): SVID + user token, scope=refunds:write
+    AS-->>A: token: sub=user, act=support-bot, scope narrowed, aud=payments, exp=5 min
+    A->>T: call with exchanged token (mTLS with SVID)
+    T->>T: check audience, actor, scope, user's own permission
+```
+
+- **Policy at the tool** reads both: "support-bot may issue refunds only when acting for a customer, only on that customer's orders, up to ₹5,000". Policy engines (OPA and similar) express this as data.
+- **Vendors now ship this for agents**: Google Cloud's Agent Identity gives each agent a SPIFFE-based identity it uses to reach MCP servers, cloud resources and other agents, acting for itself or for a user; Red Hat's Kagenti wires SPIFFE, token exchange and policy together (June 2026).
+- **Interview shape**: "each agent has an attested workload identity, no stored API keys; it exchanges the user's token for a short-lived, audience-bound token that names both the user and the agent; every service authorises both, and the audit log records both."
+
 ---
 
 ## Model Context Protocol (MCP)
@@ -256,10 +286,31 @@ flowchart LR
 
 ### Agent-to-Agent (A2A)
 
-- MCP connects an agent to **tools**; **A2A** (an open protocol started by Google, now under the Linux Foundation) connects **agents to other agents**, possibly built by different teams or vendors.
+- MCP connects an agent to **tools**; **A2A** connects **agents to other agents**, possibly built by different teams or vendors.
     + Agents publish an **Agent Card** (capabilities, endpoint, auth requirements).
-    + Work is exchanged as **tasks** with a lifecycle (submitted, working, input-required, completed), with streaming updates and artifacts.
+    + Work is exchanged as **tasks** with a lifecycle (submitted, working, input-required, completed), with streaming updates, push notifications and artifacts.
+- **Where it stands (November 2026):**
+    + Google launched it in April 2025 and gave it to the Linux Foundation; **v1.0 shipped in March 2026**, adding multi-protocol bindings and version negotiation, multi-tenancy support and **cryptographically signed Agent Cards** (a card's identity and metadata are verified against a trusted signing key, so a fake agent can't impersonate a real one).
+    + More than 150 organisations supported it by April 2026, with Google, Microsoft and AWS building it into their platforms and production use in supply chain, financial services, insurance and IT operations.
+    + In August 2026 it joined MCP under the **Agentic AI Foundation (AAIF)**, so the two main agent protocols now share one neutral home.
+    + Adoption is strong at the enterprise-platform layer and thin among startups and coding agents, which mostly use MCP and in-process sub-agents.
 - Mental model: MCP is "call a function", A2A is "delegate a job to a colleague who may take a while and ask questions". Within one codebase, sub-agents are just function calls ([[05 - Multi-Agent Topologies and Concurrency]]).
+- **Security of A2A traffic** is OWASP ASI07 (insecure inter-agent communication): verify signed Agent Cards, authenticate both ends (workload identity above), re-authorise against the originating user at every hop, and treat a remote agent's output as untrusted input ([[10 - AI Gateway Security and Guardrails]]).
+
+### Agents That Pay: Commerce and Payment Protocols
+
+- When an agent buys something, three new questions appear: how it reads a merchant's catalogue and checks out, how the merchant knows the human approved **this** purchase, and how money moves without the agent holding a card number. By late 2026 several protocols split that work, and most real deployments combine two or three of them:
+
+| Protocol | From | What it covers | Status (late 2026) |
+|---|---|---|---|
+| **ACP** (Agentic Commerce Protocol) | OpenAI and Stripe | Product feed, merchant-hosted checkout endpoints, order webhooks, and a **delegated payment** step where the agent passes a single-use scoped token (e.g. Stripe's Shared Payment Token), never a card number; the merchant stays merchant of record | Apache-2.0 spec labelled beta; first used by ChatGPT Instant Checkout (Sep 2025), which OpenAI scaled back in March 2026 in favour of merchants' own checkouts |
+| **AP2** (Agent Payments Protocol) | Google, 60+ organisations | **Authorisation**: signed **mandates** that record what the user approved (an intent mandate for "buy running shoes under ₹8,000", a cart mandate for the exact cart), so a purchase can be defended in a dispute | Announced September 2025 |
+| **UCP** | Google | Commerce capabilities a merchant exposes to agents (catalogue, cart, checkout) | 2026 |
+| **x402** | Coinbase and others | Machine-to-machine payment over HTTP 402 "payment required", typically stablecoins, for paying per API call | In use for agent micro-payments |
+| **Visa Trusted Agent Protocol** | Visa | Signs agent requests with HTTP Message Signatures (RFC 9421) so merchants can tell a legitimate agent from a scraping bot | 2025–2026 |
+
+- **Design rules that hold whatever the protocol**: the agent never sees raw card details (scoped, single-use tokens); spending limits and merchant allow-lists are enforced by code, not the prompt; anything above a limit or outside the original intent needs fresh user approval; every purchase is idempotent and auditable with the mandate attached ([[01 - Customer Support Agent with Refunds]], [[MD-05 - Immutable Double-Entry Ledger and Reconciliation Loop|MD-05]]).
+- For India, the same ideas map onto UPI mandates and tokenised cards; say so if the interviewer is a payments company.
 
 ---
 
@@ -277,6 +328,9 @@ flowchart LR
 | **Token passthrough / wrong audience** | A token issued for one service is replayed against another | Audience-bound tokens (RFC 8707 `resource`); servers reject tokens not issued for them; never forward tokens |
 | **OAuth mix-up via a malicious server** | Client sends its credentials to an attacker's authorisation server | Validate `iss`; key credentials by issuer; patched SDKs |
 | **Confused deputy between agents** | A privileged agent acts on a low-privilege caller's request | Authorise every hop against the originating user |
+| **Static API key as the agent's identity** | A copied key impersonates the agent indefinitely | Attested workload identity (SPIFFE), short-lived tokens, rotation |
+| **Spoofed remote agent** | A fake A2A agent receives delegated tasks and data | Signed Agent Cards, mutual authentication, allow-listed peers |
+| **Agent holds payment credentials** | One injection empties a card | Scoped single-use payment tokens, code-enforced limits, signed mandates |
 | **Context full of tool schemas** | Slow, expensive, worse selection | Tool search, code mode, skills |
 | **Unsandboxed code mode** | Model-written script reaches the host or network | Sandbox with resource limits and egress rules |
 
@@ -294,6 +348,9 @@ flowchart LR
 > - "Since the July 2026 spec MCP is stateless: no handshake, no session id, so a remote server scales behind a normal load balancer."
 > - "A remote MCP server is an OAuth resource server: 401 with protected-resource metadata, PKCE, an audience-bound token, and step-up on insufficient scope."
 > - "Agents get their own short-lived, task-scoped identity and act *for* the user via token exchange; every hop re-authorises against the original user."
+> - "No stored API keys for agents: an attested SPIFFE workload identity proves which agent is calling, and RFC 8693 token exchange gives it a short-lived token naming both the user and the agent."
+> - "A2A reached v1.0 in March 2026 with signed Agent Cards and now sits with MCP under the Agentic AI Foundation; I verify the card, authenticate both ends and treat the remote agent's output as untrusted."
+> - "An agent that pays never holds a card: it gets a scoped single-use token, code enforces limits and allow-lists, and a signed mandate records what the user approved."
 > - "With hundreds of tools I'd use code mode: the model reads only the tool files it needs and filters big results in a sandbox, so they never hit the context."
 
 ## Sources
@@ -305,6 +362,12 @@ flowchart LR
 - MCP server authentication survey, 2026 (DevToolLab; also cited by Microsoft Tech Community). https://devtoollab.com/blog/mcp-server-authentication-oauth-guide-2026
 - SWE-Skills-Bench figures via CloudsPress (2026). https://www.cloudspress.com/agent-skills-vs-mcp-what-context-costs-actually-look-like/
 - OWASP Top 10 for Agentic Applications (December 2025), ASI03. https://genai.owasp.org/resource/owasp-top-10-for-agentic-applications-for-2026/
+- Google Cloud, *Agent Identity overview* (SPIFFE-based identity for agents, 2026). https://docs.cloud.google.com/iam/docs/agent-identity-overview
+- Red Hat, *Wiring zero trust identity for AI agents: SPIFFE, token exchange and Kagenti* (June 2026). https://next.redhat.com/2026/06/10/wiring-zero-trust-identity-for-ai-agents-spiffe-token-exchange-and-kagenti/
+- Amin Raj, *Agent identity: what the standards fix* (2026), citing CSA and Entro Security on stale non-human identities. https://aminrj.com/posts/what-it-takes-agent-real-identity/
+- Linux Foundation, *A2A protocol surpasses 150 organizations* (April 2026). https://www.linuxfoundation.org/press/a2a-protocol-surpasses-150-organizations-lands-in-major-cloud-platforms-and-sees-enterprise-production-use-in-first-year
+- Forbes, *Agent2Agent joins the Agentic AI Foundation alongside MCP* (August 2026): v1.0 in March 2026, signed agent cards, multi-tenancy. https://www.forbes.com/sites/janakirammsv/2026/08/19/agent2agent-joins-the-agentic-ai-foundation-alongside-mcp/
+- Swell, *Agentic Commerce Protocol explained* (2026); Forter, *ACP vs UCP vs AP2* (2026); dev.to, *Agentic commerce protocols in November 2026*. https://www.swell.is/content/agentic-commerce-protocol-explained · https://ai.forter.com/agentic-commerce-protocols · https://dev.to/brudy_dev24/agentic-commerce-protocols-in-november-2026-a-verified-map-of-acp-ap2-ucp-x402-mcp-a2a-and-45nn
 
 ## Related Notes
 

@@ -168,6 +168,19 @@ def reingest(doc) -> None:
 
 ---
 
+## Multilingual and Code-Mixed Corpora
+
+Indian products face a harder version of retrieval: documents in English and Hindi, questions in Tamil, Telugu or romanised Hinglish ("sarkari yojana ke liye kya documents chahiye"). Sarvam's applied roles ask exactly this (representative question set, Nov 2026), and it applies to any Indian support or government assistant ([[01 - Customer Support Agent with Refunds]], [[04 - Voice Booking Agent]]).
+
+- **One semantic space:** a **multilingual embedding model** so a Tamil query and an English passage about the same thing land close together; this is the choice everything else depends on. Check its quality per language on your own queries; quality is very uneven across Indian languages.
+- **Normalise scripts at both ends:** transliterate romanised input to native script (or embed both forms), apply Unicode normalisation (NFC) and strip zero-width joiners consistently, so "yojana" and "योजना" can match.
+- **Hybrid still matters:** BM25 over a normalised field catches scheme names, ids and place names that embeddings blur; fuse with dense results ([[08 - Vector DB Internals and Hybrid Search#Hybrid Search]]). Store the document language as metadata for filtering and analytics.
+- **Answer in the user's language:** retrieve wherever the answer lives, then instruct the model to reply in the query's language and script; either pass source passages directly to a strong multilingual model, or translate retrieved passages first (cleaner output, more latency and translation error). Keep citations to the original-language source.
+- **Chunking:** pages that mix English and Hindi need sentence splitting that understands both scripts (the Devanagari danda `।` ends sentences); token counts per chunk differ by language because of tokenizer fertility ([[00 - LLM Fundamentals for Engineers#The token tax on Indian languages]]).
+- **Evaluate per language:** a cross-lingual set (question in language A, answer in a language-B document), recall@k and faithfulness reported per language, plus two specific failures: answering in the wrong script, and citations that don't support a translated claim. Machine-translated English benchmarks overstate quality.
+
+---
+
 ## Failure Modes
 
 | Failure | What happens | Mitigation |
@@ -191,6 +204,10 @@ def reingest(doc) -> None:
 > - "Every chunk carries tenant and ACL metadata, and permissions are enforced inside the retrieval query, not in the prompt."
 > - "Ingestion is idempotent with deterministic chunk ids; updates re-embed only changed chunks, and deletes propagate to every index."
 > - "Changing the embedding model means re-embedding everything, so I dual-write a new index and compare before switching."
+
+## Sources
+
+- ombharatiya, *AI Engineer Interview Questions: Sarvam AI* (GitHub, reviewed Nov 2026): cross-lingual RAG, Indic tokenization, VAD build round (compiled from public reports). https://github.com/ombharatiya/AI-Engineer-Interview-Questions/blob/main/14-company-interview-questions/sarvam-ai.md
 
 ## Related Notes
 

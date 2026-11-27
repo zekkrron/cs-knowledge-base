@@ -11,6 +11,7 @@ Low Level Design notes.
 | [[LLD/Problems/README\|Problems]] | Researched LLD / machine-coding problem notes: V0, extension ladder E1–E4, review cards |
 | `Code/` | Maven project with all LLD code: two self-contained packages per problem (`v0`, `full`) and JUnit tests. Run `.\mvnw.cmd test` inside it |
 | [[Problem Catalog]] | Every LLD problem by archetype, market priority (Oct 2026) and study order |
+| [[LLD Idioms]] | Small recurring code shapes (CAS claim, `compute` per key, strategy by key, injected clock...): signal, shape, problems that use it, depth link. Updated with every new problem |
 
 ## Audio Overview Prompts
 

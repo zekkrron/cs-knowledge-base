@@ -193,12 +193,54 @@ def call_with_limit(bucket: TokenBucket, messages, max_out=1024):
 
 ---
 
+## Red-Teaming and Safety Eval Pipelines
+
+- Guardrails and the OWASP list say what to defend; **red-teaming** finds out whether the defences hold, by attacking your own system the way a real adversary would. Done once by hand before launch, it's a checkbox. Done as a pipeline that runs on every model, prompt and tool change, it's a regression suite for safety. Interview banks in 2026 treat "design a red-team pipeline" as its own topic (PracHub concept pages).
+
+```mermaid
+flowchart LR
+    TM[Threat model: assets, tools, OWASP ASI01–10] --> CORP[(Attack corpus: seeds per category)]
+    CORP --> GEN[Attack generator: mutations, multi-turn, injected documents]
+    GEN --> TGT[Target: the full agent with real tools in a sandbox]
+    TGT --> TR[(Traces: prompts, tool calls, outputs)]
+    TR --> SC[Scorers: tool-call checks, classifiers, judge]
+    SC --> TRI[Triage: humans confirm and deduplicate]
+    TRI --> FIX[Fix: remove agency, add approval, tighten tool]
+    TRI --> REG[(Regression set)]
+    REG --> CI[Runs on every model / prompt / tool change]
+    CI --> TGT
+```
+
+- **1. Threat model first.** List the assets (customer data, money-moving tools, other tenants' data, system prompt), the attackers (a malicious user, a poisoned document or web page, a compromised MCP server) and which OWASP agentic risks reach each tool and memory store (table above).
+- **2. Build the attack corpus per category**: direct jailbreaks, indirect injection planted in documents, emails, tool results and images ([[17 - Multimodal Systems]]), data exfiltration (markdown images, link parameters), privilege abuse (another user's id), tool misuse (refund twice, delete), harmful content per policy category, and over-refusal probes (legitimate requests that look risky).
+- **3. Generate variants automatically.** Seeds are mutated (paraphrase, translation, encoding, role-play framing) and **multi-turn** strategies escalate over a conversation; single-turn tests miss attacks that build up. Open-source tools do this: **Promptfoo** (red-team configs and strategies such as Meta's GOAT multi-turn attacker), **garak** (NVIDIA, a probe library) and **PyRIT** (Microsoft, orchestrated multi-turn attacks). Promptfoo is reported to have been acquired by OpenAI in March 2026.
+- **4. Attack the real system, not the bare model.** Run against the full agent with its tools in a sandbox with fake data, because the damage happens in tool calls, not in text.
+- **5. Score on actions, not words.** The question is "did a refund go out, did data leave, did it call the forbidden tool", checked from the trace. A 2026 hands-on test of these tools against an agent found the judge marked 19 of 19 cases safe while a forbidden post was still sent; only an approval gate stopped it (0 of 5 sent vs 5 of 5 without). Classifier and judge detectors also produce false hits, so humans confirm before counting (Brandefense, October 2026).
+- **6. Report attack success rate (ASR)** per category and per attack strategy, with the number of attempts allowed: success at the first attempt and at N attempts are different numbers, and persistent attackers get many tries.
+- **7. Fix by removing agency first** (fewer tools, narrower scopes, approval gates), then add classifiers. Prompt rules fix some text-level attacks but rarely stop tool misuse on their own.
+- **8. Every confirmed finding becomes a regression case** in the CI suite next to the quality evals ([[11 - Evals Observability and Silent Drift]]), and the over-refusal set runs alongside it so fixes don't make the product useless.
+- **Production monitoring** closes the loop: alert on guardrail triggers, egress denials and unusual tool patterns, and feed real attempts back into the corpus.
+
+---
+
 ## PII and Data Governance
 
 - **Redact or tokenise PII** before sending to external providers where policy requires it (replace with placeholders, re-insert in the response).
 - **Provider data terms**: training opt-out, retention period, zero-data-retention options, regional processing; route sensitive tenants accordingly.
 - **Logs and traces** contain prompts and outputs: apply the same retention, access control and redaction as production databases ([[18 - Security]]).
 - **Deletion** must reach prompts in logs, cached responses, embeddings and memories ([[04 - State Memory and Context Engineering]]).
+
+### Regulation to name in a design round
+
+- **India, DPDP Act (2023) and DPDP Rules (notified 13 November 2025):** personal data needs a lawful purpose and consent, data minimisation and deletion on request; build consent, purpose and erasure into transcripts, memories and embeddings ([[01 - Customer Support Agent with Refunds]]).
+    + **Phased start:** Data Protection Board provisions on notification (13–14 November 2025); Consent Manager registration one year later (13 November 2026); the operational duties for businesses (notices, consent, security safeguards, breach reporting, retention and erasure) 18 months after notification, around **13 May 2027** (MeitY schedule as summarised by law firms; Lok Sabha answer, Aug 2026).
+    + **No blanket localisation:** cross-border transfer is allowed except to countries the government restricts by notification; a significant data fiduciary can be told to keep specified data in India.
+    + **Sector rules still apply on top:** RBI requires payment-system data to be stored only in India, a separate rule from DPDP; say both when the design touches payments.
+- **EU AI Act, after the Digital Omnibus** (Regulation (EU) 2026/1744, in force 27 July 2026):
+    + Already applying: bans on prohibited practices and the AI-literacy duty (since 2 February 2025); obligations for providers of general-purpose AI models (since 2 August 2025).
+    + **From 2 August 2026, Article 50 transparency**: tell people they're talking to an AI, label deepfakes, and mark AI-generated content in a machine-readable way, with a grace period to 2 December 2026 for generative systems already on the market.
+    + **High-risk obligations moved**: to 2 December 2027 for the Annex III use cases (employment, credit scoring, education, essential services, among others) and to 2 August 2028 for AI inside products covered by EU product-safety law.
+- **What it means for a design:** an "AI assistant" disclosure in the UI and voice greeting; provenance metadata on generated images and audio; a risk classification of the use case (a hiring screener or credit decision is high-risk; a support bot usually isn't); logs and human oversight that would satisfy an audit. Say which regime applies and move on; interviewers want awareness, not legal detail.
 
 ---
 
@@ -227,11 +269,22 @@ def call_with_limit(bucket: TokenBucket, messages, max_out=1024):
 > - "Model-generated code runs in a microVM or gVisor sandbox with no network, no secrets and hard limits, destroyed after use."
 > - "I threat-model an agent against the OWASP agentic Top 10: for every tool, credential, memory and peer, which of ASI01–ASI10 reaches it. Least Agency first: remove autonomy before adding controls."
 > - "Guardrail classifiers like Llama Guard are a noise filter, not a security boundary, and I track their false-positive rate."
+> - "Red-teaming is a pipeline: threat model, an attack corpus per category, automated multi-turn variants against the real agent in a sandbox, scoring on tool calls from the trace, attack success rate per category, and every confirmed finding becomes a regression case."
+> - "Under the EU AI Act, transparency duties apply from August 2026 and high-risk obligations from December 2027; a support bot needs disclosure, a hiring or credit system is high-risk."
 
 ## Sources
 
+- Ahlawat & Associates, *DPDP Rules notified; provisions to come into force in a staggered manner* (Nov 2025); Konfirmity, *DPDP Compliance Checklist* (2026): the three commencement tranches. https://www.ahlawatassociates.com/news/dpdp-rules-notified-provisions-to-come-into-force-in-a-staggered-manner
+- Lok Sabha unstarred question 4091 (answered 12 August 2026): Board functioning since 13 November 2025, Consent Manager registration from 13 November 2026. https://sansad.in/getFile/lsapps/loksabhaquestions/annex/188/AU4091_ajtbM6.pdf
+- RBI, *Storage of Payment System Data* (circular, April 2018): payment data stored only in India.
 - OWASP GenAI Security Project, *OWASP Top 10 for Agentic Applications for 2026* (published 9 December 2025). https://genai.owasp.org/resource/owasp-top-10-for-agentic-applications-for-2026/
 - NeuralTrust, *OWASP Top 10 for Agentic Apps 2026* (updated October 2026): the ten risks with incident examples and the LLM-list mapping. https://neuraltrust.ai/blog/owasp-top-10-for-agentic-applications-2026
+- PracHub, *LLM Safety Evaluation and Red-Team Pipelines* (concept page, 2026). https://prachub.com/concepts/llm-safety-evaluation-and-red-team-pipelines
+- Brandefense, *Garak and Promptfoo: Red Team an AI Agent* (October 2026): judge said 19 of 19 safe while a post went out; approval gate 0 of 5 vs 5 of 5. https://brandefense.io/blog/ai-red-teaming-garak-promptfoo/
+- Promptfoo, *GOAT jailbreaking strategy* (multi-turn attacker from Meta, 2024). https://www.promptfoo.dev/docs/red-team/strategies/goat/
+- Mindgard, *Best tools for red teaming* (2026): Promptfoo acquisition by OpenAI reported for March 2026. https://mindgard.ai/blog/best-tools-for-red-teaming
+- McKenna Consultants, *The EU AI Act timeline after the AI Omnibus* (2026); CSA research note (August 2026). https://www.mckennaconsultants.com/the-eu-ai-act-after-the-ai-omnibus-the-timeline-that-now-applies/ · https://labs.cloudsecurityalliance.org/wp-content/uploads/2026/08/CSA_research_note_eu_ai_act_high_risk_deadline_omnibus_20260801-csa-styled.pdf
+- Compyl, *What actually took effect on August 2, 2026* (Article 50 and the grace period). https://compyl.com/blog/eu-ai-act-high-risk-deadline-august-2026/
 
 ## Related Notes
 

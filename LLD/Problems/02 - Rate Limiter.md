@@ -547,6 +547,15 @@ Run: `.\mvnw.cmd test` in `LLD/Code`.
 
 ---
 
+## 14. Idioms Used
+
+- V0: [[LLD Idioms#3. One atomic step per key with ConcurrentHashMap.compute|3 compute per key]] · [[LLD Idioms#8. Injected Clock, read once per request|8 Injected Clock]] · [[LLD Idioms#9. Lazy expiry and refill from now, no timer thread|9 Lazy expiry]] · [[LLD Idioms#11. One-implementation interface where the first follow-up plugs in|11 Interface where E1 plugs in]] · [[LLD Idioms#16. One-line guards and a three-class exception hierarchy|16 Guards and exceptions]] · [[LLD Idioms#17. Expected rejection is a result, not an exception|17 Rejection as a result]] · [[LLD Idioms#19. The service never prints; drivers format|19 Service never prints]]
+- E1: [[LLD Idioms#10. Strategy picked by key from a map|10 Strategy by key (enum + factory)]] · [[LLD Idioms#9. Lazy expiry and refill from now, no timer thread|9 Lazy refill (token bucket)]]
+- E3: [[LLD Idioms#13. State remembers its config; rebuild on mismatch|13 Rebuild on config mismatch]] · [[LLD Idioms#4. Evict with computeIfPresent returning null|4 Evict with computeIfPresent]]
+- E4: [[LLD Idioms#17. Expected rejection is a result, not an exception|17 Decision with retry-after]]
+
+---
+
 ## Sources
 
 - LeetCode Discuss, Atlassian P4 (post 2231218, Jun 2022): working limiter, then unused quota carries over. https://leetcode.com/discuss/post/2231218/
